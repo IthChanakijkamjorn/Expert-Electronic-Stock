@@ -34,3 +34,8 @@ end $$;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
+
+-- Data API auto-exposure is off, so grant access explicitly (RLS still applies).
+grant usage on schema public to authenticated;
+grant select on public.profiles to authenticated;
+grant update, insert, delete on public.profiles to authenticated;
