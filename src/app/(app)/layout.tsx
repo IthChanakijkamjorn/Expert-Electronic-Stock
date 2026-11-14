@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -25,25 +26,32 @@ export default async function AppLayout({
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 px-4 py-3">
-        <div className="flex items-center gap-6">
-          <strong>{t.appName}</strong>
-          <nav className="flex gap-4 text-sm text-zinc-700">
+      <header className="sticky top-0 z-40 bg-navy text-white shadow-[0_12px_30px_rgba(0,0,0,0.28)]">
+        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
+          <Link href="/" className="flex items-center gap-3">
+            <Image src="/logo.png" alt="" width={36} height={36} priority />
+            <span className="font-serif text-base font-semibold sm:text-lg">
+              Expert Electronic &amp; Communication
+            </span>
+          </Link>
+          <nav className="flex gap-5 text-[11px] font-semibold uppercase tracking-[0.2em]">
             {nav.map((n) => (
-              <Link key={n.href} href={n.href} className="hover:underline">
+              <Link key={n.href} href={n.href} className="text-white/80 hover:text-white">
                 {n.label}
               </Link>
             ))}
           </nav>
-        </div>
-        <div className="flex items-center gap-3">
-          <LangSwitch current={lang} />
-          <form action={signOut}>
-            <button className="text-sm underline">{t.logout}</button>
-          </form>
+          <div className="flex items-center gap-3">
+            <LangSwitch current={lang} />
+            <form action={signOut}>
+              <button className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/80 hover:text-white">
+                {t.logout}
+              </button>
+            </form>
+          </div>
         </div>
       </header>
-      <main className="flex-1 p-4">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 p-4 py-8">{children}</main>
     </div>
   );
 }

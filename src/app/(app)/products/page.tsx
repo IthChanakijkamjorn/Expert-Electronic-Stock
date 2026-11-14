@@ -31,9 +31,9 @@ export default async function ProductsPage({
   return (
     <section className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">{t.products}</h1>
+        <h1 className="text-3xl font-semibold">{t.products}</h1>
         {(role === "admin" || role === "manager") && (
-          <Link href="/products/new" className="rounded bg-black px-3 py-1.5 text-sm text-white">
+          <Link href="/products/new" className="btn">
             {t.addProduct}
           </Link>
         )}
@@ -43,13 +43,13 @@ export default async function ProductsPage({
           name="q"
           defaultValue={q}
           placeholder={t.search}
-          className="w-full max-w-sm rounded border border-zinc-300 px-3 py-1.5"
+          className="input max-w-sm"
         />
-        <button className="rounded border border-zinc-300 px-3 py-1.5">{t.search}</button>
+        <button className="btn-ghost">{t.search}</button>
       </form>
       {products?.length ? (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+        <div className="card overflow-x-auto p-4">
+          <table className="data-table w-full text-left text-sm">
             <thead className="border-b border-zinc-300">
               <tr>
                 <th className="py-2 pr-3">{t.sku}</th>
@@ -80,7 +80,7 @@ export default async function ProductsPage({
           </table>
         </div>
       ) : (
-        <p className="text-zinc-500">{t.noProducts}</p>
+        <p className="text-muted">{t.noProducts}</p>
       )}
     </section>
   );

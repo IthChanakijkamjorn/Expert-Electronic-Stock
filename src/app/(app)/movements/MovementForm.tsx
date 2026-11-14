@@ -12,9 +12,9 @@ export function MovementForm({
   products: { id: string; name: string; sku: string | null; stock: number; unit: string }[];
 }) {
   const [state, action, pending] = useActionState(recordMovement, null);
-  const field = "w-full rounded border border-zinc-300 px-3 py-1.5";
+  const field = "input mt-1";
   return (
-    <form action={action} className="flex max-w-md flex-col gap-3">
+    <form action={action} className="card flex max-w-md flex-col gap-3">
       <label>
         {t.product}
         <select name="product_id" required className={field} defaultValue="">
@@ -55,7 +55,7 @@ export function MovementForm({
         </p>
       )}
       {state?.ok && <p className="text-green-700">✓</p>}
-      <button disabled={pending} className="rounded bg-black px-3 py-2 text-white disabled:opacity-50">
+      <button disabled={pending} className="btn">
         {t.save}
       </button>
     </form>

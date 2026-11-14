@@ -12,7 +12,7 @@ type Labels = {
 
 export function LoginForm({ labels }: { labels: Labels }) {
   const [state, action, pending] = useActionState(signIn, null);
-  const input = "w-full rounded border border-zinc-300 px-3 py-2";
+  const input = "input";
   return (
     <form action={action} className="flex flex-col gap-3">
       <label className="flex flex-col gap-1 text-sm">
@@ -36,7 +36,7 @@ export function LoginForm({ labels }: { labels: Labels }) {
       )}
       <button
         disabled={pending}
-        className="rounded bg-zinc-900 px-3 py-2 text-white disabled:opacity-50"
+        className="btn mt-2"
       >
         {labels.login}
       </button>

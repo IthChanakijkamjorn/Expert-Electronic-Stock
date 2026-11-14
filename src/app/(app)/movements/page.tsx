@@ -27,12 +27,12 @@ export default async function MovementsPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold">{t.movements}</h1>
+      <h1 className="text-3xl font-semibold">{t.movements}</h1>
       <MovementForm t={t} products={products ?? []} />
       <div>
         <h2 className="mb-2 text-lg font-medium">{t.recent}</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+        <div className="card overflow-x-auto p-4">
+          <table className="data-table w-full text-left text-sm">
             <thead className="border-b border-zinc-300">
               <tr>
                 <th className="py-2 pr-3">{t.date}</th>
