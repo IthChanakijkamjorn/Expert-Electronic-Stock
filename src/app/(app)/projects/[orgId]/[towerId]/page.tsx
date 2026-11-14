@@ -34,7 +34,8 @@ export default async function TowerPage({
   const orgName = (tower.organizations as unknown as { name: string } | null)?.name;
 
   return (
-    <section className="flex flex-col gap-6">
+    <section className={canManage ? "grid gap-8 lg:grid-cols-[65fr_35fr]" : ""}>
+      <div className="flex flex-col gap-6">
       <div>
         <Link href={`/projects/${orgId}`} className="text-sm text-muted hover:underline">{t.back}</Link>
         <p className="eyebrow mt-3">{orgName}</p>
@@ -44,7 +45,7 @@ export default async function TowerPage({
         [...byYear].map(([year, list]) => (
           <div key={year}>
             <h2 className="mb-2 font-serif text-2xl text-navy">{t.year} {year}</h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {list.map((p) => (
                 <Link
                   key={p.id}
@@ -61,8 +62,9 @@ export default async function TowerPage({
       ) : (
         <p className="text-muted">{t.noItems}</p>
       )}
+      </div>
       {canManage && (
-        <div className="max-w-md">
+        <aside className="lg:sticky lg:top-24 lg:self-start">
           <h2 className="mb-2 text-lg font-medium">{t.addProject}</h2>
           <form action={createProject.bind(null, orgId, towerId)} className="card flex flex-col gap-3">
             <label className="flex flex-col gap-1 text-sm">
@@ -79,7 +81,7 @@ export default async function TowerPage({
             </label>
             <button className="btn w-fit">{t.save}</button>
           </form>
-        </div>
+        </aside>
       )}
     </section>
   );
