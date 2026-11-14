@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n";
 import { getRole } from "@/lib/role";
 import { signedUrls } from "@/lib/storage";
+import { ShareButton } from "@/components/ShareButton";
 import { FileUploader } from "@/components/FileUploader";
 import { MovementForm } from "../../../../movements/MovementForm";
 import { addProjectFile, deleteProjectFile } from "../../../actions";
@@ -63,6 +64,14 @@ export default async function ProjectPage({
     usage.set(m.product_id, cur);
   });
 
+  const shareLabels = {
+    share: t.share,
+    days: t.shareDays,
+    create: t.createLink,
+    copy: t.copy,
+    copied: t.copied,
+    failed: t.shareFailed,
+  };
   const bound = addProjectFile.bind(null, projectId);
 
   return (
@@ -79,7 +88,7 @@ export default async function ProjectPage({
       <div className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold text-navy">{t.files}</h2>
         <FileUploader
-          projectId={projectId}
+          prefix={`projects/${projectId}`}
           record={bound}
           label={t.uploadFiles}
           uploadingText={t.uploading}
@@ -102,6 +111,7 @@ export default async function ProjectPage({
                         {t.download}
                       </a>
                     )}
+                    <ShareButton path={f.storage_path} fileName={f.file_name} labels={shareLabels} />
                     {canManage && (
                       <form action={deleteProjectFile.bind(null, f.id)}>
                         <button className="text-red-600 underline">{t.remove}</button>

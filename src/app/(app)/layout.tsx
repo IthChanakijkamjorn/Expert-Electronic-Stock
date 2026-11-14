@@ -23,6 +23,7 @@ export default async function AppLayout({
     { href: "/products", label: t.products },
     { href: "/movements", label: t.movements },
     { href: "/projects", label: t.projects },
+    { href: "/files", label: t.filesMenu },
   ];
 
   return (

@@ -1,0 +1,54 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
+
+export async function addProductFile(
+  productId: string,
+  path: string,
+  name: string,
+  size: number,
+) {
+  if (!path.startsWith(`products/${productId}/`)) throw new Error("bad path");
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("product_files")
+    .insert({ product_id: productId, storage_path: path, file_name: name, size_bytes: size });
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteProductFile(fileId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("product_files")
+    .select("storage_path")
+    .eq("id", fileId)
+    .single();
+  if (!data) return;
+  await supabase.storage.from("files").remove([data.storage_path]);
+  await supabase.from("product_files").delete().eq("id", fileId);
+  revalidatePath("/files", "layout");
+}
+
+export async function createShare(path: string, fileName: string, days: number) {
+  const safeDays = Math.min(Math.max(Math.floor(days) || 7, 1), 90);
+  const expires = new Date(Date.now() + safeDays * 86400000).toISOString();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("file_shares")
+    .insert({ storage_path: path, file_name: fileName, expires_at: expires })
+    .select("token")
+    .single();
+  if (error) throw new Error(error.message);
+  revalidatePath("/files");
+  return data.token as string;
+}
+
+export async function revokeShare(shareId: string) {
+  const supabase = await createClient();
+  await supabase
+    .from("file_shares")
+    .update({ revoked_at: new Date().toISOString() })
+    .eq("id", shareId);
+  revalidatePath("/files");
+}

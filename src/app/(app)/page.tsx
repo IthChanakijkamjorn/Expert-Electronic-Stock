@@ -18,6 +18,7 @@ export default async function Dashboard() {
     { href: "/products", label: t.products },
     { href: "/movements", label: t.movements },
     { href: "/projects", label: t.projects },
+    { href: "/files", label: t.filesMenu },
   ];
   return (
     <section className="flex flex-col gap-6">
@@ -32,7 +33,7 @@ export default async function Dashboard() {
           </p>
         )}
       </div>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {links.map((l) => (
           <Link key={l.href} href={l.href} className="card text-xl font-semibold text-navy transition hover:-translate-y-0.5">
             {l.label} →

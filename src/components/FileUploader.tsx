@@ -5,13 +5,13 @@ import { useState } from "react";
 import { uploadToStorage } from "./upload";
 
 export function FileUploader({
-  projectId,
+  prefix,
   record,
   label,
   uploadingText,
   failedText,
 }: {
-  projectId: string;
+  prefix: string;
   record: (path: string, name: string, size: number) => Promise<void>;
   label: string;
   uploadingText: string;
@@ -25,7 +25,7 @@ export function FileUploader({
     setStatus("busy");
     try {
       for (const file of Array.from(files)) {
-        const path = await uploadToStorage(`projects/${projectId}`, file);
+        const path = await uploadToStorage(prefix, file);
         await record(path, file.name, file.size);
       }
       setStatus("idle");
