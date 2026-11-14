@@ -14,7 +14,7 @@ export function EntityCard({
   return (
     <Link
       href={href}
-      className="group card-link overflow-hidden !p-0"
+      className="group card card-link !p-0"
     >
       <div className="aspect-[16/9] overflow-hidden bg-gradient-to-br from-navy to-[#000066]">
         {imageUrl ? (
@@ -29,7 +29,7 @@ export function EntityCard({
       <div className="p-4">
         <h3 className="flex items-center justify-between font-semibold text-navy">
           {title}
-          <span className="transition group-hover:translate-x-1">→</span>
+          <span className="arrow-chip">→</span>
         </h3>
         {subtitle && <p className="text-sm text-muted">{subtitle}</p>}
       </div>

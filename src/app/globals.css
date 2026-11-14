@@ -40,7 +40,20 @@ h1 {
     @apply rounded-3xl border border-white bg-white/80 p-6 shadow-[0_20px_50px_rgba(21,21,46,0.08)];
   }
   .card-link {
-    @apply block cursor-pointer rounded-3xl border border-white bg-white/80 p-6 shadow-[0_20px_50px_rgba(21,21,46,0.08)] transition duration-200 hover:-translate-y-1 hover:border-navy/40 hover:bg-white hover:shadow-[0_24px_60px_rgba(0,0,77,0.18)] focus-visible:outline-2 focus-visible:outline-navy;
+    @apply relative block cursor-pointer overflow-hidden transition duration-200 hover:-translate-y-1 hover:border-navy/30 hover:bg-white hover:shadow-[0_24px_60px_rgba(0,0,77,0.18)];
+  }
+  .card-link::before {
+    content: "";
+    @apply absolute inset-x-0 top-0 h-1 origin-left scale-x-0 bg-navy transition duration-300;
+  }
+  .card-link:hover::before {
+    @apply scale-x-100;
+  }
+  .arrow-chip {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#eeeefa] text-navy transition duration-200;
+  }
+  .card-link:hover .arrow-chip {
+    @apply translate-x-1 bg-navy text-white;
   }
   .eyebrow {
     @apply text-[11px] font-semibold uppercase tracking-[0.3em] text-muted;

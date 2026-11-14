@@ -34,8 +34,9 @@ export default async function Dashboard() {
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
         {links.map((l) => (
-          <Link key={l.href} href={l.href} className="card-link text-xl font-semibold text-navy">
-            {l.label} →
+          <Link key={l.href} href={l.href} className="card card-link flex items-center justify-between gap-3 text-xl font-semibold text-navy">
+            {l.label}
+            <span className="arrow-chip">→</span>
           </Link>
         ))}
       </div>

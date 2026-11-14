@@ -91,10 +91,16 @@ export default async function ProductsPage({
             <Link
               key={brand}
               href={`/products/brand/${encodeURIComponent(brand)}`}
-              className="card-link"
+              className="card card-link flex items-center gap-4"
             >
-              <p className="text-xl font-semibold text-navy">{brand === NO_BRAND ? t.noBrand : brand}</p>
-              <p className="mt-1 text-sm text-muted">{count} {t.items}</p>
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-navy font-serif text-xl text-white">
+                {(brand === NO_BRAND ? t.noBrand : brand).charAt(0).toUpperCase()}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-lg font-semibold text-navy">{brand === NO_BRAND ? t.noBrand : brand}</span>
+                <span className="block text-sm text-muted">{count} {t.items}</span>
+              </span>
+              <span className="arrow-chip">→</span>
             </Link>
           ))}
         </div>

@@ -62,7 +62,7 @@ export default async function TowerPage({
                 <Link
                   key={p.id}
                   href={`/projects/${orgId}/${towerId}/${p.id}`}
-                  className="card-link"
+                  className="card card-link"
                 >
                   <h3 className="font-semibold text-navy">{p.name}</h3>
                   {p.notes && <p className="mt-1 line-clamp-2 text-sm text-muted">{p.notes}</p>}
