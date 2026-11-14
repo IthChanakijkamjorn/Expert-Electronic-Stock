@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n";
@@ -16,7 +17,11 @@ export default async function AppLayout({
   if (!user) redirect("/login");
 
   const { lang, t } = await getDictionary();
-  const nav = [t.dashboard, t.products, t.movements, t.projects];
+  const nav = [
+    { href: "/", label: t.dashboard },
+    { href: "/products", label: t.products },
+    { href: "/movements", label: t.movements },
+  ];
 
   return (
     <div className="flex flex-1 flex-col">
@@ -25,7 +30,9 @@ export default async function AppLayout({
           <strong>{t.appName}</strong>
           <nav className="flex gap-4 text-sm text-zinc-700">
             {nav.map((n) => (
-              <span key={n}>{n}</span>
+              <Link key={n.href} href={n.href} className="hover:underline">
+                {n.label}
+              </Link>
             ))}
           </nav>
         </div>
