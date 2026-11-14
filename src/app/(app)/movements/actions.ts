@@ -12,6 +12,7 @@ export async function recordMovement(_prev: MovementState, formData: FormData): 
   const type = String(formData.get("type") ?? "");
   const comment = String(formData.get("comment") ?? "").trim();
   const qty = Math.floor(Number(formData.get("quantity")));
+  const projectId = String(formData.get("project_id") ?? "") || null;
   const sign = formData.get("direction") === "out" ? -1 : 1;
   if (!productId || !TYPES.includes(type) || !comment || !(qty > 0)) {
     return { error: "invalid" };
@@ -23,11 +24,13 @@ export async function recordMovement(_prev: MovementState, formData: FormData): 
     type,
     comment,
     quantity: sign * qty,
+    project_id: projectId,
   });
   if (error) {
     return { error: error.message.includes("insufficient_stock") ? "insufficient" : "failed" };
   }
   revalidatePath("/movements");
   revalidatePath("/products");
+  revalidatePath("/projects", "layout");
   return { ok: true };
 }

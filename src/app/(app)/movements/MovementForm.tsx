@@ -7,8 +7,16 @@ import type { Dictionary } from "@/lib/i18n/dictionaries";
 export function MovementForm({
   t,
   products,
+  projects = [],
+  fixedProjectId,
+  defaultDirection = "in",
+  defaultType = "purchase",
 }: {
+  fixedProjectId?: string;
+  defaultDirection?: "in" | "out";
+  defaultType?: string;
   t: Dictionary;
+  projects?: { id: string; label: string }[];
   products: { id: string; name: string; sku: string | null; stock: number; unit: string }[];
 }) {
   const [state, action, pending] = useActionState(recordMovement, null);
@@ -28,7 +36,7 @@ export function MovementForm({
       </label>
       <label>
         {t.direction}
-        <select name="direction" className={field}>
+        <select name="direction" className={field} defaultValue={defaultDirection}>
           <option value="in">{t.stockIn}</option>
           <option value="out">{t.stockOut}</option>
         </select>
@@ -39,12 +47,24 @@ export function MovementForm({
       </label>
       <label>
         {t.reason}
-        <select name="type" className={field}>
+        <select name="type" className={field} defaultValue={defaultType}>
           {Object.entries(t.movementTypes).map(([k, v]) => (
             <option key={k} value={k}>{v}</option>
           ))}
         </select>
       </label>
+      {fixedProjectId && <input type="hidden" name="project_id" value={fixedProjectId} />}
+      {!fixedProjectId && projects.length > 0 && (
+        <label>
+          {t.projects}
+          <select name="project_id" className={field} defaultValue="">
+            <option value="">{t.noProject}</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>{p.label}</option>
+            ))}
+          </select>
+        </label>
+      )}
       <label>
         {t.comment}
         <textarea name="comment" required rows={3} placeholder={t.commentHint} className={field} />

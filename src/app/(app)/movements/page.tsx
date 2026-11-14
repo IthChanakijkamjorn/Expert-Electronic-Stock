@@ -5,7 +5,7 @@ import { MovementForm } from "./MovementForm";
 export default async function MovementsPage() {
   const { lang, t } = await getDictionary();
   const supabase = await createClient();
-  const [{ data: products }, { data: movements }] = await Promise.all([
+  const [{ data: products }, { data: movements }, { data: projects }] = await Promise.all([
     supabase
       .from("product_stock")
       .select("id, name, sku, stock, unit")
@@ -17,7 +17,16 @@ export default async function MovementsPage() {
       .select("id, quantity, type, comment, created_at, created_by, products(name)")
       .order("created_at", { ascending: false })
       .limit(30),
+    supabase
+      .from("projects")
+      .select("id, name, year, towers(name, organizations(name))")
+      .order("year", { ascending: false })
+      .limit(500),
   ]);
+  const projectOptions = (projects ?? []).map((p) => {
+    const tw = p.towers as unknown as { name: string; organizations: { name: string } };
+    return { id: p.id, label: `${tw.organizations.name} › ${tw.name} › ${p.year} › ${p.name}` };
+  });
 
   const ids = [...new Set((movements ?? []).map((m) => m.created_by))];
   const { data: people } = ids.length
@@ -28,7 +37,7 @@ export default async function MovementsPage() {
   return (
     <section className="flex flex-col gap-6">
       <h1 className="text-3xl font-semibold">{t.movements}</h1>
-      <MovementForm t={t} products={products ?? []} />
+      <MovementForm t={t} products={products ?? []} projects={projectOptions} />
       <div>
         <h2 className="mb-2 text-lg font-medium">{t.recent}</h2>
         <div className="card overflow-x-auto p-4">
