@@ -175,3 +175,23 @@ export async function renameProject(id: string, name: string) {
   if (error) throw new Error(error.message);
   revalidatePath("/projects", "layout");
 }
+
+export async function reorderOrganizations(ids: string[]) {
+  const supabase = await createClient();
+  const results = await Promise.all(
+    ids.map((id, i) => supabase.from("organizations").update({ position: i }).eq("id", id)),
+  );
+  const failed = results.find((r) => r.error);
+  if (failed?.error) throw new Error(failed.error.message);
+  revalidatePath("/projects", "layout");
+}
+
+export async function reorderTowers(ids: string[]) {
+  const supabase = await createClient();
+  const results = await Promise.all(
+    ids.map((id, i) => supabase.from("towers").update({ position: i }).eq("id", id)),
+  );
+  const failed = results.find((r) => r.error);
+  if (failed?.error) throw new Error(failed.error.message);
+  revalidatePath("/projects", "layout");
+}

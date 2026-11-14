@@ -7,7 +7,7 @@ import { signedUrls } from "@/lib/storage";
 import { ShareButton } from "@/components/ShareButton";
 import { FileUploader } from "@/components/FileUploader";
 import { MovementForm } from "../../../../movements/MovementForm";
-import { ConfirmButton } from "@/components/ConfirmButton";
+import { DeleteButton } from "@/components/DeleteButton";
 import { RenameForm } from "@/components/RenameForm";
 import { addProjectFile, deleteProject, deleteProjectFile, renameProject } from "../../../actions";
 
@@ -89,9 +89,7 @@ export default async function ProjectPage({
           <div className="mt-3 flex flex-wrap items-center gap-4">
             <RenameForm initial={project.name} action={renameProject.bind(null, projectId)} labels={renameLabels} />
             {role === "admin" && (
-              <form action={deleteProject.bind(null, orgId, towerId, projectId)}>
-                <ConfirmButton message={t.confirmDeleteProject}>{t.deleteProject}</ConfirmButton>
-              </form>
+              <DeleteButton action={deleteProject.bind(null, orgId, towerId, projectId)} name={project.name} labels={{ delete: t.deleteProject, warning: t.deleteWarning, message: t.confirmDeleteProject, ok: t.ok, cancel: t.cancel }} />
             )}
           </div>
         )}

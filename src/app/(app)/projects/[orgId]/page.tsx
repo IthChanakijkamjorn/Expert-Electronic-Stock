@@ -5,11 +5,9 @@ import { getDictionary } from "@/lib/i18n";
 import { getRole } from "@/lib/role";
 import { signedUrls } from "@/lib/storage";
 import { AddForm } from "@/components/AddForm";
-import { EntityCard } from "@/components/EntityCard";
 import { ImageField } from "@/components/ImageField";
-import { ConfirmButton } from "@/components/ConfirmButton";
-import { RenameForm } from "@/components/RenameForm";
-import { createTower, deleteOrganization, renameOrganization } from "../actions";
+import { EditableGrid } from "@/components/EditableGrid";
+import { createTower, deleteTower, renameTower, reorderTowers } from "../actions";
 
 export default async function OrganizationPage({
   params,
@@ -21,7 +19,6 @@ export default async function OrganizationPage({
   const supabase = await createClient();
   const role = await getRole();
   const canManage = role === "admin" || role === "manager";
-  const renameLabels = { rename: t.rename, save: t.save, cancel: t.cancel, failed: t.saveFailed };
   const { data: org } = await supabase
     .from("organizations")
     .select("id, name")
@@ -32,43 +29,43 @@ export default async function OrganizationPage({
     .from("towers")
     .select("id, name, image_path, projects(count)")
     .eq("organization_id", orgId)
+    .order("position")
     .order("name");
   const urls = await signedUrls((towers ?? []).map((x) => x.image_path));
 
+  const labels = {
+    edit: t.editMode, done: t.doneEditing, rename: t.rename, save: t.save, cancel: t.cancel, failed: t.saveFailed,
+    del: { delete: t.deleteTower, warning: t.deleteWarning, message: t.confirmDeleteTower, ok: t.ok, cancel: t.cancel },
+  };
+  const heading = (
+    <>
+      <Link href="/projects" className="text-sm text-muted hover:underline">{t.back}</Link>
+      <p className="eyebrow mt-3">{t.organization}</p>
+      <h1 className="text-3xl font-semibold">{org.name}</h1>
+    </>
+  );
+
   return (
-    <section className="flex flex-col gap-6">
-      <div>
-        <Link href="/projects" className="text-sm text-muted hover:underline">{t.back}</Link>
-        <p className="eyebrow mt-3">{t.organization}</p>
-        <h1 className="text-3xl font-semibold">{org.name}</h1>
-        {canManage && (
-          <div className="mt-3 flex flex-wrap items-center gap-4">
-            <RenameForm initial={org.name} action={renameOrganization.bind(null, orgId)} labels={renameLabels} />
-            {role === "admin" && (
-              <form action={deleteOrganization.bind(null, orgId)}>
-                <ConfirmButton message={t.confirmDeleteOrganization}>{t.deleteOrganization}</ConfirmButton>
-              </form>
-            )}
-          </div>
-        )}
-      </div>
-      {towers?.length ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {towers.map((x) => (
-            <EntityCard
-              key={x.id}
-              href={`/projects/${orgId}/${x.id}`}
-              title={x.name}
-              subtitle={`${x.projects?.[0]?.count ?? 0} ${t.projectsCount}`}
-              imageUrl={x.image_path ? urls.get(x.image_path) : undefined}
-            />
-          ))}
-        </div>
-      ) : (
-        <p className="text-muted">{t.noItems}</p>
-      )}
-      {(role === "admin" || role === "manager") && (
-        <div className="max-w-md">
+    <section className={canManage ? "grid gap-8 lg:grid-cols-[65fr_35fr]" : ""}>
+      <EditableGrid
+        heading={heading}
+        items={(towers ?? []).map((x) => ({
+          id: x.id,
+          href: `/projects/${orgId}/${x.id}`,
+          title: x.name,
+          subtitle: `${x.projects?.[0]?.count ?? 0} ${t.projectsCount}`,
+          imageUrl: x.image_path ? urls.get(x.image_path) : undefined,
+        }))}
+        canManage={canManage}
+        isAdmin={role === "admin"}
+        empty={t.noItems}
+        reorder={reorderTowers}
+        rename={renameTower}
+        remove={deleteTower.bind(null, orgId)}
+        labels={labels}
+      />
+      {canManage && (
+        <aside className="lg:sticky lg:top-24 lg:self-start">
           <h2 className="mb-2 text-lg font-medium">{t.addTower}</h2>
           <AddForm action={createTower.bind(null, orgId)} submitLabel={t.save}>
             <label className="flex flex-col gap-1 text-sm">
@@ -77,7 +74,7 @@ export default async function OrganizationPage({
             </label>
             <ImageField label={t.image} uploadingText={t.uploading} failedText={t.uploadFailed} />
           </AddForm>
-        </div>
+        </aside>
       )}
     </section>
   );

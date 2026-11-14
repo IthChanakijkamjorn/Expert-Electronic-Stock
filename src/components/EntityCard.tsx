@@ -5,21 +5,22 @@ export function EntityCard({
   title,
   subtitle,
   imageUrl,
+  editing,
+  actions,
 }: {
   href: string;
   title: string;
   subtitle?: string;
   imageUrl?: string;
+  editing?: boolean;
+  actions?: React.ReactNode;
 }) {
-  return (
-    <Link
-      href={href}
-      className="group card card-link !p-0"
-    >
+  const body = (
+    <>
       <div className="aspect-[16/9] overflow-hidden bg-gradient-to-br from-navy to-[#000066]">
         {imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt="" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+          <img src={imageUrl} alt="" draggable={false} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
         ) : (
           <div className="flex h-full items-center justify-center font-serif text-5xl text-white/70">
             {title.trim().charAt(0).toUpperCase()}
@@ -29,10 +30,17 @@ export function EntityCard({
       <div className="p-4">
         <h3 className="flex items-center justify-between font-semibold text-navy">
           {title}
-          <span className="arrow-chip">→</span>
+          <span className="arrow-chip">{editing ? "⠿" : "→"}</span>
         </h3>
         {subtitle && <p className="text-sm text-muted">{subtitle}</p>}
+        {editing && actions && <div className="mt-3 flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
-    </Link>
+    </>
+  );
+  const cls = "group card card-link !p-0";
+  return editing ? (
+    <div className={`${cls} cursor-grab active:cursor-grabbing`}>{body}</div>
+  ) : (
+    <Link href={href} className={cls}>{body}</Link>
   );
 }

@@ -6,7 +6,7 @@ import { getRole } from "@/lib/role";
 import { signedUrls } from "@/lib/storage";
 import { FileUploader } from "@/components/FileUploader";
 import { ShareButton } from "@/components/ShareButton";
-import { ConfirmButton } from "@/components/ConfirmButton";
+import { DeleteButton } from "@/components/DeleteButton";
 import { RenameForm } from "@/components/RenameForm";
 import { addProductFile, deleteProduct, deleteProductFile, renameProduct } from "../file-actions";
 
@@ -61,9 +61,7 @@ export default async function ProductFilesPage({
           <div className="mt-3 flex flex-wrap items-center gap-4">
             <RenameForm initial={product.name} action={renameProduct.bind(null, productId)} labels={renameLabels} />
             {role === "admin" && (
-              <form action={deleteProduct.bind(null, productId)}>
-                <ConfirmButton message={t.confirmDeleteProduct}>{t.deleteProduct}</ConfirmButton>
-              </form>
+              <DeleteButton action={deleteProduct.bind(null, productId)} name={product.name} labels={{ delete: t.deleteProduct, warning: t.deleteWarning, message: t.confirmDeleteProduct, ok: t.ok, cancel: t.cancel }} />
             )}
           </div>
         )}
