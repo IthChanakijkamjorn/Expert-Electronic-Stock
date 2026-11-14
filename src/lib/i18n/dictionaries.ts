@@ -3,12 +3,12 @@ export type Lang = (typeof LANGS)[number];
 export const DEFAULT_LANG: Lang = "th";
 
 const th = {
-  appName: "ระบบสต็อก Expert Electronic",
+  appName: "ระบบหลังบ้าน Expert Electronic",
   login: "เข้าสู่ระบบ",
-  email: "อีเมล",
+  email: "ชื่อผู้ใช้",
   password: "รหัสผ่าน",
   logout: "ออกจากระบบ",
-  invalidCredentials: "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+  invalidCredentials: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง",
   dashboard: "แดชบอร์ด",
   products: "สินค้า",
   movements: "รับ/จ่ายสินค้า",
@@ -23,12 +23,12 @@ const th = {
 export type Dictionary = typeof th;
 
 const en: Dictionary = {
-  appName: "Expert Electronic Stock",
+  appName: "Expert Electronic Back Office",
   login: "Sign in",
-  email: "Email",
+  email: "Username",
   password: "Password",
   logout: "Sign out",
-  invalidCredentials: "Invalid email or password",
+  invalidCredentials: "Invalid username or password",
   dashboard: "Dashboard",
   products: "Products",
   movements: "Stock in/out",

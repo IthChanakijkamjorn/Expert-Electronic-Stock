@@ -3,7 +3,7 @@ import { getLang } from "@/lib/i18n";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Expert Electronic Stock",
+  title: "Expert Electronic Back Office",
   robots: { index: false, follow: false },
 };
 

@@ -17,7 +17,7 @@ export function LoginForm({ labels }: { labels: Labels }) {
     <form action={action} className="flex flex-col gap-3">
       <label className="flex flex-col gap-1 text-sm">
         {labels.email}
-        <input name="email" type="email" required autoComplete="email" className={input} />
+        <input name="email" type="text" required autoComplete="username" autoCapitalize="none" className={input} />
       </label>
       <label className="flex flex-col gap-1 text-sm">
         {labels.password}

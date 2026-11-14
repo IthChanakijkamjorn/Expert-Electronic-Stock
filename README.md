@@ -1,4 +1,4 @@
-# Expert Electronic Stock
+# Expert Electronic Back Office
 
 Private stock-management app (Next.js + Supabase). Thai by default, English available.
 
