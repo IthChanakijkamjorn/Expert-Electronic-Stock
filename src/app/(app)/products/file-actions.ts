@@ -1,5 +1,6 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
@@ -51,4 +52,12 @@ export async function revokeShare(shareId: string) {
     .update({ revoked_at: new Date().toISOString() })
     .eq("id", shareId);
   revalidatePath("/products");
+}
+
+export async function deleteProduct(productId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("products").update({ active: false }).eq("id", productId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/products", "layout");
+  redirect("/products");
 }

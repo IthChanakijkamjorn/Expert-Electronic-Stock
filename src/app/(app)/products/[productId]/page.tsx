@@ -6,7 +6,8 @@ import { getRole } from "@/lib/role";
 import { signedUrls } from "@/lib/storage";
 import { FileUploader } from "@/components/FileUploader";
 import { ShareButton } from "@/components/ShareButton";
-import { addProductFile, deleteProductFile } from "../file-actions";
+import { ConfirmButton } from "@/components/ConfirmButton";
+import { addProductFile, deleteProduct, deleteProductFile } from "../file-actions";
 
 const formatSize = (n: number | null) =>
   n == null ? "" : n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.ceil(n / 1024)} KB`;
@@ -54,6 +55,11 @@ export default async function ProductFilesPage({
           {t.stock}: {product.stock} {product.unit}
           {product.location ? ` · ${t.location}: ${product.location}` : ""}
         </p>
+        {role === "admin" && (
+          <form action={deleteProduct.bind(null, productId)} className="mt-3">
+            <ConfirmButton message={t.confirmDeleteProduct}>{t.deleteProduct}</ConfirmButton>
+          </form>
+        )}
         <h2 className="mt-6 text-xl font-semibold text-navy">{t.files}</h2>
       </div>
       <FileUploader

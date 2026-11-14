@@ -7,7 +7,8 @@ import { signedUrls } from "@/lib/storage";
 import { ShareButton } from "@/components/ShareButton";
 import { FileUploader } from "@/components/FileUploader";
 import { MovementForm } from "../../../../movements/MovementForm";
-import { addProjectFile, deleteProjectFile } from "../../../actions";
+import { ConfirmButton } from "@/components/ConfirmButton";
+import { addProjectFile, deleteProject, deleteProjectFile } from "../../../actions";
 
 const formatSize = (n: number | null) =>
   n == null ? "" : n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.ceil(n / 1024)} KB`;
@@ -82,6 +83,11 @@ export default async function ProjectPage({
           {tower.organizations.name} · {tower.name} · {project.year}
         </p>
         <h1 className="text-3xl font-semibold">{project.name}</h1>
+        {role === "admin" && (
+          <form action={deleteProject.bind(null, orgId, towerId, projectId)} className="mt-3">
+            <ConfirmButton message={t.confirmDeleteProject}>{t.deleteProject}</ConfirmButton>
+          </form>
+        )}
         {project.notes && <p className="mt-2 text-muted">{project.notes}</p>}
       </div>
 

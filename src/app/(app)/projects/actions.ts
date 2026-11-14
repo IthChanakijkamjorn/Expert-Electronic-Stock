@@ -69,3 +69,35 @@ export async function deleteProjectFile(fileId: string) {
   await supabase.from("project_files").delete().eq("id", fileId);
   revalidatePath("/projects", "layout");
 }
+
+async function requireAdmin() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data } = user
+    ? await supabase.from("profiles").select("role").eq("id", user.id).single()
+    : { data: null };
+  if (data?.role !== "admin") throw new Error("admin only");
+  return supabase;
+}
+
+export async function deleteProject(orgId: string, towerId: string, projectId: string) {
+  const supabase = await requireAdmin();
+  const { data: files } = await supabase
+    .from("project_files")
+    .select("storage_path")
+    .eq("project_id", projectId);
+  const paths = (files ?? []).map((f) => f.storage_path);
+  if (paths.length) {
+    await supabase.storage.from("files").remove(paths);
+    await supabase
+      .from("file_shares")
+      .update({ revoked_at: new Date().toISOString() })
+      .in("storage_path", paths);
+  }
+  const { error } = await supabase.from("projects").delete().eq("id", projectId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/projects", "layout");
+  redirect(`/projects/${orgId}/${towerId}`);
+}
