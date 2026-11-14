@@ -27,7 +27,7 @@ export async function deleteProductFile(fileId: string) {
   if (!data) return;
   await supabase.storage.from("files").remove([data.storage_path]);
   await supabase.from("product_files").delete().eq("id", fileId);
-  revalidatePath("/files", "layout");
+  revalidatePath("/products", "layout");
 }
 
 export async function createShare(path: string, fileName: string, days: number) {
@@ -40,7 +40,7 @@ export async function createShare(path: string, fileName: string, days: number) 
     .select("token")
     .single();
   if (error) throw new Error(error.message);
-  revalidatePath("/files");
+  revalidatePath("/products");
   return data.token as string;
 }
 
@@ -50,5 +50,5 @@ export async function revokeShare(shareId: string) {
     .from("file_shares")
     .update({ revoked_at: new Date().toISOString() })
     .eq("id", shareId);
-  revalidatePath("/files");
+  revalidatePath("/products");
 }

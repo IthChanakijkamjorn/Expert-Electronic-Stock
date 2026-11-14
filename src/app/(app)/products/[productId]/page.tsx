@@ -6,7 +6,7 @@ import { getRole } from "@/lib/role";
 import { signedUrls } from "@/lib/storage";
 import { FileUploader } from "@/components/FileUploader";
 import { ShareButton } from "@/components/ShareButton";
-import { addProductFile, deleteProductFile } from "../actions";
+import { addProductFile, deleteProductFile } from "../file-actions";
 
 const formatSize = (n: number | null) =>
   n == null ? "" : n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.ceil(n / 1024)} KB`;
@@ -23,8 +23,8 @@ export default async function ProductFilesPage({
   const canManage = role === "admin" || role === "manager";
 
   const { data: product } = await supabase
-    .from("products")
-    .select("id, name, sku, brand")
+    .from("product_stock")
+    .select("id, name, sku, brand, unit, location, min_stock, stock")
     .eq("id", productId)
     .maybeSingle();
   if (!product) notFound();
@@ -47,9 +47,14 @@ export default async function ProductFilesPage({
   return (
     <section className="flex flex-col gap-6">
       <div>
-        <Link href="/files" className="text-sm text-muted hover:underline">{t.back}</Link>
+        <Link href={product.brand ? `/products/brand/${encodeURIComponent(product.brand)}` : "/products"} className="text-sm text-muted hover:underline">{t.back}</Link>
         <p className="eyebrow mt-3">{[product.sku, product.brand].filter(Boolean).join(" · ")}</p>
         <h1 className="text-3xl font-semibold">{product.name}</h1>
+        <p className="mt-2 text-muted">
+          {t.stock}: {product.stock} {product.unit}
+          {product.location ? ` · ${t.location}: ${product.location}` : ""}
+        </p>
+        <h2 className="mt-6 text-xl font-semibold text-navy">{t.files}</h2>
       </div>
       <FileUploader
         prefix={`products/${productId}`}

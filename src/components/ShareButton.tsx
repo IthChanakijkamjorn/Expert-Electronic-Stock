@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { createShare } from "@/app/(app)/files/actions";
+import { createShare } from "@/app/(app)/products/file-actions";
 
 export function ShareButton({
   path,
