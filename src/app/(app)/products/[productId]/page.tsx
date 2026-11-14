@@ -49,24 +49,39 @@ export default async function ProductFilesPage({
 
   return (
     <section className="flex flex-col gap-6">
-      <div>
-        <Link href={product.brand ? `/products/brand/${encodeURIComponent(product.brand)}` : "/products"} className="text-sm text-muted hover:underline">{t.back}</Link>
-        <p className="eyebrow mt-3">{[product.sku, product.brand].filter(Boolean).join(" · ")}</p>
-        <h1 className="text-3xl font-semibold">{product.name}</h1>
-        <p className="mt-2 text-muted">
-          {t.stock}: {product.stock} {product.unit}
-          {product.location ? ` · ${t.location}: ${product.location}` : ""}
-        </p>
+      <div className="card flex flex-col gap-5">
+        <div>
+          <Link href={product.brand ? `/products/brand/${encodeURIComponent(product.brand)}` : "/products"} className="text-sm text-muted hover:underline">{t.back}</Link>
+          <p className="eyebrow mt-3">{[product.brand, product.sku].filter(Boolean).join(" · ")}</p>
+          <h1 className="text-3xl font-semibold">{product.name}</h1>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl bg-[#f5f5ff] p-4">
+            <p className="eyebrow">{t.stock}</p>
+            <p className="mt-1 text-3xl font-bold text-navy">{product.stock}<span className="ml-1 text-sm font-medium text-muted">{product.unit}</span></p>
+            <span className={`pill mt-2 ${product.stock <= 0 ? "bg-red-100 text-red-700" : product.stock <= product.min_stock ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
+              {product.stock <= 0 ? t.outOfStock : product.stock <= product.min_stock ? t.lowStock : t.inStock}
+            </span>
+          </div>
+          <div className="rounded-2xl bg-[#f5f5ff] p-4">
+            <p className="eyebrow">{t.location}</p>
+            <p className="mt-1 text-lg font-semibold text-navy">{product.location || "—"}</p>
+          </div>
+          <div className="rounded-2xl bg-[#f5f5ff] p-4">
+            <p className="eyebrow">{t.minStock}</p>
+            <p className="mt-1 text-lg font-semibold text-navy">{product.min_stock} {product.unit}</p>
+          </div>
+        </div>
         {canManage && (
-          <div className="mt-3 flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 border-t border-[#ece8f2] pt-4">
             <RenameForm initial={product.name} action={renameProduct.bind(null, productId)} labels={renameLabels} />
             {role === "admin" && (
               <DeleteButton action={deleteProduct.bind(null, productId)} name={product.name} labels={{ delete: t.deleteProduct, warning: t.deleteWarning, message: t.confirmDeleteProduct, ok: t.ok, cancel: t.cancel }} />
             )}
           </div>
         )}
-        <h2 className="mt-6 text-xl font-semibold text-navy">{t.files}</h2>
       </div>
+      <h2 className="text-xl font-semibold text-navy">{t.files}</h2>
       <FileUploader
         prefix={`products/${productId}`}
         record={addProductFile.bind(null, productId)}

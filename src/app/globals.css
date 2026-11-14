@@ -55,6 +55,9 @@ h1 {
   .card-link:hover .arrow-chip {
     @apply translate-x-1 bg-navy text-white;
   }
+  .pill {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
   .eyebrow {
     @apply text-[11px] font-semibold uppercase tracking-[0.3em] text-muted;
   }
