@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n";
 import { getRole } from "@/lib/role";
-import { createProject } from "../../actions";
+import { ConfirmButton } from "@/components/ConfirmButton";
+import { RenameForm } from "@/components/RenameForm";
+import { createProject, deleteTower, renameTower } from "../../actions";
 
 export default async function TowerPage({
   params,
@@ -14,6 +16,8 @@ export default async function TowerPage({
   const { t } = await getDictionary();
   const supabase = await createClient();
   const role = await getRole();
+  const canManage = role === "admin" || role === "manager";
+  const renameLabels = { rename: t.rename, save: t.save, cancel: t.cancel, failed: t.saveFailed };
   const { data: tower } = await supabase
     .from("towers")
     .select("id, name, organizations(name)")
@@ -38,6 +42,16 @@ export default async function TowerPage({
         <Link href={`/projects/${orgId}`} className="text-sm text-muted hover:underline">{t.back}</Link>
         <p className="eyebrow mt-3">{orgName}</p>
         <h1 className="text-3xl font-semibold">{tower.name}</h1>
+        {canManage && (
+          <div className="mt-3 flex flex-wrap items-center gap-4">
+            <RenameForm initial={tower.name} action={renameTower.bind(null, towerId)} labels={renameLabels} />
+            {role === "admin" && (
+              <form action={deleteTower.bind(null, orgId, towerId)}>
+                <ConfirmButton message={t.confirmDeleteTower}>{t.deleteTower}</ConfirmButton>
+              </form>
+            )}
+          </div>
+        )}
       </div>
       {byYear.size ? (
         [...byYear].map(([year, list]) => (
@@ -48,7 +62,7 @@ export default async function TowerPage({
                 <Link
                   key={p.id}
                   href={`/projects/${orgId}/${towerId}/${p.id}`}
-                  className="card transition hover:-translate-y-0.5"
+                  className="card-link"
                 >
                   <h3 className="font-semibold text-navy">{p.name}</h3>
                   {p.notes && <p className="mt-1 line-clamp-2 text-sm text-muted">{p.notes}</p>}

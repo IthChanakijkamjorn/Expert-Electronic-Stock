@@ -101,3 +101,77 @@ export async function deleteProject(orgId: string, towerId: string, projectId: s
   revalidatePath("/projects", "layout");
   redirect(`/projects/${orgId}/${towerId}`);
 }
+
+async function purge(supabase: Awaited<ReturnType<typeof createClient>>, paths: (string | null)[]) {
+  const list = paths.filter((p): p is string => !!p);
+  if (!list.length) return;
+  await supabase.storage.from("files").remove(list);
+  await supabase
+    .from("file_shares")
+    .update({ revoked_at: new Date().toISOString() })
+    .in("storage_path", list);
+}
+
+type TowerTree = { image_path: string | null; projects: { project_files: { storage_path: string }[] }[] };
+const towerPaths = (t: TowerTree) => [
+  t.image_path,
+  ...t.projects.flatMap((p) => p.project_files.map((f) => f.storage_path)),
+];
+
+export async function deleteTower(orgId: string, towerId: string) {
+  const supabase = await requireAdmin();
+  const { data } = await supabase
+    .from("towers")
+    .select("image_path, projects(project_files(storage_path))")
+    .eq("id", towerId)
+    .single();
+  if (data) await purge(supabase, towerPaths(data as unknown as TowerTree));
+  const { error } = await supabase.from("towers").delete().eq("id", towerId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/projects", "layout");
+  redirect(`/projects/${orgId}`);
+}
+
+export async function deleteOrganization(orgId: string) {
+  const supabase = await requireAdmin();
+  const { data } = await supabase
+    .from("organizations")
+    .select("image_path, towers(image_path, projects(project_files(storage_path)))")
+    .eq("id", orgId)
+    .single();
+  if (data) {
+    const o = data as unknown as { image_path: string | null; towers: TowerTree[] };
+    await purge(supabase, [o.image_path, ...o.towers.flatMap(towerPaths)]);
+  }
+  const { error } = await supabase.from("organizations").delete().eq("id", orgId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/projects", "layout");
+  redirect("/projects");
+}
+
+const cleanName = (name: string) => {
+  const n = name.trim();
+  if (!n) throw new Error("empty name");
+  return n;
+};
+
+export async function renameOrganization(id: string, name: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("organizations").update({ name: cleanName(name) }).eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/projects", "layout");
+}
+
+export async function renameTower(id: string, name: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("towers").update({ name: cleanName(name) }).eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/projects", "layout");
+}
+
+export async function renameProject(id: string, name: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("projects").update({ name: cleanName(name) }).eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/projects", "layout");
+}

@@ -7,7 +7,8 @@ import { signedUrls } from "@/lib/storage";
 import { FileUploader } from "@/components/FileUploader";
 import { ShareButton } from "@/components/ShareButton";
 import { ConfirmButton } from "@/components/ConfirmButton";
-import { addProductFile, deleteProduct, deleteProductFile } from "../file-actions";
+import { RenameForm } from "@/components/RenameForm";
+import { addProductFile, deleteProduct, deleteProductFile, renameProduct } from "../file-actions";
 
 const formatSize = (n: number | null) =>
   n == null ? "" : n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.ceil(n / 1024)} KB`;
@@ -36,6 +37,7 @@ export default async function ProductFilesPage({
     .eq("product_id", productId)
     .order("created_at", { ascending: false });
   const urls = await signedUrls((files ?? []).map((f) => f.storage_path));
+  const renameLabels = { rename: t.rename, save: t.save, cancel: t.cancel, failed: t.saveFailed };
   const shareLabels = {
     share: t.share,
     days: t.shareDays,
@@ -55,10 +57,15 @@ export default async function ProductFilesPage({
           {t.stock}: {product.stock} {product.unit}
           {product.location ? ` · ${t.location}: ${product.location}` : ""}
         </p>
-        {role === "admin" && (
-          <form action={deleteProduct.bind(null, productId)} className="mt-3">
-            <ConfirmButton message={t.confirmDeleteProduct}>{t.deleteProduct}</ConfirmButton>
-          </form>
+        {canManage && (
+          <div className="mt-3 flex flex-wrap items-center gap-4">
+            <RenameForm initial={product.name} action={renameProduct.bind(null, productId)} labels={renameLabels} />
+            {role === "admin" && (
+              <form action={deleteProduct.bind(null, productId)}>
+                <ConfirmButton message={t.confirmDeleteProduct}>{t.deleteProduct}</ConfirmButton>
+              </form>
+            )}
+          </div>
         )}
         <h2 className="mt-6 text-xl font-semibold text-navy">{t.files}</h2>
       </div>

@@ -91,7 +91,7 @@ export default async function ProductsPage({
             <Link
               key={brand}
               href={`/products/brand/${encodeURIComponent(brand)}`}
-              className="card transition hover:-translate-y-0.5"
+              className="card-link"
             >
               <p className="text-xl font-semibold text-navy">{brand === NO_BRAND ? t.noBrand : brand}</p>
               <p className="mt-1 text-sm text-muted">{count} {t.items}</p>

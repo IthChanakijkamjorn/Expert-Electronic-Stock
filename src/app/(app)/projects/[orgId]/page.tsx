@@ -7,7 +7,9 @@ import { signedUrls } from "@/lib/storage";
 import { AddForm } from "@/components/AddForm";
 import { EntityCard } from "@/components/EntityCard";
 import { ImageField } from "@/components/ImageField";
-import { createTower } from "../actions";
+import { ConfirmButton } from "@/components/ConfirmButton";
+import { RenameForm } from "@/components/RenameForm";
+import { createTower, deleteOrganization, renameOrganization } from "../actions";
 
 export default async function OrganizationPage({
   params,
@@ -18,6 +20,8 @@ export default async function OrganizationPage({
   const { t } = await getDictionary();
   const supabase = await createClient();
   const role = await getRole();
+  const canManage = role === "admin" || role === "manager";
+  const renameLabels = { rename: t.rename, save: t.save, cancel: t.cancel, failed: t.saveFailed };
   const { data: org } = await supabase
     .from("organizations")
     .select("id, name")
@@ -37,6 +41,16 @@ export default async function OrganizationPage({
         <Link href="/projects" className="text-sm text-muted hover:underline">{t.back}</Link>
         <p className="eyebrow mt-3">{t.organization}</p>
         <h1 className="text-3xl font-semibold">{org.name}</h1>
+        {canManage && (
+          <div className="mt-3 flex flex-wrap items-center gap-4">
+            <RenameForm initial={org.name} action={renameOrganization.bind(null, orgId)} labels={renameLabels} />
+            {role === "admin" && (
+              <form action={deleteOrganization.bind(null, orgId)}>
+                <ConfirmButton message={t.confirmDeleteOrganization}>{t.deleteOrganization}</ConfirmButton>
+              </form>
+            )}
+          </div>
+        )}
       </div>
       {towers?.length ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

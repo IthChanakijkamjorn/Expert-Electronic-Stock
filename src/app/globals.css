@@ -39,6 +39,9 @@ h1 {
   .card {
     @apply rounded-3xl border border-white bg-white/80 p-6 shadow-[0_20px_50px_rgba(21,21,46,0.08)];
   }
+  .card-link {
+    @apply block cursor-pointer rounded-3xl border border-white bg-white/80 p-6 shadow-[0_20px_50px_rgba(21,21,46,0.08)] transition duration-200 hover:-translate-y-1 hover:border-navy/40 hover:bg-white hover:shadow-[0_24px_60px_rgba(0,0,77,0.18)] focus-visible:outline-2 focus-visible:outline-navy;
+  }
   .eyebrow {
     @apply text-[11px] font-semibold uppercase tracking-[0.3em] text-muted;
   }

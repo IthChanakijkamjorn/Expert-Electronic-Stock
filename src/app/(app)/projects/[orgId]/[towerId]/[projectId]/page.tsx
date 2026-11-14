@@ -8,7 +8,8 @@ import { ShareButton } from "@/components/ShareButton";
 import { FileUploader } from "@/components/FileUploader";
 import { MovementForm } from "../../../../movements/MovementForm";
 import { ConfirmButton } from "@/components/ConfirmButton";
-import { addProjectFile, deleteProject, deleteProjectFile } from "../../../actions";
+import { RenameForm } from "@/components/RenameForm";
+import { addProjectFile, deleteProject, deleteProjectFile, renameProject } from "../../../actions";
 
 const formatSize = (n: number | null) =>
   n == null ? "" : n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.ceil(n / 1024)} KB`;
@@ -65,6 +66,7 @@ export default async function ProjectPage({
     usage.set(m.product_id, cur);
   });
 
+  const renameLabels = { rename: t.rename, save: t.save, cancel: t.cancel, failed: t.saveFailed };
   const shareLabels = {
     share: t.share,
     days: t.shareDays,
@@ -83,10 +85,15 @@ export default async function ProjectPage({
           {tower.organizations.name} · {tower.name} · {project.year}
         </p>
         <h1 className="text-3xl font-semibold">{project.name}</h1>
-        {role === "admin" && (
-          <form action={deleteProject.bind(null, orgId, towerId, projectId)} className="mt-3">
-            <ConfirmButton message={t.confirmDeleteProject}>{t.deleteProject}</ConfirmButton>
-          </form>
+        {canManage && (
+          <div className="mt-3 flex flex-wrap items-center gap-4">
+            <RenameForm initial={project.name} action={renameProject.bind(null, projectId)} labels={renameLabels} />
+            {role === "admin" && (
+              <form action={deleteProject.bind(null, orgId, towerId, projectId)}>
+                <ConfirmButton message={t.confirmDeleteProject}>{t.deleteProject}</ConfirmButton>
+              </form>
+            )}
+          </div>
         )}
         {project.notes && <p className="mt-2 text-muted">{project.notes}</p>}
       </div>

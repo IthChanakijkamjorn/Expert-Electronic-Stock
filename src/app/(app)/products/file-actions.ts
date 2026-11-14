@@ -61,3 +61,13 @@ export async function deleteProduct(productId: string) {
   revalidatePath("/products", "layout");
   redirect("/products");
 }
+
+export async function renameProduct(productId: string, name: string) {
+  const clean = name.trim();
+  if (!clean) throw new Error("empty name");
+  const supabase = await createClient();
+  const { error } = await supabase.from("products").update({ name: clean }).eq("id", productId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/products", "layout");
+  revalidatePath("/movements");
+}

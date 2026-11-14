@@ -14,12 +14,12 @@ export function EntityCard({
   return (
     <Link
       href={href}
-      className="group overflow-hidden rounded-3xl border border-white bg-white/80 shadow-[0_20px_50px_rgba(21,21,46,0.08)] transition hover:-translate-y-0.5"
+      className="group card-link overflow-hidden !p-0"
     >
-      <div className="aspect-[16/9] bg-gradient-to-br from-navy to-[#000066]">
+      <div className="aspect-[16/9] overflow-hidden bg-gradient-to-br from-navy to-[#000066]">
         {imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+          <img src={imageUrl} alt="" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
         ) : (
           <div className="flex h-full items-center justify-center font-serif text-5xl text-white/70">
             {title.trim().charAt(0).toUpperCase()}
@@ -27,7 +27,10 @@ export function EntityCard({
         )}
       </div>
       <div className="p-4">
-        <h3 className="font-semibold text-navy group-hover:underline">{title}</h3>
+        <h3 className="flex items-center justify-between font-semibold text-navy">
+          {title}
+          <span className="transition group-hover:translate-x-1">→</span>
+        </h3>
         {subtitle && <p className="text-sm text-muted">{subtitle}</p>}
       </div>
     </Link>
