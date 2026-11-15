@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { signIn } from "./actions";
+import { Turnstile } from "./Turnstile";
 
 type Labels = {
   email: string;
@@ -29,6 +30,7 @@ export function LoginForm({ labels }: { labels: Labels }) {
           className={input}
         />
       </label>
+      <Turnstile resetSignal={state} />
       {state?.error && (
         <p role="alert" className="text-sm text-red-600">
           {labels.invalidCredentials}

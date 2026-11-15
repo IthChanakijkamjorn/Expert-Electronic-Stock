@@ -31,9 +31,9 @@ export async function deleteProductFile(fileId: string) {
   revalidatePath("/products", "layout");
 }
 
-export async function createShare(path: string, fileName: string, days: number) {
-  const safeDays = Math.min(Math.max(Math.floor(days) || 7, 1), 90);
-  const expires = new Date(Date.now() + safeDays * 86400000).toISOString();
+export async function createShare(path: string, fileName: string, hours: number) {
+  const safeHours = Math.min(Math.max(Math.floor(hours) || 168, 1), 2160);
+  const expires = new Date(Date.now() + safeHours * 3600000).toISOString();
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("file_shares")

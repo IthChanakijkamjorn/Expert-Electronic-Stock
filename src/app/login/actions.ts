@@ -15,6 +15,7 @@ export async function signIn(
   const { error } = await supabase.auth.signInWithPassword({
     email: id.includes("@") ? id : `${id}@${USERNAME_DOMAIN}`,
     password: String(formData.get("password") ?? ""),
+    options: { captchaToken: String(formData.get("captcha") ?? "") || undefined },
   });
   if (error) return { error: true };
   redirect("/");

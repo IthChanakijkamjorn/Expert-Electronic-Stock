@@ -10,10 +10,10 @@ export function ShareButton({
 }: {
   path: string;
   fileName: string;
-  labels: { share: string; days: string; create: string; copy: string; copied: string; failed: string };
+  labels: { share: string; days: string; hours: string; create: string; copy: string; copied: string; failed: string };
 }) {
   const [open, setOpen] = useState(false);
-  const [days, setDays] = useState(7);
+  const [days, setDays] = useState(168);
   const [url, setUrl] = useState("");
   const [state, setState] = useState<"" | "copied" | "failed">("");
   const [pending, start] = useTransition();
@@ -40,8 +40,8 @@ export function ShareButton({
   return (
     <span className="flex flex-wrap items-center gap-2">
       <select value={days} onChange={(e) => setDays(Number(e.target.value))} className="input w-auto py-1">
-        {[1, 7, 30, 90].map((d) => (
-          <option key={d} value={d}>{d} {labels.days}</option>
+        {[1, 6, 24, 72, 168, 720, 2160].map((h) => (
+          <option key={h} value={h}>{h < 24 ? `${h} ${labels.hours}` : `${h / 24} ${labels.days}`}</option>
         ))}
       </select>
       <button type="button" onClick={create} disabled={pending} className="btn-ghost py-1">

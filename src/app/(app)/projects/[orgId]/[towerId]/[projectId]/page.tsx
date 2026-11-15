@@ -70,6 +70,7 @@ export default async function ProjectPage({
   const shareLabels = {
     share: t.share,
     days: t.shareDays,
+    hours: t.shareHours,
     create: t.createLink,
     copy: t.copy,
     copied: t.copied,

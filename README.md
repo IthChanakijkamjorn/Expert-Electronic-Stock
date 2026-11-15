@@ -7,6 +7,7 @@ Private stock-management app (Next.js + Supabase). Thai by default, English avai
 2. Copy `.env.example` to `.env.local` and fill in the project URL and anon key.
 3. Create users in Supabase Auth, then promote the first admin:
    `update public.profiles set role = 'admin' where id = '<user id>';`
+3b. Login CAPTCHA (Cloudflare Turnstile): create a Turnstile widget, put the site key in `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, and paste the secret key in Supabase → Authentication → Attack Protection (CAPTCHA). Leave both unset for local dev.
 4. `npm install && npm run dev`
 
 ## Import existing products (one-off)
