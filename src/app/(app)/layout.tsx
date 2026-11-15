@@ -22,6 +22,7 @@ export default async function AppLayout({
     { href: "/", label: t.dashboard },
     { href: "/products", label: t.products },
     { href: "/movements", label: t.movements },
+    { href: "/scan", label: t.scan },
     { href: "/projects", label: t.projects },
     ...(role === "admin" || role === "manager" ? [{ href: "/stocktake", label: t.stocktake }, { href: "/locations", label: t.locations }, { href: "/purchasing", label: t.purchasing }] : []),
     ...(role === "admin"
@@ -31,7 +32,7 @@ export default async function AppLayout({
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="sticky top-0 z-40 bg-navy text-white shadow-[0_12px_30px_rgba(0,0,0,0.28)]">
+      <header className="sticky top-0 z-40 print:hidden bg-navy text-white shadow-[0_12px_30px_rgba(0,0,0,0.28)]">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <Link href="/" className="flex items-center gap-3">
             <Image src="/logo.png" alt="" width={36} height={36} priority />
@@ -39,7 +40,7 @@ export default async function AppLayout({
               Expert Electronic &amp; Communication
             </span>
           </Link>
-          <nav className="flex gap-5 text-[11px] font-semibold uppercase tracking-[0.2em]">
+          <nav className="order-last flex w-full gap-5 overflow-x-auto whitespace-nowrap pb-1 text-[11px] md:order-none md:w-auto md:pb-0 font-semibold uppercase tracking-[0.2em]">
             {nav.map((n) => (
               <Link key={n.href} href={n.href} className="text-white/80 hover:text-white">
                 {n.label}

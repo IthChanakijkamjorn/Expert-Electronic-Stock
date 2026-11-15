@@ -136,14 +136,17 @@ export default async function ProductFilesPage({
             <p className="mt-1 text-lg font-semibold text-navy">{product.min_stock} {product.unit}</p>
           </div>
         </div>
-        {canManage && (
-          <div className="flex flex-wrap items-center gap-3 border-t border-[#ece8f2] pt-4">
+        <div className="flex flex-wrap items-center gap-3 border-t border-[#ece8f2] pt-4">
+          <Link href={`/products/${productId}/label`} className="rounded-full border border-[#cfc9dc] px-3 py-1 text-xs font-semibold text-navy transition hover:bg-navy hover:text-white">
+            ▦ {t.printLabel}
+          </Link>
+          {canManage && (
             <RenameForm initial={product.name} action={renameProduct.bind(null, productId)} labels={renameLabels} />
-            {role === "admin" && (
-              <DeleteButton action={deleteProduct.bind(null, productId)} name={product.name} labels={{ delete: t.deleteProduct, warning: t.deleteWarning, message: t.confirmDeleteProduct, ok: t.ok, cancel: t.cancel }} />
-            )}
-          </div>
-        )}
+          )}
+          {role === "admin" && (
+            <DeleteButton action={deleteProduct.bind(null, productId)} name={product.name} labels={{ delete: t.deleteProduct, warning: t.deleteWarning, message: t.confirmDeleteProduct, ok: t.ok, cancel: t.cancel }} />
+          )}
+        </div>
       </div>
       {(locations?.length ?? 0) > 1 && (
         <>
