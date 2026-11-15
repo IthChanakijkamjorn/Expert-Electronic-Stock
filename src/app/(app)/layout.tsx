@@ -23,6 +23,7 @@ export default async function AppLayout({
     { href: "/products", label: t.products },
     { href: "/movements", label: t.movements },
     { href: "/projects", label: t.projects },
+    ...(role === "admin" || role === "manager" ? [{ href: "/stocktake", label: t.stocktake }] : []),
     ...(role === "admin"
       ? [{ href: "/users", label: t.users }, { href: "/audit", label: t.auditLog }]
       : []),
