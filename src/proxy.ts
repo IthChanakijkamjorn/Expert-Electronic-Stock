@@ -30,7 +30,8 @@ export async function proxy(request: NextRequest) {
   if (!user && !isLogin) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
-  if (user && isLogin) {
+  // A password-only session must still be able to reach the code prompt.
+  if (user && isLogin && !request.nextUrl.pathname.startsWith("/login/mfa")) {
     return NextResponse.redirect(new URL("/", request.url));
   }
   return response;

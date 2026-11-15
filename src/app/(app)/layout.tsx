@@ -17,12 +17,14 @@ export default async function AppLayout({
   if (!claims?.claims) redirect("/login");
 
   const { lang, t } = await getDictionary();
-  const role = await getRole();
+  const [role, { data: aalOk }] = await Promise.all([getRole(), supabase.rpc("aal_ok")]);
+  if (aalOk === false) redirect("/login/mfa");
   const nav = [
     { href: "/", label: t.dashboard },
     { href: "/products", label: t.products },
     { href: "/movements", label: t.movements },
     { href: "/scan", label: t.scan },
+    { href: "/account", label: t.account },
     { href: "/projects", label: t.projects },
     ...(role === "admin" || role === "manager" ? [{ href: "/stocktake", label: t.stocktake }, { href: "/locations", label: t.locations }, { href: "/purchasing", label: t.purchasing }] : []),
     ...(role === "admin"

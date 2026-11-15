@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n";
+import { verifiedTotpFactor } from "@/lib/mfa";
 
 export default async function Dashboard() {
   const { t } = await getDictionary();
@@ -16,6 +17,8 @@ export default async function Dashboard() {
 
   const { data: stock } = await supabase.from("product_stock").select("stock, min_stock").eq("active", true).limit(5000);
   const lowCount = (stock ?? []).filter((p) => p.stock <= p.min_stock).length;
+
+  const needs2fa = profile?.role === "admin" && !(await verifiedTotpFactor());
 
   const links = [
     { href: "/products", label: t.products },
@@ -35,6 +38,11 @@ export default async function Dashboard() {
           </p>
         )}
       </div>
+      {needs2fa && (
+        <Link href="/account" className="card card-link !border-amber-300 !bg-amber-50 font-semibold text-amber-800">
+          🔐 {t.admin2faReminder}
+        </Link>
+      )}
       {lowCount > 0 && (
         <Link href="/low-stock" className="card card-link flex items-center justify-between gap-3 !border-amber-300 !bg-amber-50 text-lg font-semibold text-amber-800">
           ⚠ {t.lowStockTitle}: {lowCount}
