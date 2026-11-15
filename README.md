@@ -12,3 +12,14 @@ Private stock-management app (Next.js + Supabase). Thai by default, English avai
 
 ## Import existing products (one-off)
 `node scripts/import-sanity-products.mjs > import-products.sql`, then paste the file into the Supabase SQL editor. Safe to re-run.
+
+## Backups
+
+`.github/workflows/backup.yml` runs daily (and on demand from the Actions tab). It dumps the database, downloads the
+`files` bucket, encrypts everything with GPG and uploads it to a private Cloudflare R2 bucket, keeping 30 days.
+
+Repository secrets (Settings → Secrets and variables → Actions): `SUPABASE_DB_URL` (session pooler connection string),
+`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `BACKUP_PASSPHRASE`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`,
+`R2_SECRET_ACCESS_KEY`, `R2_BUCKET`. Keep the passphrase somewhere safe: without it a backup cannot be opened.
+
+Restore: `gpg -d backup-YYYY-MM-DD.tar.gpg | tar -x`, then `pg_restore` the `database.dump` into a database.
