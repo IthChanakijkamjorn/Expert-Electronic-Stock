@@ -137,9 +137,6 @@ export default async function ProductFilesPage({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3 border-t border-[#ece8f2] pt-4">
-          <Link href={`/products/${productId}/label`} className="rounded-full border border-[#cfc9dc] px-3 py-1 text-xs font-semibold text-navy transition hover:bg-navy hover:text-white">
-            ▦ {t.printLabel}
-          </Link>
           {canManage && (
             <RenameForm initial={product.name} action={renameProduct.bind(null, productId)} labels={renameLabels} />
           )}

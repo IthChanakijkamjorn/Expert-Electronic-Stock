@@ -29,7 +29,6 @@ export default async function Dashboard() {
         { href: "/products", label: t.products },
         { href: "/movements", label: t.movements },
         { href: "/low-stock", label: t.lowStock },
-        { href: "/scan", label: t.scan },
         ...(manager ? [{ href: "/stocktake", label: t.stocktake }, { href: "/locations", label: t.locations }] : []),
       ],
     },
