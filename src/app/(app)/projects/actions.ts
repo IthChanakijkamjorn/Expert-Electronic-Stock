@@ -214,3 +214,21 @@ export async function deleteOrganizationInline(orgId: string) {
 export async function deleteTowerInline(orgId: string, towerId: string) {
   return deleteTower(orgId, towerId, true);
 }
+
+export async function setProjectItem(projectId: string, formData: FormData) {
+  const productId = text(formData, "product_id");
+  const qty = Math.floor(Number(formData.get("planned_qty")));
+  if (!productId || !(qty > 0)) return;
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("project_items")
+    .upsert({ project_id: projectId, product_id: productId, planned_qty: qty }, { onConflict: "project_id,product_id" });
+  if (error) throw new Error(error.message);
+  revalidatePath("/projects", "layout");
+}
+
+export async function removeProjectItem(itemId: string) {
+  const supabase = await createClient();
+  await supabase.from("project_items").delete().eq("id", itemId);
+  revalidatePath("/projects", "layout");
+}

@@ -10,7 +10,9 @@ import { FileUploader } from "@/components/FileUploader";
 import { MovementForm } from "../../../../movements/MovementForm";
 import { DeleteButton } from "@/components/DeleteButton";
 import { RenameForm } from "@/components/RenameForm";
-import { addProjectFile, deleteProject, deleteProjectFile, renameProject } from "../../../actions";
+import { AddForm } from "@/components/AddForm";
+import { ProductPicker } from "../../../../movements/ProductPicker";
+import { addProjectFile, deleteProject, deleteProjectFile, removeProjectItem, renameProject, setProjectItem } from "../../../actions";
 
 const formatSize = (n: number | null) =>
   n == null ? "" : n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.ceil(n / 1024)} KB`;
@@ -40,7 +42,7 @@ export default async function ProjectPage({
   };
   if (tower.organization_id !== orgId) notFound();
 
-  const [{ data: files }, { data: moves }, { data: products }] = await Promise.all([
+  const [{ data: files }, { data: moves }, { data: products }, { data: planItems }] = await Promise.all([
     supabase
       .from("project_files")
       .select("id, storage_path, file_name, size_bytes, created_at")
@@ -56,6 +58,10 @@ export default async function ProjectPage({
       .eq("active", true)
       .order("name")
       .limit(1000),
+    supabase
+      .from("project_items")
+      .select("id, product_id, planned_qty, products(name, unit)")
+      .eq("project_id", projectId),
   ]);
   const { data: shares } = files?.length
     ? await supabase
@@ -68,10 +74,15 @@ export default async function ProjectPage({
     : { data: [] };
   const urls = await signedUrls((files ?? []).map((f) => f.storage_path));
 
-  const usage = new Map<string, { name: string; unit: string; net: number }>();
+  type Row = { name: string; unit: string; net: number; planned: number | null; itemId?: string };
+  const usage = new Map<string, Row>();
+  (planItems ?? []).forEach((i) => {
+    const p = i.products as unknown as { name: string; unit: string };
+    usage.set(i.product_id, { name: p.name, unit: p.unit, net: 0, planned: i.planned_qty, itemId: i.id });
+  });
   (moves ?? []).forEach((m) => {
     const p = m.products as unknown as { name: string; unit: string };
-    const cur = usage.get(m.product_id) ?? { name: p.name, unit: p.unit, net: 0 };
+    const cur = usage.get(m.product_id) ?? { name: p.name, unit: p.unit, net: 0, planned: null };
     cur.net -= m.quantity;
     usage.set(m.product_id, cur);
   });
@@ -156,28 +167,62 @@ export default async function ProjectPage({
       </div>
 
       <div className="flex flex-col gap-3">
-        <h2 className="text-xl font-semibold text-navy">{t.usedProducts}</h2>
+        <h2 className="text-xl font-semibold text-navy">{t.plannedItems}</h2>
         {usage.size ? (
-          <div className="card p-4">
+          <div className="card overflow-x-auto p-4">
             <table className="data-table w-full text-left text-sm">
               <thead>
                 <tr>
                   <th className="py-2 pr-3">{t.product}</th>
-                  <th className="text-right">{t.netUsed}</th>
+                  <th className="text-right">{t.planned}</th>
+                  <th className="text-right">{t.used}</th>
+                  <th className="text-right">{t.remaining}</th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
-                {[...usage.values()].map((u) => (
-                  <tr key={u.name}>
-                    <td className="py-2 pr-3">{u.name}</td>
-                    <td className="text-right">{u.net} {u.unit}</td>
-                  </tr>
-                ))}
+                {[...usage.values()].map((u) => {
+                  const left = u.planned == null ? null : u.planned - u.net;
+                  return (
+                    <tr key={u.name}>
+                      <td className="py-2 pr-3">{u.name}</td>
+                      <td className="text-right">{u.planned == null ? "—" : `${u.planned} ${u.unit}`}</td>
+                      <td className="text-right">{u.net} {u.unit}</td>
+                      <td className="text-right">
+                        {left == null ? (
+                          <span className="text-muted">{t.notPlanned}</span>
+                        ) : left < 0 ? (
+                          <span className="font-semibold text-red-600">{t.overUsed} {-left}</span>
+                        ) : left === 0 ? (
+                          <span className="font-semibold text-green-700">{t.planDone}</span>
+                        ) : (
+                          `${left} ${u.unit}`
+                        )}
+                      </td>
+                      <td className="text-right">
+                        {canManage && u.itemId && (
+                          <form action={removeProjectItem.bind(null, u.itemId)}>
+                            <button className="text-red-600 underline">{t.remove}</button>
+                          </form>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         ) : (
           <p className="text-muted">{t.noItems}</p>
+        )}
+        {canManage && (
+          <>
+            <h3 className="mt-2 font-medium">{t.addPlanned}</h3>
+            <AddForm action={setProjectItem.bind(null, projectId)} submitLabel={t.save}>
+              <ProductPicker products={products ?? []} placeholder={t.searchProducts} emptyText={t.noMatches} />
+              <input name="planned_qty" type="number" min={1} required className="input" placeholder={t.quantity} />
+            </AddForm>
+          </>
         )}
         <h3 className="mt-2 font-medium">{t.useProduct}</h3>
         <MovementForm
