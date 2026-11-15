@@ -51,7 +51,7 @@ export default async function ProjectPage({
       .eq("project_id", projectId),
     supabase
       .from("product_stock")
-      .select("id, name, sku, stock, unit")
+      .select("id, name, sku, brand, stock, unit")
       .eq("active", true)
       .order("name")
       .limit(1000),

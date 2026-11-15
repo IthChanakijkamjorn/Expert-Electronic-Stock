@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { recordMovement } from "./actions";
+import { ProductPicker } from "./ProductPicker";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 export function MovementForm({
@@ -17,23 +18,16 @@ export function MovementForm({
   defaultType?: string;
   t: Dictionary;
   projects?: { id: string; label: string }[];
-  products: { id: string; name: string; sku: string | null; stock: number; unit: string }[];
+  products: { id: string; name: string; sku: string | null; brand?: string | null; stock: number; unit: string }[];
 }) {
   const [state, action, pending] = useActionState(recordMovement, null);
   const field = "input mt-1";
   return (
-    <form action={action} className="card flex max-w-md flex-col gap-3">
-      <label>
-        {t.product}
-        <select name="product_id" required className={field} defaultValue="">
-          <option value="" disabled>{t.selectProduct}</option>
-          {products.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.sku ? `${p.sku} · ` : ""}{p.name} ({p.stock} {p.unit})
-            </option>
-          ))}
-        </select>
-      </label>
+    <form action={action} className="card flex flex-col gap-3">
+      <div>
+        <span>{t.product}</span>
+        <ProductPicker products={products} placeholder={t.searchProducts} emptyText={t.noMatches} />
+      </div>
       <label>
         {t.direction}
         <select name="direction" className={field} defaultValue={defaultDirection}>
