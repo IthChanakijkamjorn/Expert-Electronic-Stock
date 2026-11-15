@@ -7,12 +7,9 @@ import { signedUrls } from "@/lib/storage";
 import { ActiveShares } from "@/components/ActiveShares";
 import { ShareButton } from "@/components/ShareButton";
 import { FileUploader } from "@/components/FileUploader";
-import { MovementForm } from "../../../../movements/MovementForm";
 import { DeleteButton } from "@/components/DeleteButton";
 import { RenameForm } from "@/components/RenameForm";
-import { AddForm } from "@/components/AddForm";
-import { ProductPicker } from "../../../../movements/ProductPicker";
-import { addProjectFile, deleteProject, deleteProjectFile, removeProjectItem, renameProject, setProjectItem } from "../../../actions";
+import { addProjectFile, deleteProject, deleteProjectFile, renameProject } from "../../../actions";
 
 const formatSize = (n: number | null) =>
   n == null ? "" : n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.ceil(n / 1024)} KB`;
@@ -42,7 +39,7 @@ export default async function ProjectPage({
   };
   if (tower.organization_id !== orgId) notFound();
 
-  const [{ data: files }, { data: moves }, { data: products }, { data: planItems }, { data: prices }] = await Promise.all([
+  const [{ data: files }, { data: moves }, { data: planItems }, { data: prices }] = await Promise.all([
     supabase
       .from("project_files")
       .select("id, storage_path, file_name, size_bytes, created_at")
@@ -52,12 +49,6 @@ export default async function ProjectPage({
       .from("stock_movements")
       .select("quantity, product_id, products(name, unit)")
       .eq("project_id", projectId),
-    supabase
-      .from("product_stock")
-      .select("id, name, sku, brand, stock, unit")
-      .eq("active", true)
-      .order("name")
-      .limit(1000),
     supabase
       .from("project_items")
       .select("id, product_id, planned_qty, products(name, unit)")
@@ -190,7 +181,6 @@ export default async function ProjectPage({
                   <th className="text-right">{t.planned}</th>
                   <th className="text-right">{t.used}</th>
                   <th className="text-right">{t.remaining}</th>
-                  <th />
                 </tr>
               </thead>
               <tbody>
@@ -210,13 +200,6 @@ export default async function ProjectPage({
                           <span className="font-semibold text-green-700">{t.planDone}</span>
                         ) : (
                           `${left} ${u.unit}`
-                        )}
-                      </td>
-                      <td className="text-right">
-                        {canManage && u.itemId && (
-                          <form action={removeProjectItem.bind(null, u.itemId)}>
-                            <button className="text-red-600 underline">{t.remove}</button>
-                          </form>
                         )}
                       </td>
                     </tr>
@@ -254,21 +237,8 @@ export default async function ProjectPage({
                 </ul>
               </div>
             )}
-            <h3 className="mt-2 font-medium">{t.addPlanned}</h3>
-            <AddForm action={setProjectItem.bind(null, projectId)} submitLabel={t.save}>
-              <ProductPicker products={products ?? []} placeholder={t.searchProducts} emptyText={t.noMatches} />
-              <input name="planned_qty" type="number" min={1} required className="input" placeholder={t.quantity} />
-            </AddForm>
           </>
         )}
-        <h3 className="mt-2 font-medium">{t.useProduct}</h3>
-        <MovementForm
-          t={t}
-          products={products ?? []}
-          fixedProjectId={projectId}
-          defaultDirection="out"
-          defaultType="project_use"
-        />
       </div>
     </section>
   );
