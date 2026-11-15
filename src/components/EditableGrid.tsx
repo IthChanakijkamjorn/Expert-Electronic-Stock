@@ -98,7 +98,7 @@ export function EditableGrid({
                 }}
                 onDrop={(e) => e.preventDefault()}
                 onDragEnd={drop}
-                className={`rounded-3xl transition ${dragId === id ? "opacity-40" : ""} ${editing ? "ring-2 ring-dashed ring-navy/25" : ""}`}
+                className={`rounded-3xl transition ${dragId === id ? "opacity-40" : ""} ${editing ? "outline-2 outline-dashed outline-offset-4 outline-navy/25" : ""}`}
               >
                 <EntityCard
                   href={it.href}

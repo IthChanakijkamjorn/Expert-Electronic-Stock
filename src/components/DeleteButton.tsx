@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 
 export type DeleteLabels = {
   delete: string;
@@ -26,12 +27,15 @@ export function DeleteButton({
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen(true);
+        }}
         className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-red-700"
       >
         🗑 {labels.delete}
       </button>
-      {open && (
+      {open && createPortal(
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
           role="alertdialog"
@@ -54,14 +58,18 @@ export function DeleteButton({
               <button
                 type="button"
                 disabled={pending}
-                onClick={() => start(async () => { await action(); })}
+                onClick={() => start(async () => {
+                  await action();
+                  setOpen(false);
+                })}
                 className="inline-flex items-center justify-center rounded-full bg-red-600 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-red-700 disabled:opacity-50"
               >
-                {labels.ok}
+                {pending ? "…" : labels.ok}
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );

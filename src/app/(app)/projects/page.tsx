@@ -5,7 +5,7 @@ import { signedUrls } from "@/lib/storage";
 import { AddForm } from "@/components/AddForm";
 import { ImageField } from "@/components/ImageField";
 import { EditableGrid } from "@/components/EditableGrid";
-import { createOrganization, deleteOrganization, renameOrganization, reorderOrganizations } from "./actions";
+import { createOrganization, deleteOrganization, deleteOrganizationInline, renameOrganization, reorderOrganizations } from "./actions";
 
 export default async function ProjectsPage() {
   const { t } = await getDictionary();
@@ -40,7 +40,7 @@ export default async function ProjectsPage() {
         empty={t.noItems}
         reorder={reorderOrganizations}
         rename={renameOrganization}
-        remove={deleteOrganization}
+        remove={deleteOrganizationInline}
         labels={labels}
       />
       {canManage && (

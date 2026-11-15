@@ -118,7 +118,7 @@ const towerPaths = (t: TowerTree) => [
   ...t.projects.flatMap((p) => p.project_files.map((f) => f.storage_path)),
 ];
 
-export async function deleteTower(orgId: string, towerId: string) {
+export async function deleteTower(orgId: string, towerId: string, stay = false) {
   const supabase = await requireAdmin();
   const { data } = await supabase
     .from("towers")
@@ -129,10 +129,10 @@ export async function deleteTower(orgId: string, towerId: string) {
   const { error } = await supabase.from("towers").delete().eq("id", towerId);
   if (error) throw new Error(error.message);
   revalidatePath("/projects", "layout");
-  redirect(`/projects/${orgId}`);
+  if (!stay) redirect(`/projects/${orgId}`);
 }
 
-export async function deleteOrganization(orgId: string) {
+export async function deleteOrganization(orgId: string, stay = false) {
   const supabase = await requireAdmin();
   const { data } = await supabase
     .from("organizations")
@@ -146,7 +146,7 @@ export async function deleteOrganization(orgId: string) {
   const { error } = await supabase.from("organizations").delete().eq("id", orgId);
   if (error) throw new Error(error.message);
   revalidatePath("/projects", "layout");
-  redirect("/projects");
+  if (!stay) redirect("/projects");
 }
 
 const cleanName = (name: string) => {
@@ -194,4 +194,11 @@ export async function reorderTowers(ids: string[]) {
   const failed = results.find((r) => r.error);
   if (failed?.error) throw new Error(failed.error.message);
   revalidatePath("/projects", "layout");
+}
+
+export async function deleteOrganizationInline(orgId: string) {
+  return deleteOrganization(orgId, true);
+}
+export async function deleteTowerInline(orgId: string, towerId: string) {
+  return deleteTower(orgId, towerId, true);
 }

@@ -17,7 +17,7 @@ export function EntityCard({
 }) {
   const body = (
     <>
-      <div className="aspect-[16/9] overflow-hidden bg-gradient-to-br from-navy to-[#000066]">
+      <div className="aspect-[16/9] overflow-hidden rounded-t-3xl bg-gradient-to-br from-navy to-[#000066]">
         {imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={imageUrl} alt="" draggable={false} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />

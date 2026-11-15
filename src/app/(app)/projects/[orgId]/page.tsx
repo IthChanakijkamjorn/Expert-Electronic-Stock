@@ -7,7 +7,7 @@ import { signedUrls } from "@/lib/storage";
 import { AddForm } from "@/components/AddForm";
 import { ImageField } from "@/components/ImageField";
 import { EditableGrid } from "@/components/EditableGrid";
-import { createTower, deleteTower, renameTower, reorderTowers } from "../actions";
+import { createTower, deleteTowerInline, renameTower, reorderTowers } from "../actions";
 
 export default async function OrganizationPage({
   params,
@@ -61,7 +61,7 @@ export default async function OrganizationPage({
         empty={t.noItems}
         reorder={reorderTowers}
         rename={renameTower}
-        remove={deleteTower.bind(null, orgId)}
+        remove={deleteTowerInline.bind(null, orgId)}
         labels={labels}
       />
       {canManage && (
