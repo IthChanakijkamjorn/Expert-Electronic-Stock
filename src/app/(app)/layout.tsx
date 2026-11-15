@@ -61,14 +61,14 @@ export default async function AppLayout({
   return (
     <div className="flex flex-1 flex-col">
       <header className="sticky top-0 z-40 print:hidden bg-navy text-white shadow-[0_12px_30px_rgba(0,0,0,0.28)]">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <Link href="/" className="flex items-center gap-3">
+        <div className="mx-auto flex w-full max-w-[90rem] flex-wrap items-center justify-between gap-3 px-4 py-3 lg:flex-nowrap">
+          <Link href="/" className="flex shrink-0 items-center gap-3">
             <Image src="/logo.png" alt="" width={36} height={36} priority />
-            <span className="font-serif text-base font-semibold sm:text-lg">
+            <span className="font-serif text-base font-semibold lg:text-[15px] xl:text-lg">
               Expert Electronic &amp; Communication
             </span>
           </Link>
-          <nav className="order-last flex w-full flex-wrap gap-x-6 gap-y-1 text-[11px] font-semibold uppercase tracking-[0.2em] md:order-none md:w-auto">
+          <nav className="order-last flex w-full flex-wrap gap-x-5 gap-y-1 text-[11px] font-semibold uppercase tracking-[0.12em] lg:order-none lg:w-auto lg:flex-nowrap lg:whitespace-nowrap">
             {nav.map((n) => (
               <div key={n.label} className="group relative">
                 <Link href={n.href} className="block py-1 text-white/80 hover:text-white">
@@ -89,11 +89,11 @@ export default async function AppLayout({
               </div>
             ))}
           </nav>
-          <div className="flex items-center gap-3">
-            <Link href="/account" className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/80 hover:text-white">{t.account}</Link>
+          <div className="flex shrink-0 items-center gap-3 whitespace-nowrap">
+            <Link href="/account" className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/80 hover:text-white">{t.account}</Link>
             <LangSwitch current={lang} />
             <form action={signOut}>
-              <button className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/80 hover:text-white">
+              <button className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/80 hover:text-white">
                 {t.logout}
               </button>
             </form>
