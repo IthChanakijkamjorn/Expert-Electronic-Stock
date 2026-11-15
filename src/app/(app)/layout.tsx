@@ -43,7 +43,14 @@ export default async function AppLayout({
         { href: "/receipts", label: t.receipt },
       ],
     },
-    { href: "/projects", label: t.projects },
+    {
+      href: "/projects",
+      label: t.projects,
+      children: [
+        { href: "/projects", label: t.projects },
+        { href: "/floorplans", label: t.floorPlans },
+      ],
+    },
     ...(manager
       ? [{ href: "/purchasing", label: t.purchasing, children: [{ href: "/purchasing", label: t.purchasing }, { href: "/suppliers", label: t.suppliers }] }]
       : []),

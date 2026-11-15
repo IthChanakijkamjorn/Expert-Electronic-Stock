@@ -236,7 +236,11 @@ export default async function ProjectPage({
         {canManage && (
           <>
             <h3 className="mt-2 font-medium">{t.quotation}</h3>
-            <Link href={`/quotations/new?project=${projectId}`} className="btn w-fit">{t.newQuotation}</Link>
+            <div className="flex flex-wrap gap-2">
+              <Link href={`/quotations/new?project=${projectId}`} className="btn w-fit">{t.newQuotation}</Link>
+              <Link href={`/floorplans/new?project=${projectId}`} className="btn-ghost">{t.fpNew}</Link>
+              <Link href="/floorplans" className="btn-ghost">{t.floorPlans}</Link>
+            </div>
             {quotes && quotes.length > 0 && (
               <div className="card p-4">
                 <h4 className="mb-2 text-sm font-medium">{t.pastQuotations}</h4>
