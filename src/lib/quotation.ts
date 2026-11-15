@@ -2,11 +2,30 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
+import { COMPANY } from "@/lib/company";
+import { bahtText } from "@/lib/bahttext";
 
-export type QuoteLine = { name: string; unit: string; qty: number; price: number };
+export type QuoteLine = { brand: string; model: string; name: string; unit: string; qty: number; price: number };
 
-const NAVY = rgb(0.1, 0.12, 0.4);
-const GREY = rgb(0.4, 0.4, 0.45);
+export type QuoteData = {
+  number: string;
+  date: Date;
+  customer: string;
+  attention: string | null;
+  project: string;
+  phone: string | null;
+  email: string | null;
+  validDays: number | null;
+  leadDays: number | null;
+  warrantyYears: number | null;
+  paymentTerms: string | null;
+  discountPct: number;
+  vat: boolean;
+  quotedBy: string | null;
+  lines: QuoteLine[];
+};
+
+const BLACK = rgb(0, 0, 0);
 const money = (n: number) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 function wrap(text: string, font: PDFFont, size: number, width: number) {
@@ -22,91 +41,194 @@ function wrap(text: string, font: PDFFont, size: number, width: number) {
   return out.length ? out : [""];
 }
 
-export async function buildQuotation(opts: {
-  customer: string;
-  project: string;
-  lines: QuoteLine[];
-  vat: boolean;
-  date: Date;
-}) {
-  const fontsDir = path.join(process.cwd(), "fonts");
-  const [regularBytes, boldBytes] = await Promise.all([
-    readFile(path.join(fontsDir, "Sarabun-Regular.ttf")),
-    readFile(path.join(fontsDir, "Sarabun-Bold.ttf")),
+function fit(text: string, font: PDFFont, size: number, width: number) {
+  if (font.widthOfTextAtSize(text, size) <= width) return text;
+  let t = text;
+  while (t && font.widthOfTextAtSize(t + "…", size) > width) t = t.slice(0, -1);
+  return t + "…";
+}
+
+export async function buildQuotation(q: QuoteData) {
+  const [regularBytes, boldBytes, logoBytes] = await Promise.all([
+    readFile(path.join(process.cwd(), "fonts", "Sarabun-Regular.ttf")),
+    readFile(path.join(process.cwd(), "fonts", "Sarabun-Bold.ttf")),
+    readFile(path.join(process.cwd(), "public", "logo.png")),
   ]);
   const doc = await PDFDocument.create();
   doc.registerFontkit(fontkit);
   const font = await doc.embedFont(regularBytes, { subset: true });
   const bold = await doc.embedFont(boldBytes, { subset: true });
+  const logo = await doc.embedPng(logoBytes);
 
   const W = 595;
   const H = 842;
-  const M = 40;
-  const cols = { no: M, name: M + 28, qty: 340, price: 410, amount: W - M };
+  const M = 28;
+  const FOOT = 178;
+  const LINE = 0.6;
+  const tableW = W - 2 * M;
+  const widths = [32, 66, 78, 168, 52, 56, 32, 55];
+  const xs = widths.reduce<number[]>((acc, w, i) => [...acc, acc[i] + w], [M]);
+  const sizeText = 9.5;
+
   let page!: PDFPage;
   let y = 0;
+  let tableTop = 0;
 
-  const right = (text: string, x: number, size = 10, f = font) =>
-    page.drawText(text, { x: x - f.widthOfTextAtSize(text, size), y, size, font: f });
+  const text = (s: string, x: number, yy: number, size = sizeText, f = font) =>
+    page.drawText(s, { x, y: yy, size, font: f, color: BLACK });
+  const centered = (s: string, x: number, w: number, yy: number, size = sizeText, f = font) =>
+    text(s, x + (w - f.widthOfTextAtSize(s, size)) / 2, yy, size, f);
+  const rightAt = (s: string, xr: number, yy: number, size = sizeText, f = font) =>
+    text(s, xr - f.widthOfTextAtSize(s, size), yy, size, f);
+  const box = (x: number, yBottom: number, w: number, h: number) =>
+    page.drawRectangle({ x, y: yBottom, width: w, height: h, borderWidth: LINE, borderColor: BLACK });
+  const hline = (yy: number, x1 = M, x2 = W - M) =>
+    page.drawLine({ start: { x: x1, y: yy }, end: { x: x2, y: yy }, thickness: LINE, color: BLACK });
 
-  const header = () => {
-    page.drawText("Expert Electronic & Communication", { x: M, y: H - M - 8, size: 16, font: bold, color: NAVY });
-    page.drawText("ใบเสนอราคา / Quotation", { x: M, y: H - M - 30, size: 13, font: bold });
-    page.drawText(`วันที่ / Date: ${opts.date.toISOString().slice(0, 10)}`, { x: W - M - 150, y: H - M - 8, size: 10, font });
-    page.drawText(`ลูกค้า / Customer: ${opts.customer}`, { x: M, y: H - M - 52, size: 10, font });
-    page.drawText(`โครงการ / Project: ${opts.project}`, { x: M, y: H - M - 66, size: 10, font });
-    y = H - M - 92;
-    page.drawRectangle({ x: M, y: y - 6, width: W - 2 * M, height: 20, color: NAVY });
-    const white = rgb(1, 1, 1);
-    page.drawText("#", { x: cols.no + 2, y, size: 10, font: bold, color: white });
-    page.drawText("รายการ / Description", { x: cols.name, y, size: 10, font: bold, color: white });
-    const rh = (t: string, x: number) =>
-      page.drawText(t, { x: x - bold.widthOfTextAtSize(t, 10), y, size: 10, font: bold, color: white });
-    rh("จำนวน / Qty", cols.qty + 40);
-    rh("ราคา / Price", cols.price + 50);
-    rh("รวม / Amount", cols.amount - 4);
-    y -= 24;
+  const pageHeader = (first: boolean) => {
+    if (!first) {
+      text(`${q.number} · ${q.customer}`, M, H - M - 8, 9, bold);
+      y = H - M - 24;
+    } else {
+      page.drawImage(logo, { x: M, y: H - M - 62, width: 62, height: 62 });
+      const tx = M + 74;
+      text(COMPANY.nameEn, tx, H - M - 14, 15, bold);
+      text(COMPANY.address, tx, H - M - 30, 8.5);
+      text(COMPANY.tel, tx, H - M - 42, 8.5);
+      text(`E-mail: ${COMPANY.email}  ${COMPANY.web}`, tx, H - M - 54, 8.5);
+      y = H - M - 84;
+
+      text("ใบเสนอราคา / QUOTATION", M, y, 14, bold);
+      const rx = 340;
+      const rw = W - M - rx;
+      text("เลขที่ / No.:", rx, y, sizeText, bold);
+      text(q.number, rx + 62, y);
+      y -= 17;
+
+      const left = [
+        `บริษัท/หน่วยงาน / Company: ${q.customer}`,
+        `เรียน / Attn: ${q.attention ?? ""}`,
+        `โครงการ / Project: ${q.project}`,
+        `โทร / Tel: ${q.phone ?? ""}${q.email ? `   Email: ${q.email}` : ""}`,
+        `เลขประจำตัวผู้เสียภาษี / Tax ID: ${COMPANY.taxId}`,
+      ];
+      const right = [
+        `วันที่ / Date: ${q.date.toISOString().slice(0, 10)}`,
+        `กำหนดยื่นราคา / Validity: ${q.validDays ?? "-"} วัน`,
+        `ระยะเวลาดำเนินการ / Lead time: ${q.leadDays ?? "-"} วัน`,
+        `การรับประกัน / Warranty: ${q.warrantyYears ?? "-"} ปี`,
+        `ผู้เสนอราคา / Quoted by: ${q.quotedBy ?? ""}`,
+      ];
+      left.forEach((l, i) => {
+        text(fit(l, font, sizeText, rx - M - 8), M, y - i * 14);
+        text(fit(right[i], font, sizeText, rw), rx, y - i * 14);
+      });
+      y -= 5 * 14 + 4;
+    }
+
+    tableTop = y;
+    const h = 28;
+    page.drawRectangle({ x: M, y: y - h, width: tableW, height: h, color: rgb(0.93, 0.94, 0.99) });
+    const heads: [string, string][] = [
+      ["ลำดับที่", "Item"],
+      ["ยี่ห้อ", "Brand"],
+      ["รุ่น", "Model"],
+      ["รายละเอียด", "Description"],
+      ["จำนวน", "Quantity"],
+      ["ราคาต่อหน่วย", "Unit Price"],
+      ["ส่วนลด", "%"],
+      ["จำนวนเงิน(บาท)", "Amount"],
+    ];
+    heads.forEach(([th, en], i) => {
+      centered(th, xs[i], widths[i], y - 11, 8, bold);
+      centered(en, xs[i], widths[i], y - 22, 8, bold);
+    });
+    y -= h;
   };
 
-  const newPage = () => {
+  const closeTable = (bottom: number) => {
+    hline(tableTop);
+    hline(tableTop - 28);
+    xs.forEach((x) =>
+      page.drawLine({ start: { x, y: tableTop }, end: { x, y: bottom }, thickness: LINE, color: BLACK }),
+    );
+    hline(bottom);
+  };
+
+  const newPage = (first: boolean) => {
     page = doc.addPage([W, H]);
-    header();
+    pageHeader(first);
   };
-  newPage();
+  newPage(true);
 
-  let subtotal = 0;
-  opts.lines.forEach((l, i) => {
-    const amount = l.qty * l.price;
-    subtotal += amount;
-    const rows = wrap(l.name, font, 10, cols.qty - cols.name - 8);
-    if (y - rows.length * 13 < M + 90) newPage();
-    page.drawText(String(i + 1), { x: cols.no + 2, y, size: 10, font });
-    rows.forEach((r, k) => page.drawText(r, { x: cols.name, y: y - k * 13, size: 10, font }));
-    right(`${l.qty} ${l.unit}`, cols.qty + 40);
-    right(money(l.price), cols.price + 50);
-    right(money(amount), cols.amount - 4);
-    y -= rows.length * 13 + 4;
-    page.drawLine({ start: { x: M, y: y + 8 }, end: { x: W - M, y: y + 8 }, thickness: 0.4, color: rgb(0.85, 0.85, 0.88) });
+  const factor = 1 - q.discountPct / 100;
+  let gross = 0;
+  q.lines.forEach((l, i) => {
+    const amount = l.qty * l.price * factor;
+    gross += amount;
+    const nameRows = wrap(l.name, font, sizeText, widths[3] - 8);
+    const modelRows = wrap(l.model, font, sizeText, widths[2] - 8);
+    const brandRows = wrap(l.brand, font, sizeText, widths[1] - 8);
+    const rows = Math.max(nameRows.length, modelRows.length, brandRows.length);
+    const rowH = rows * 12 + 6;
+    if (y - rowH < M + 8) {
+      closeTable(y);
+      newPage(false);
+    }
+    const top = y - 11;
+    centered(String(i + 1), xs[0], widths[0], top);
+    brandRows.forEach((r, k) => text(r, xs[1] + 4, top - k * 12));
+    modelRows.forEach((r, k) => text(r, xs[2] + 4, top - k * 12));
+    nameRows.forEach((r, k) => text(r, xs[3] + 4, top - k * 12));
+    centered(`${l.qty} ${l.unit}`, xs[4], widths[4], top);
+    rightAt(money(l.price), xs[6] - 4, top);
+    centered(q.discountPct ? String(q.discountPct) : "-", xs[6], widths[6], top);
+    rightAt(money(amount), xs[8] - 4, top);
+    y -= rowH;
   });
 
-  if (y < M + 70) newPage();
-  y -= 10;
-  const vat = opts.vat ? subtotal * 0.07 : 0;
-  const totals: [string, number, boolean][] = [["รวม / Subtotal", subtotal, false]];
-  if (opts.vat) totals.push(["ภาษีมูลค่าเพิ่ม 7% / VAT 7%", vat, false]);
-  totals.push(["ยอดรวมสุทธิ / Total", subtotal + vat, true]);
-  totals.forEach(([label, value, strong]) => {
-    const f = strong ? bold : font;
-    page.drawText(label, { x: 330, y, size: 10, font: f });
-    right(money(value), cols.amount - 4, 10, f);
-    y -= 16;
+  // The totals block needs the full footer height; otherwise it goes on a fresh page.
+  if (y - M < FOOT + 20) {
+    closeTable(y);
+    newPage(false);
+  }
+  closeTable(M + FOOT);
+
+  const vat = q.vat ? gross * 0.07 : 0;
+  const total = gross + vat;
+  const fy = M + FOOT;
+  const totalsX = 395;
+  const row1H = 66;
+
+  box(M, fy - row1H, totalsX - M, row1H);
+  centered(bahtText(total), M, totalsX - M, fy - row1H / 2 - 4, 12, bold);
+  const rows: [string, string, boolean][] = [
+    ["ราคาสินค้า", money(gross), false],
+    ["ภาษีมูลค่าเพิ่ม 7%", q.vat ? money(vat) : "-", false],
+    ["รวมราคาทั้งสิ้น", money(total), true],
+  ];
+  rows.forEach(([label, value, strong], i) => {
+    const by = fy - (i + 1) * (row1H / 3);
+    box(totalsX, by, W - M - totalsX, row1H / 3);
+    text(label, totalsX + 5, by + 7, sizeText, strong ? bold : font);
+    rightAt(value, W - M - 5, by + 7, sizeText, strong ? bold : font);
   });
-  page.drawText("ใบเสนอราคานี้เป็นราคาที่เสนอเบื้องต้น / This quotation is an estimate.", {
-    x: M,
-    y: M,
-    size: 8,
-    font,
-    color: GREY,
-  });
+
+  const row2H = 62;
+  const y2 = fy - row1H - row2H;
+  const split = 300;
+  box(M, y2, split - M, row2H);
+  box(split, y2, W - M - split, row2H);
+  centered("เงื่อนไขชำระเงิน / PAYMENT", M, split - M, y2 + row2H - 13, sizeText, bold);
+  hline(y2 + row2H - 18, M, split);
+  centered(q.paymentTerms ?? "", M, split - M, y2 + row2H - 36);
+  centered("ผู้อนุมัติ / APPROVED BY", split, W - M - split, y2 + row2H - 13, sizeText, bold);
+  centered(COMPANY.approverName, split, W - M - split, y2 + 16);
+  centered(`( ${COMPANY.approverTitle} )`, split, W - M - split, y2 + 4);
+
+  const row3H = y2 - M;
+  box(M, M, tableW, row3H);
+  wrap(COMPANY.bank, font, 8.5, tableW - 10).forEach((r, k) => text(r, M + 5, M + row3H - 12 - k * 11, 8.5));
+
   return doc.save();
 }
