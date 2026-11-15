@@ -68,7 +68,7 @@ export default async function AppLayout({
               Expert Electronic &amp; Communication
             </span>
           </Link>
-          <nav className="order-last flex w-full flex-wrap gap-x-5 lg:mr-auto gap-y-1 text-[11px] font-semibold uppercase tracking-[0.12em] lg:order-none lg:w-auto lg:flex-nowrap lg:whitespace-nowrap">
+          <nav className="order-last flex w-full flex-wrap gap-x-5 gap-y-1 text-[11px] font-semibold uppercase tracking-[0.12em] lg:order-none lg:w-auto lg:flex-1 lg:flex-nowrap lg:justify-evenly lg:whitespace-nowrap xl:text-xs">
             {nav.map((n) => (
               <div key={n.label} className="group relative">
                 <Link href={n.href} className="block py-1 text-white/80 hover:text-white">
