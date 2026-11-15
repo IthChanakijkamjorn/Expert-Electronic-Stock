@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getRole } from "@/lib/role";
 import { logAudit } from "@/lib/audit";
 
-export async function submitStocktake(brand: string, formData: FormData) {
+export async function submitStocktake(brand: string, locationId: string, formData: FormData) {
   const role = await getRole();
   if (role !== "admin" && role !== "manager") return;
 
@@ -16,20 +16,23 @@ export async function submitStocktake(brand: string, formData: FormData) {
     const n = Math.floor(Number(value));
     if (Number.isFinite(n) && n >= 0) counts.set(key.slice(6), n);
   }
-  if (!counts.size) redirect(`/stocktake?brand=${encodeURIComponent(brand)}&done=0`);
+  if (!counts.size) redirect(`/stocktake?brand=${encodeURIComponent(brand)}&loc=${locationId}&done=0`);
 
   const supabase = await createClient();
   const { data: current } = await supabase
-    .from("product_stock")
-    .select("id, stock")
-    .in("id", [...counts.keys()]);
+    .from("product_location_stock")
+    .select("product_id, qty")
+    .eq("location_id", locationId)
+    .in("product_id", [...counts.keys()]);
+  const have = new Map((current ?? []).map((r) => [r.product_id, r.qty]));
 
   const comment = `Stocktake ${new Date().toISOString().slice(0, 10)}`;
-  const rows = (current ?? [])
-    .map((p) => ({ p, diff: counts.get(p.id)! - p.stock }))
+  const rows = [...counts.entries()]
+    .map(([id, n]) => ({ id, diff: n - (have.get(id) ?? 0) }))
     .filter((r) => r.diff !== 0)
     .map((r) => ({
-      product_id: r.p.id,
+      product_id: r.id,
+      location_id: locationId,
       quantity: r.diff,
       type: "count_correction" as const,
       comment,
@@ -41,5 +44,5 @@ export async function submitStocktake(brand: string, formData: FormData) {
     await logAudit("stocktake", "brand", `${brand} (${rows.length})`);
   }
   revalidatePath("/", "layout");
-  redirect(`/stocktake?brand=${encodeURIComponent(brand)}&done=${rows.length}`);
+  redirect(`/stocktake?brand=${encodeURIComponent(brand)}&loc=${locationId}&done=${rows.length}`);
 }

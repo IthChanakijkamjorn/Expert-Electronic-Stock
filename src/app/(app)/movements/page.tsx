@@ -29,12 +29,12 @@ export default async function MovementsPage({
   }
   let movementsQuery = supabase
     .from("stock_movements")
-    .select("id, quantity, type, comment, created_at, created_by, products(name)", { count: "exact" })
+    .select("id, quantity, type, comment, created_at, created_by, products(name), locations(name)", { count: "exact" })
     .order("created_at", { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
   if (filter) movementsQuery = movementsQuery.or(filter);
 
-  const [{ data: products }, { data: movements, count }, { data: projects }] = await Promise.all([
+  const [{ data: products }, { data: movements, count }, { data: projects }, { data: locations }] = await Promise.all([
     supabase
       .from("product_stock")
       .select("id, name, sku, brand, stock, unit")
@@ -47,6 +47,7 @@ export default async function MovementsPage({
       .select("id, name, year, towers(name, organizations(name))")
       .order("year", { ascending: false })
       .limit(500),
+    supabase.from("locations").select("id, name, is_default").order("name"),
   ]);
   const projectOptions = (projects ?? []).map((p) => {
     const tw = p.towers as unknown as { name: string; organizations: { name: string } };
@@ -90,6 +91,7 @@ export default async function MovementsPage({
                   <th className="py-2 pr-3">{t.date}</th>
                   <th className="pr-3">{t.product}</th>
                   <th className="pr-3 text-right">{t.quantity}</th>
+                  <th className="pr-3">{t.location}</th>
                   <th className="pr-3">{t.reason}</th>
                   <th className="pr-3">{t.comment}</th>
                   <th>{t.by}</th>
@@ -103,13 +105,14 @@ export default async function MovementsPage({
                     </td>
                     <td className="pr-3">{(m.products as unknown as { name: string } | null)?.name}</td>
                     <td className="pr-3 text-right">{m.quantity > 0 ? `+${m.quantity}` : m.quantity}</td>
+                    <td className="pr-3">{(m.locations as unknown as { name: string } | null)?.name}</td>
                     <td className="pr-3">{t.movementTypes[m.type as keyof typeof t.movementTypes]}</td>
                     <td className="pr-3">{m.comment}</td>
                     <td>{names.get(m.created_by) ?? ""}</td>
                   </tr>
                 ))}
                 {(movements ?? []).length === 0 && (
-                  <tr><td colSpan={6} className="py-4 text-center text-muted">{t.noMatches}</td></tr>
+                  <tr><td colSpan={7} className="py-4 text-center text-muted">{t.noMatches}</td></tr>
                 )}
               </tbody>
             </table>
@@ -117,7 +120,7 @@ export default async function MovementsPage({
           {totalPages > 1 && pager}
         </div>
         <div className="lg:sticky lg:top-4">
-          <MovementForm t={t} products={products ?? []} projects={projectOptions} />
+          <MovementForm t={t} products={products ?? []} projects={projectOptions} locations={locations ?? []} />
         </div>
       </div>
     </section>

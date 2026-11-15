@@ -9,6 +9,7 @@ export function MovementForm({
   t,
   products,
   projects = [],
+  locations = [],
   fixedProjectId,
   defaultDirection = "in",
   defaultType = "purchase",
@@ -18,6 +19,7 @@ export function MovementForm({
   defaultType?: string;
   t: Dictionary;
   projects?: { id: string; label: string }[];
+  locations?: { id: string; name: string; is_default: boolean }[];
   products: { id: string; name: string; sku: string | null; brand?: string | null; stock: number; unit: string }[];
 }) {
   const [state, action, pending] = useActionState(recordMovement, null);
@@ -39,10 +41,20 @@ export function MovementForm({
         {t.quantity}
         <input name="quantity" type="number" min={1} step={1} required className={field} />
       </label>
+      {locations.length > 1 && (
+        <label>
+          {t.location}
+          <select name="location_id" className={field} defaultValue={locations.find((l) => l.is_default)?.id}>
+            {locations.map((l) => (
+              <option key={l.id} value={l.id}>{l.name}</option>
+            ))}
+          </select>
+        </label>
+      )}
       <label>
         {t.reason}
         <select name="type" className={field} defaultValue={defaultType}>
-          {Object.entries(t.movementTypes).map(([k, v]) => (
+          {Object.entries(t.movementTypes).filter(([k]) => k !== "transfer").map(([k, v]) => (
             <option key={k} value={k}>{v}</option>
           ))}
         </select>

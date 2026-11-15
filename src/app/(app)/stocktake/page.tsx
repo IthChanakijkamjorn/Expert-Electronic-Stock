@@ -8,17 +8,28 @@ import { submitStocktake } from "./actions";
 export default async function StocktakePage({
   searchParams,
 }: {
-  searchParams: Promise<{ brand?: string; done?: string }>;
+  searchParams: Promise<{ brand?: string; loc?: string; done?: string }>;
 }) {
-  const { brand, done } = await searchParams;
+  const { brand, loc, done } = await searchParams;
   const { t } = await getDictionary();
   const role = await getRole();
   if (role !== "admin" && role !== "manager") redirect("/");
 
   const supabase = await createClient();
+  const { data: locations } = await supabase
+    .from("locations")
+    .select("id, name, is_default")
+    .order("name");
+  const location = locations?.find((l) => l.id === loc) ?? locations?.find((l) => l.is_default) ?? locations?.[0];
+  if (!location) redirect("/");
+  const { data: locStock } = await supabase
+    .from("product_location_stock")
+    .select("product_id, qty")
+    .eq("location_id", location.id);
+  const qtyAt = new Map((locStock ?? []).map((r) => [r.product_id, r.qty]));
   const { data } = await supabase
     .from("product_stock")
-    .select("id, name, sku, brand, unit, stock")
+    .select("id, name, sku, brand, unit")
     .eq("active", true)
     .order("name")
     .limit(3000);
@@ -38,11 +49,26 @@ export default async function StocktakePage({
         <p className="card border-green-600 p-3 text-green-700">{t.stocktakeDone.replace("{n}", done)}</p>
       )}
 
+      {(locations?.length ?? 0) > 1 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="eyebrow">{t.location}</span>
+          {locations!.map((l) => (
+            <Link
+              key={l.id}
+              href={`/stocktake?loc=${l.id}${brand !== undefined ? `&brand=${encodeURIComponent(brand)}` : ""}`}
+              className={l.id === location.id ? "btn" : "btn-ghost"}
+            >
+              {l.name}
+            </Link>
+          ))}
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-2">
         {brands.map((b) => (
           <Link
             key={b || "none"}
-            href={`/stocktake?brand=${encodeURIComponent(b)}`}
+            href={`/stocktake?brand=${encodeURIComponent(b)}&loc=${location.id}`}
             className={b === brand ? "btn" : "btn-ghost"}
           >
             {b || t.noBrand}
@@ -51,7 +77,7 @@ export default async function StocktakePage({
       </div>
 
       {brand !== undefined && (
-        <form action={submitStocktake.bind(null, brand)} className="card flex flex-col gap-4 p-4">
+        <form action={submitStocktake.bind(null, brand, location.id)} className="card flex flex-col gap-4 p-4">
           <div className="overflow-x-auto">
             <table className="data-table w-full text-left text-sm">
               <thead>
@@ -67,7 +93,7 @@ export default async function StocktakePage({
                   <tr key={p.id} className="border-t border-zinc-100">
                     <td className="py-2 pr-3">{p.sku}</td>
                     <td className="pr-3">{p.name}</td>
-                    <td className="pr-3 text-right">{p.stock} {p.unit}</td>
+                    <td className="pr-3 text-right">{qtyAt.get(p.id) ?? 0} {p.unit}</td>
                     <td className="text-right">
                       <input name={`count_${p.id}`} type="number" min={0} className="input w-28 text-right" />
                     </td>
