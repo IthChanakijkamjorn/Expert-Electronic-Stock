@@ -42,7 +42,7 @@ export default async function ProjectPage({
   };
   if (tower.organization_id !== orgId) notFound();
 
-  const [{ data: files }, { data: moves }, { data: products }, { data: planItems }] = await Promise.all([
+  const [{ data: files }, { data: moves }, { data: products }, { data: planItems }, { data: prices }] = await Promise.all([
     supabase
       .from("project_files")
       .select("id, storage_path, file_name, size_bytes, created_at")
@@ -62,7 +62,11 @@ export default async function ProjectPage({
       .from("project_items")
       .select("id, product_id, planned_qty, products(name, unit)")
       .eq("project_id", projectId),
+    canManage
+      ? supabase.from("product_prices").select("product_id, cost")
+      : Promise.resolve({ data: [] as { product_id: string; cost: number | null }[] }),
   ]);
+  const costOf = new Map((prices ?? []).map((p) => [p.product_id, Number(p.cost ?? 0)]));
   const { data: shares } = files?.length
     ? await supabase
         .from("file_shares")
@@ -74,19 +78,20 @@ export default async function ProjectPage({
     : { data: [] };
   const urls = await signedUrls((files ?? []).map((f) => f.storage_path));
 
-  type Row = { name: string; unit: string; net: number; planned: number | null; itemId?: string };
+  type Row = { name: string; unit: string; net: number; planned: number | null; itemId?: string; cost: number };
   const usage = new Map<string, Row>();
   (planItems ?? []).forEach((i) => {
     const p = i.products as unknown as { name: string; unit: string };
-    usage.set(i.product_id, { name: p.name, unit: p.unit, net: 0, planned: i.planned_qty, itemId: i.id });
+    usage.set(i.product_id, { name: p.name, unit: p.unit, net: 0, planned: i.planned_qty, itemId: i.id, cost: costOf.get(i.product_id) ?? 0 });
   });
   (moves ?? []).forEach((m) => {
     const p = m.products as unknown as { name: string; unit: string };
-    const cur = usage.get(m.product_id) ?? { name: p.name, unit: p.unit, net: 0, planned: null };
+    const cur = usage.get(m.product_id) ?? { name: p.name, unit: p.unit, net: 0, planned: null, cost: costOf.get(m.product_id) ?? 0 };
     cur.net -= m.quantity;
     usage.set(m.product_id, cur);
   });
 
+  const materialCost = [...usage.values()].reduce((sum, u) => sum + Math.max(u.net, 0) * u.cost, 0);
   const renameLabels = { rename: t.rename, save: t.save, cancel: t.cancel, failed: t.saveFailed };
   const shareLabels = {
     share: t.share,
@@ -211,12 +216,25 @@ export default async function ProjectPage({
                 })}
               </tbody>
             </table>
+            {canManage && (
+              <p className="mt-3 text-right text-sm font-semibold">
+                {t.materialCost}: {materialCost.toLocaleString(lang === "th" ? "th-TH" : "en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+            )}
           </div>
         ) : (
           <p className="text-muted">{t.noItems}</p>
         )}
         {canManage && (
           <>
+            <h3 className="mt-2 font-medium">{t.quotation}</h3>
+            <form action={`/projects/${orgId}/${towerId}/${projectId}/quotation`} target="_blank" className="card flex flex-wrap items-center gap-4 p-4">
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="vat" value="1" defaultChecked /> {t.includeVat}
+              </label>
+              <button className="btn">{t.createQuotation}</button>
+              <p className="w-full text-sm text-muted">{t.quotationHelp}</p>
+            </form>
             <h3 className="mt-2 font-medium">{t.addPlanned}</h3>
             <AddForm action={setProjectItem.bind(null, projectId)} submitLabel={t.save}>
               <ProductPicker products={products ?? []} placeholder={t.searchProducts} emptyText={t.noMatches} />

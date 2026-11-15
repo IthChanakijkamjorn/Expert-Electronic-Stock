@@ -8,6 +8,9 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  outputFileTracingIncludes: {
+    "/projects/**": ["./fonts/**"],
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

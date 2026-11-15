@@ -14,6 +14,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { setProductImage } from "../image-actions";
 import { addSerials, deleteSerial, issueSerial, returnSerial } from "../serial-actions";
 import { TransferForm } from "@/components/TransferForm";
+import { setPrices } from "../price-actions";
 import { AddForm } from "@/components/AddForm";
 import { addProductFile, deleteProduct, deleteProductFile, renameProduct } from "../file-actions";
 
@@ -63,6 +64,9 @@ export default async function ProductFilesPage({
     supabase.from("product_location_stock").select("location_id, qty").eq("product_id", productId),
   ]);
   const qtyAt = new Map((locStock ?? []).map((r) => [r.location_id, r.qty]));
+  const { data: price } = canManage
+    ? await supabase.from("product_prices").select("cost, sell_price").eq("product_id", productId).maybeSingle()
+    : { data: null };
   const { data: brandRow } = product.brand
     ? await supabase.from("brands").select("logo_path").eq("name", product.brand).maybeSingle()
     : { data: null };
@@ -158,6 +162,22 @@ export default async function ProductFilesPage({
             </ul>
             <TransferForm productId={productId} locations={locations!} t={t} />
           </div>
+        </>
+      )}
+      {canManage && (
+        <>
+          <h2 className="text-xl font-semibold text-navy">{t.prices}</h2>
+          <form action={setPrices.bind(null, productId)} className="card flex flex-wrap items-end gap-3 p-4">
+            <label className="text-sm">
+              {t.costPrice}
+              <input name="cost" type="number" min={0} step="0.01" defaultValue={price?.cost ?? ""} className="input mt-1 w-40" />
+            </label>
+            <label className="text-sm">
+              {t.sellPrice}
+              <input name="sell_price" type="number" min={0} step="0.01" defaultValue={price?.sell_price ?? ""} className="input mt-1 w-40" />
+            </label>
+            <button className="btn">{t.save}</button>
+          </form>
         </>
       )}
       <h2 className="text-xl font-semibold text-navy">{t.serials}</h2>
