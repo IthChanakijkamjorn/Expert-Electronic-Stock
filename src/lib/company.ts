@@ -16,7 +16,7 @@ export const COMPANY = {
     "ธนาคารกรุงเทพ สาขาถนนสุขาภิบาล 3 บึงกุม เลขที่บัญชี 056-0-35738-6 ชื่อบัญชี \"บริษัท เอ็กซ์เพิร์ท อีเล็คโทรนิค แอนด์ คอมมูนิเคชั่น จำกัด\" โอนเงินแล้วกรุณา โทร/แฟกซ์/เมล แจ้งบริษัทด้วย",
 };
 
-// Company block printed on tax invoices. Editable per document, so it is stored with each invoice.
+// Company block printed on documents. Editable per document, so it is stored with each one.
 export type DocCompany = {
   name: string;
   address: string;
@@ -25,19 +25,38 @@ export type DocCompany = {
   web: string;
   taxId: string;
   bank: string;
+  approverName: string;
+  approverTitle: string;
 };
 
-export const defaultDocCompany = (): DocCompany => ({
-  name: COMPANY.nameTh,
-  address: COMPANY.addressTh,
-  tel: COMPANY.telTh,
-  email: COMPANY.email,
-  web: COMPANY.web,
-  taxId: "010 5538 039 535",
-  bank: COMPANY.invoiceBank,
-});
+export type DocKind = "invoice" | "quote" | "receipt";
 
-export const mergeDocCompany = (c: Partial<DocCompany> | null | undefined): DocCompany => ({
-  ...defaultDocCompany(),
+export const defaultDocCompany = (kind: DocKind = "invoice"): DocCompany =>
+  kind === "quote"
+    ? {
+        name: COMPANY.nameEn,
+        address: COMPANY.address,
+        tel: COMPANY.tel,
+        email: COMPANY.email,
+        web: COMPANY.web,
+        taxId: "010 5538 039 535",
+        bank: COMPANY.bank,
+        approverName: COMPANY.approverName,
+        approverTitle: COMPANY.approverTitle,
+      }
+    : {
+        name: COMPANY.nameTh,
+        address: COMPANY.addressTh,
+        tel: COMPANY.telTh,
+        email: COMPANY.email,
+        web: COMPANY.web,
+        taxId: "010 5538 039 535",
+        bank: COMPANY.invoiceBank,
+        approverName: COMPANY.approverName,
+        approverTitle: COMPANY.approverTitle,
+      };
+
+export const mergeDocCompany = (c: Partial<DocCompany> | null | undefined, kind: DocKind = "invoice"): DocCompany => ({
+  ...defaultDocCompany(kind),
   ...(c ?? {}),
 });

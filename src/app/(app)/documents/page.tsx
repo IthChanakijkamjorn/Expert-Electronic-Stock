@@ -10,14 +10,13 @@ export default async function DocumentsPage() {
   const supabase = await createClient();
   const date = (d: string) => new Date(d).toLocaleDateString(lang === "th" ? "th-TH" : "en-GB");
 
-  const [{ data: invoices }, { data: quotes }] = await Promise.all([
+  const [{ data: invoices }, { data: quotes }, { data: receipts }] = await Promise.all([
     supabase.from("tax_invoices").select("id, number, invoice_date, customer").order("created_at", { ascending: false }).limit(5),
     manager
-      ? supabase
-          .from("quotations")
-          .select("id, number, created_at, customer, project_id, projects(tower_id, towers(organization_id))")
-          .order("created_at", { ascending: false })
-          .limit(5)
+      ? supabase.from("quotations").select("id, number, quote_date, customer").order("created_at", { ascending: false }).limit(5)
+      : Promise.resolve({ data: null }),
+    manager
+      ? supabase.from("receipts").select("id, number, receipt_date, customer").order("created_at", { ascending: false }).limit(5)
       : Promise.resolve({ data: null }),
   ]);
 
@@ -45,44 +44,33 @@ export default async function DocumentsPage() {
           </ul>
         </div>
 
-        <div id="quotations" className="card flex scroll-mt-24 flex-col gap-3">
-          <h2 className="text-xl font-semibold">{t.quotation}</h2>
-          <p className="text-sm text-muted">{t.docNotStock}</p>
-          {manager ? (
-            <>
-              <Link href="/projects" className="btn w-fit">{t.docCreateFromProject}</Link>
-              <ul className="flex flex-col gap-1 text-sm">
-                {(quotes ?? []).map((q) => {
-                  const p = q.projects as unknown as { tower_id: string; towers: { organization_id: string } } | null;
-                  return (
-                    <li key={q.id}>
-                      {p ? (
-                        <a
-                          href={`/projects/${p.towers.organization_id}/${p.tower_id}/${q.project_id}/quotation/${q.id}`}
-                          target="_blank"
-                          className="font-semibold text-navy underline"
-                        >
-                          {q.number}
-                        </a>
-                      ) : (
-                        q.number
-                      )}{" "}
-                      <span className="text-muted">{date(q.created_at)} · {q.customer}</span>
+        {[
+          { id: "quotations", title: t.quotation, href: "/quotations", create: t.newQuotation, rows: (quotes ?? []).map((q) => ({ id: q.id, number: q.number, d: q.quote_date, customer: q.customer })) },
+          { id: "receipts", title: t.receipt, href: "/receipts", create: t.newReceipt, rows: (receipts ?? []).map((r) => ({ id: r.id, number: r.number, d: r.receipt_date, customer: r.customer })) },
+        ].map((c) => (
+          <div key={c.id} id={c.id} className="card flex scroll-mt-24 flex-col gap-3">
+            <h2 className="text-xl font-semibold">{c.title}</h2>
+            <p className="text-sm text-muted">{t.docNotStock}</p>
+            {manager ? (
+              <>
+                <div className="flex gap-2">
+                  <Link href={`${c.href}/new`} className="btn">{c.create}</Link>
+                  <Link href={c.href} className="btn-ghost">{t.docRecent}</Link>
+                </div>
+                <ul className="flex flex-col gap-1 text-sm">
+                  {c.rows.map((r) => (
+                    <li key={r.id}>
+                      <Link href={`${c.href}/${r.id}`} className="font-semibold text-navy underline">{r.number}</Link>{" "}
+                      <span className="text-muted">{date(r.d)} · {r.customer}</span>
                     </li>
-                  );
-                })}
-              </ul>
-            </>
-          ) : (
-            <p className="text-sm text-muted">—</p>
-          )}
-        </div>
-
-        <div id="receipts" className="card flex scroll-mt-24 flex-col gap-3">
-          <h2 className="text-xl font-semibold">{t.receipt}</h2>
-          <p className="text-sm text-muted">{t.docNotStock}</p>
-          <span className="pill w-fit bg-zinc-100 text-zinc-700">{t.receiptSoon}</span>
-        </div>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p className="text-sm text-muted">—</p>
+            )}
+          </div>
+        ))}
       </div>
     </section>
   );

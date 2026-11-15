@@ -1,0 +1,63 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getDictionary } from "@/lib/i18n";
+import { getRole } from "@/lib/role";
+import { fetchAll } from "@/lib/fetchAll";
+import { signedUrls } from "@/lib/storage";
+import { QuotationForm } from "./QuotationForm";
+
+export default async function NewQuotationPage({ searchParams }: { searchParams: Promise<{ project?: string }> }) {
+  const role = await getRole();
+  if (role !== "admin" && role !== "manager") redirect("/documents");
+  const { project } = await searchParams;
+  const { t } = await getDictionary();
+  const supabase = await createClient();
+  const { data: claims } = await supabase.auth.getClaims();
+
+  const [products, prices, { data: projects }, { data: sigs }, { data: me }] = await Promise.all([
+    fetchAll((a, b) => supabase.from("products").select("id, name, sku, brand, unit").eq("active", true).order("id").range(a, b)),
+    fetchAll((a, b) => supabase.from("product_prices").select("product_id, sell_price").order("product_id").range(a, b)),
+    supabase.from("projects").select("id, name, year, towers(name, organizations(name))").order("year", { ascending: false }).limit(500),
+    supabase.from("signatures").select("id, name, path, is_default").order("created_at"),
+    supabase.from("profiles").select("full_name").eq("id", claims?.claims.sub ?? "").maybeSingle(),
+  ]);
+
+  const sellPrice: Record<string, number> = {};
+  prices.forEach((p) => {
+    if (p.sell_price !== null) sellPrice[p.product_id] = Number(p.sell_price);
+  });
+  const projectOptions = (projects ?? []).map((p) => {
+    const tw = p.towers as unknown as { name: string; organizations: { name: string } };
+    return { id: p.id, name: p.name, org: tw.organizations.name, label: `${tw.organizations.name} › ${tw.name} › ${p.year} › ${p.name}` };
+  });
+
+  // Prefill from a project: its planned list, or what it has used when nothing is planned.
+  const initial = new Map<string, number>();
+  const chosen = projectOptions.find((p) => p.id === project);
+  if (chosen) {
+    const [{ data: plan }, { data: moves }] = await Promise.all([
+      supabase.from("project_items").select("product_id, planned_qty").eq("project_id", chosen.id),
+      supabase.from("stock_movements").select("product_id, quantity").eq("project_id", chosen.id),
+    ]);
+    if (plan?.length) plan.forEach((i) => initial.set(i.product_id, i.planned_qty));
+    else (moves ?? []).forEach((m) => initial.set(m.product_id, (initial.get(m.product_id) ?? 0) - m.quantity));
+  }
+
+  const urls = await signedUrls((sigs ?? []).map((s) => s.path));
+  return (
+    <section className="flex flex-col gap-6">
+      <h1 className="text-3xl font-semibold">{t.newQuotation}</h1>
+      <QuotationForm
+        t={t}
+        products={products}
+        sellPrice={sellPrice}
+        projects={projectOptions}
+        signatures={(sigs ?? []).map((s) => ({ id: s.id, name: s.name, url: urls.get(s.path) ?? null, is_default: s.is_default }))}
+        initialProject={chosen?.id ?? ""}
+        initialLines={[...initial].filter(([, q]) => q > 0).map(([id, qty]) => ({ id, qty }))}
+        customer={chosen?.org ?? ""}
+        quotedBy={me?.full_name ?? ""}
+      />
+    </section>
+  );
+}

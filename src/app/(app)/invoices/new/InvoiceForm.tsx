@@ -3,12 +3,12 @@
 import { useActionState, useMemo, useState } from "react";
 import { createInvoice } from "../actions";
 import { InvoicePaper, type PaperData, type PaperHandlers, type PaperLine } from "@/components/InvoicePaper";
+import { DocVariantSelect } from "@/components/DocVariantSelect";
+import { BrandPicker } from "@/components/BrandPicker";
 import { defaultDocCompany } from "@/lib/company";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 type Product = { id: string; name: string; sku: string | null; brand: string | null; unit: string };
-
-const cmp = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: "base", numeric: true });
 
 export function InvoiceForm({
   t,
@@ -39,33 +39,16 @@ export function InvoiceForm({
     salesperson,
     date: new Date().toISOString().slice(0, 10),
     vat: true,
+    variant: "original",
     lines: [],
   });
   const [preview, setPreview] = useState(false);
   const [editCompany, setEditCompany] = useState(false);
   const [projectId, setProjectId] = useState("");
   const [locationId, setLocationId] = useState(locations.find((l) => l.is_default)?.id ?? locations[0]?.id ?? "");
-  const [query, setQuery] = useState("");
-  const [open, setOpen] = useState(false);
 
   const byId = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
   const available = (id: string) => stock[id]?.[locationId] ?? 0;
-
-  // Brands A-Z first, products A-Z inside each brand; products without a brand come last.
-  const groups = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const list = q
-      ? products.filter((p) => `${p.brand ?? ""} ${p.sku ?? ""} ${p.name}`.toLowerCase().includes(q))
-      : products;
-    const byBrand = new Map<string, Product[]>();
-    list.forEach((p) => {
-      const key = p.brand?.trim() || "";
-      byBrand.set(key, [...(byBrand.get(key) ?? []), p]);
-    });
-    return [...byBrand.entries()]
-      .sort(([a], [b]) => (a === "" ? 1 : b === "" ? -1 : cmp(a, b)))
-      .map(([brand, items]) => ({ brand, items: [...items].sort((a, b) => cmp(a.name, b.name)) }));
-  }, [products, query]);
 
   const addProduct = (p: Product) => {
     setData((d) => ({
@@ -77,8 +60,6 @@ export function InvoiceForm({
             { key: p.id, brand: p.brand ?? "", model: p.sku ?? "", name: p.name, unit: p.unit, qty: "1", price: String(sellPrice[p.id] ?? 0) },
           ],
     }));
-    setQuery("");
-    setOpen(false);
   };
 
   const handlers: PaperHandlers = {
@@ -93,53 +74,19 @@ export function InvoiceForm({
     const over = Number(l.qty) > left;
     return { ...l, over, hint: `${over ? `${t.invOverStock} — ` : ""}${t.invAvailable}: ${left} ${byId.get(l.key)?.unit ?? ""}` };
   });
-  const over = lines.some((l) => l.over);
   const invalid =
     !data.customer.trim() || !lines.length || lines.some((l) => !(Math.floor(Number(l.qty)) > 0) || !(Number(l.price) >= 0));
 
   const addRow = (
-    <div className="relative">
-      <input
-        className="input"
-        placeholder={`+ ${t.invAddItem}`}
-        value={query}
-        onFocus={() => setOpen(true)}
-        onChange={(e) => {
-          setQuery(e.target.value);
-          setOpen(true);
-        }}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
-        autoComplete="off"
-      />
-      {open && (
-        <div className="absolute z-20 mt-1 max-h-80 w-full overflow-auto rounded-lg border border-zinc-300 bg-white shadow-lg">
-          {groups.length === 0 && <p className="px-3 py-2 text-muted">{t.noMatches}</p>}
-          {groups.map((g) => (
-            <div key={g.brand}>
-              <p className="sticky top-0 bg-zinc-100 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-navy">
-                {g.brand || t.invNoBrand}
-              </p>
-              {g.items.map((p) => {
-                const left = available(p.id);
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    disabled={left <= 0}
-                    className="flex w-full justify-between gap-3 px-3 py-2 text-left hover:bg-zinc-100 disabled:opacity-40"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => addProduct(p)}
-                  >
-                    <span>{p.sku ? `${p.sku} · ` : ""}{p.name}</span>
-                    <span className="shrink-0 text-muted">{left} {p.unit}</span>
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    <BrandPicker
+      products={products}
+      placeholder={`+ ${t.invAddItem}`}
+      emptyText={t.noMatches}
+      noBrandText={t.invNoBrand}
+      available={available}
+      allowOver
+      onPick={addProduct}
+    />
   );
 
   return (
@@ -188,7 +135,8 @@ export function InvoiceForm({
             <button type="button" className="btn-ghost" onClick={() => setEditCompany((v) => !v)}>
               ✎ {editCompany ? t.docDoneEditing : t.docEditCompany}
             </button>
-            <button type="button" className="btn ml-auto" disabled={invalid || over} onClick={() => { setPreview(true); window.scrollTo({ top: 0 }); }}>
+            <DocVariantSelect value={data.variant ?? "original"} label={t.docVariant} onChange={(v) => setData((d) => ({ ...d, variant: v }))} />
+            <button type="button" className="btn ml-auto" disabled={invalid} onClick={() => { setPreview(true); window.scrollTo({ top: 0 }); }}>
               {t.docPreview} →
             </button>
           </>

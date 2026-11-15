@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n";
 import { mergeDocCompany } from "@/lib/company";
 import { InvoicePaper } from "@/components/InvoicePaper";
+import { parseVariant } from "@/lib/docType";
+import { DocVariantSelect } from "@/components/DocVariantSelect";
 import { PrintButton } from "@/components/PrintButton";
 import type { QuoteLine } from "@/lib/quotation";
 
@@ -12,10 +14,11 @@ export default async function InvoicePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ created?: string }>;
+  searchParams: Promise<{ created?: string; doc?: string }>;
 }) {
   const { id } = await params;
-  const { created } = await searchParams;
+  const { created, doc } = await searchParams;
+  const variant = parseVariant(doc);
   const { t } = await getDictionary();
   const supabase = await createClient();
   const { data: inv } = await supabase.from("tax_invoices").select("*").eq("id", id).maybeSingle();
@@ -27,8 +30,9 @@ export default async function InvoicePage({
         <h1 className="text-2xl font-semibold">{inv.number}</h1>
         <div className="ml-auto flex flex-wrap gap-2">
           <Link href="/invoices" className="btn-ghost">← {t.taxInvoices}</Link>
+          <DocVariantSelect value={variant} label={t.docVariant} />
           <PrintButton label={`🖨 ${t.docPrint}`} />
-          <a href={`/invoices/${id}/pdf`} target="_blank" className="btn">{t.invOpenPdf}</a>
+          <a href={`/invoices/${id}/pdf?doc=${variant}`} target="_blank" className="btn">{t.invOpenPdf}</a>
         </div>
         {created && <p className="w-full rounded-lg bg-emerald-50 px-3 py-2 text-emerald-700">{t.invCreated}</p>}
       </div>
@@ -45,6 +49,7 @@ export default async function InvoicePage({
             salesperson: inv.salesperson ?? "",
             date: inv.invoice_date,
             vat: inv.vat,
+            variant,
             lines: (inv.lines as QuoteLine[]).map((l, i) => ({
               key: String(i),
               brand: l.brand,

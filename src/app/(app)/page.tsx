@@ -16,6 +16,7 @@ export default async function Dashboard() {
     .single();
 
   const { data: stock } = await supabase.from("product_stock").select("stock, min_stock").eq("active", true).limit(5000);
+  const negCount = (stock ?? []).filter((p) => p.stock < 0).length;
   const lowCount = (stock ?? []).filter((p) => p.stock <= p.min_stock).length;
 
   const needs2fa = profile?.role === "admin" && !(await verifiedTotpFactor());
@@ -27,8 +28,8 @@ export default async function Dashboard() {
   ];
   const docs = [
     { href: "/invoices", label: t.taxInvoices, note: t.docStockLinked },
-    { href: "/documents#quotations", label: t.quotation, note: t.docNotStock },
-    { href: "/documents#receipts", label: t.receipt, note: t.receiptSoon },
+    { href: "/quotations", label: t.quotation, note: t.docNotStock },
+    { href: "/receipts", label: t.receipt, note: t.docNotStock },
   ];
   return (
     <section className="flex flex-col gap-6">
@@ -46,6 +47,12 @@ export default async function Dashboard() {
       {needs2fa && (
         <Link href="/account" className="card card-link !border-amber-300 !bg-amber-50 font-semibold text-amber-800">
           🔐 {t.admin2faReminder}
+        </Link>
+      )}
+      {negCount > 0 && (
+        <Link href="/low-stock" className="card card-link flex items-center justify-between gap-3 !border-red-300 !bg-red-50 text-lg font-semibold text-red-800">
+          🔴 {t.negativeStockTitle}: {negCount}
+          <span className="arrow-chip">→</span>
         </Link>
       )}
       {lowCount > 0 && (

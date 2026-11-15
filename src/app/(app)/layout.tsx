@@ -39,8 +39,8 @@ export default async function AppLayout({
       label: t.documents,
       children: [
         { href: "/invoices", label: t.taxInvoices },
-        { href: "/documents#quotations", label: t.quotation },
-        { href: "/documents#receipts", label: t.receipt },
+        { href: "/quotations", label: t.quotation },
+        { href: "/receipts", label: t.receipt },
       ],
     },
     { href: "/projects", label: t.projects },

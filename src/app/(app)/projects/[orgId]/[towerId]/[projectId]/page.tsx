@@ -66,9 +66,6 @@ export default async function ProjectPage({
       ? supabase.from("product_prices").select("product_id, cost")
       : Promise.resolve({ data: [] as { product_id: string; cost: number | null }[] }),
   ]);
-  const { data: sigs } = canManage
-    ? await supabase.from("signatures").select("id, name, is_default").order("created_at")
-    : { data: null };
   const { data: quotes } = canManage
     ? await supabase
         .from("quotations")
@@ -239,36 +236,14 @@ export default async function ProjectPage({
         {canManage && (
           <>
             <h3 className="mt-2 font-medium">{t.quotation}</h3>
-            <form method="post" action={`/projects/${orgId}/${towerId}/${projectId}/quotation`} target="_blank" className="card grid gap-3 p-4 sm:grid-cols-2">
-              <input name="customer" required defaultValue={tower.organizations.name} className="input" placeholder={t.qCustomer} />
-              <input name="attention" className="input" placeholder={t.qAttention} />
-              <input name="phone" className="input" placeholder={t.phone} />
-              <input name="email" type="email" className="input" placeholder={t.emailAddress} />
-              <input name="valid_days" type="number" min={0} defaultValue={30} className="input" placeholder={t.qValidDays} title={t.qValidDays} />
-              <input name="lead_days" type="number" min={0} className="input" placeholder={t.qLeadDays} title={t.qLeadDays} />
-              <input name="warranty_years" type="number" min={0} step="0.5" className="input" placeholder={t.qWarranty} title={t.qWarranty} />
-              <input name="payment_terms" className="input" defaultValue="เงินสด" placeholder={t.qPayment} />
-              <input name="discount_pct" type="number" min={0} max={100} step="0.01" defaultValue={0} className="input" placeholder={t.qDiscount} title={t.qDiscount} />
-              <input name="quoted_by" className="input" placeholder={t.qQuotedBy} />
-              <select name="signature_id" defaultValue={sigs?.find((x) => x.is_default)?.id ?? ""} className="input" title={t.qSignature}>
-                <option value="">{t.noSignatureOption}</option>
-                {sigs?.map((x) => (
-                  <option key={x.id} value={x.id}>{x.name}</option>
-                ))}
-              </select>
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" name="vat" value="1" defaultChecked /> {t.includeVat}
-              </label>
-              <button className="btn">{t.createQuotation}</button>
-              <p className="text-sm text-muted sm:col-span-2">{t.quotationHelp}</p>
-            </form>
+            <Link href={`/quotations/new?project=${projectId}`} className="btn w-fit">{t.newQuotation}</Link>
             {quotes && quotes.length > 0 && (
               <div className="card p-4">
                 <h4 className="mb-2 text-sm font-medium">{t.pastQuotations}</h4>
                 <ul className="space-y-1 text-sm">
                   {quotes.map((q) => (
                     <li key={q.id}>
-                      <a className="underline" target="_blank" href={`/projects/${orgId}/${towerId}/${projectId}/quotation/${q.id}`}>{q.number}</a>
+                      <Link className="underline" href={`/quotations/${q.id}`}>{q.number}</Link>
                       <span className="text-muted"> · {q.customer} · {q.created_at.slice(0, 10)}</span>
                     </li>
                   ))}

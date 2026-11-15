@@ -1,3 +1,4 @@
+import { docHead, type DocVariant } from "@/lib/docType";
 import type { ReactNode } from "react";
 import type { DocCompany } from "@/lib/company";
 
@@ -24,6 +25,7 @@ export type PaperData = {
   salesperson: string;
   date: string;
   vat: boolean;
+  variant?: DocVariant;
   lines: PaperLine[];
 };
 
@@ -34,8 +36,8 @@ export type PaperHandlers = {
   onRemove: (key: string) => void;
 };
 
-const money = (n: number) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const blank = "w-full border-0 border-b border-dashed border-sky-400 bg-sky-50 px-1 py-0.5 outline-none focus:bg-sky-100";
+export const money = (n: number) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+export const blank = "w-full border-0 border-b border-dashed border-sky-400 bg-sky-50 px-1 py-0.5 outline-none focus:bg-sky-100";
 const MIN_ROWS = 14;
 
 // Looks like the paper form. `h` set = editable blanks; unset = read-only text (preview, print and saved view).
@@ -94,8 +96,8 @@ export function InvoicePaper({
           </div>
         </div>
         <div className="w-[270px] border border-black text-center">
-          <div className="border-b border-black py-1 text-[15px] font-bold">ต้นฉบับใบกำกับภาษี</div>
-          <div className="border-b border-black py-1 text-[14px] font-bold">ORIGINAL TAX INVOICE</div>
+          <div className="border-b border-black py-1 text-[15px] font-bold">{docHead("ใบกำกับภาษี", "TAX INVOICE", data.variant).th}</div>
+          <div className="border-b border-black py-1 text-[14px] font-bold">{docHead("ใบกำกับภาษี", "TAX INVOICE", data.variant).en}</div>
           <div className="flex items-center justify-center gap-1 px-1 py-1 text-[11px]">
             <span className="shrink-0">เลขประจำตัวผู้เสียภาษีอากร:</span>
             {coField("taxId")}

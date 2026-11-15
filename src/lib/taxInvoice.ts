@@ -1,3 +1,4 @@
+import { docHead, type DocVariant } from "@/lib/docType";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { PDFDocument, rgb, type PDFPage } from "pdf-lib";
@@ -15,6 +16,7 @@ export type TaxInvoiceData = {
   branch: string | null;
   salesperson: string | null;
   vat: boolean;
+  variant?: DocVariant;
   lines: QuoteLine[];
   company?: Partial<DocCompany> | null;
 };
@@ -83,9 +85,9 @@ export async function buildTaxInvoice(inv: TaxInvoiceData) {
       const bx = 388;
       const bw = W - M - bx;
       box(bx, H - M - 22, bw, 22);
-      centered("ต้นฉบับใบกำกับภาษี", bx, bw, H - M - 15, 11, bold);
+      centered(docHead("ใบกำกับภาษี", "TAX INVOICE", inv.variant).th, bx, bw, H - M - 15, 11, bold);
       box(bx, H - M - 44, bw, 22);
-      centered("ORIGINAL TAX INVOICE", bx, bw, H - M - 37, 11, bold);
+      centered(docHead("ใบกำกับภาษี", "TAX INVOICE", inv.variant).en, bx, bw, H - M - 37, 11, bold);
       box(bx, H - M - 64, bw, 20);
       centered(`เลขประจำตัวผู้เสียภาษีอากร: ${co.taxId}`, bx, bw, H - M - 58, 8);
 

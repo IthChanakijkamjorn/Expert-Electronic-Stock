@@ -1,13 +1,15 @@
+import { docHead, type DocVariant } from "@/lib/docType";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
-import { COMPANY } from "@/lib/company";
+import { mergeDocCompany, type DocCompany } from "@/lib/company";
 import { bahtText } from "@/lib/bahttext";
 
 export type QuoteLine = { brand: string; model: string; name: string; unit: string; qty: number; price: number };
 
 export type QuoteData = {
+  variant?: DocVariant;
   number: string;
   date: Date;
   customer: string;
@@ -24,6 +26,7 @@ export type QuoteData = {
   quotedBy: string | null;
   lines: QuoteLine[];
   signature?: Uint8Array | null;
+  company?: Partial<DocCompany> | null;
 };
 
 const BLACK = rgb(0, 0, 0);
@@ -64,6 +67,7 @@ export async function buildQuotation(q: QuoteData) {
     readFile(path.join(process.cwd(), "fonts", "Sarabun-Bold.ttf")),
     readFile(path.join(process.cwd(), "public", "logo.png")),
   ]);
+  const co = mergeDocCompany(q.company, "quote");
   const doc = await PDFDocument.create();
   doc.registerFontkit(fontkit);
   const font = await doc.embedFont(regularBytes, { subset: true });
@@ -102,13 +106,13 @@ export async function buildQuotation(q: QuoteData) {
     } else {
       page.drawImage(logo, { x: M, y: H - M - 62, width: 62, height: 62 });
       const tx = M + 74;
-      text(COMPANY.nameEn, tx, H - M - 14, 15, bold);
-      text(COMPANY.address, tx, H - M - 30, 8.5);
-      text(COMPANY.tel, tx, H - M - 42, 8.5);
-      text(`E-mail: ${COMPANY.email}  ${COMPANY.web}`, tx, H - M - 54, 8.5);
+      text(co.name, tx, H - M - 14, 15, bold);
+      text(co.address, tx, H - M - 30, 8.5);
+      text(co.tel, tx, H - M - 42, 8.5);
+      text(`E-mail: ${co.email}  ${co.web}`, tx, H - M - 54, 8.5);
       y = H - M - 84;
 
-      text("ใบเสนอราคา / QUOTATION", M, y, 14, bold);
+      text(`${docHead("ใบเสนอราคา", "QUOTATION", q.variant).th} / ${docHead("ใบเสนอราคา", "QUOTATION", q.variant).en}`, M, y, 14, bold);
       const rx = 340;
       const rw = W - M - rx;
       text("เลขที่ / No.:", rx, y, sizeText, bold);
@@ -120,7 +124,7 @@ export async function buildQuotation(q: QuoteData) {
         `เรียน / Attn: ${q.attention ?? ""}`,
         `โครงการ / Project: ${q.project}`,
         `โทร / Tel: ${q.phone ?? ""}${q.email ? `   Email: ${q.email}` : ""}`,
-        `เลขประจำตัวผู้เสียภาษี / Tax ID: ${COMPANY.taxId}`,
+        `เลขประจำตัวผู้เสียภาษี / Tax ID: ${co.taxId}`,
       ];
       const right = [
         `วันที่ / Date: ${q.date.toISOString().slice(0, 10)}`,
@@ -244,12 +248,12 @@ export async function buildQuotation(q: QuoteData) {
       page.drawImage(img, { x: split + (W - M - split - w) / 2, y: y2 + 30 + (maxH - h) / 2, width: w, height: h });
     }
   }
-  centered(COMPANY.approverName, split, W - M - split, y2 + 16);
-  centered(`( ${COMPANY.approverTitle} )`, split, W - M - split, y2 + 4);
+  centered(co.approverName, split, W - M - split, y2 + 16);
+  centered(`( ${co.approverTitle} )`, split, W - M - split, y2 + 4);
 
   const row3H = y2 - M;
   box(M, M, tableW, row3H);
-  wrap(COMPANY.bank, font, 8.5, tableW - 10).forEach((r, k) => text(r, M + 5, M + row3H - 12 - k * 11, 8.5));
+  wrap(co.bank, font, 8.5, tableW - 10).forEach((r, k) => text(r, M + 5, M + row3H - 12 - k * 11, 8.5));
 
   return doc.save();
 }

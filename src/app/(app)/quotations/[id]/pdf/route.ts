@@ -1,22 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import { getRole } from "@/lib/role";
 import { buildQuotation, type QuoteLine } from "@/lib/quotation";
+import { parseVariant } from "@/lib/docType";
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ projectId: string; id: string }> },
-) {
-  const { projectId, id } = await params;
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const role = await getRole();
   if (role !== "admin" && role !== "manager") return new Response("forbidden", { status: 403 });
 
   const supabase = await createClient();
-  const { data: q } = await supabase
-    .from("quotations")
-    .select("*, projects(name)")
-    .eq("id", id)
-    .eq("project_id", projectId)
-    .maybeSingle();
+  const { data: q } = await supabase.from("quotations").select("*, projects(name)").eq("id", id).maybeSingle();
   if (!q) return new Response("not found", { status: 404 });
 
   const { data: sig } = q.signature_id
@@ -27,11 +20,12 @@ export async function GET(
 
   const pdf = await buildQuotation({
     signature,
+    variant: parseVariant(new URL(req.url).searchParams.get("doc")),
     number: q.number,
-    date: new Date(q.created_at),
+    date: new Date(q.quote_date),
     customer: q.customer,
     attention: q.attention,
-    project: (q.projects as unknown as { name: string }).name,
+    project: q.project_label ?? (q.projects as unknown as { name: string } | null)?.name ?? "",
     phone: q.phone,
     email: q.email,
     validDays: q.valid_days,
@@ -41,6 +35,7 @@ export async function GET(
     discountPct: Number(q.discount_pct),
     vat: q.vat,
     quotedBy: q.quoted_by,
+    company: q.company,
     lines: q.lines as QuoteLine[],
   });
   return new Response(Buffer.from(pdf), {
