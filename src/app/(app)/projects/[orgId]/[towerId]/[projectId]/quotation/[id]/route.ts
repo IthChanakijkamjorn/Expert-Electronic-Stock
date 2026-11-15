@@ -19,8 +19,10 @@ export async function GET(
     .maybeSingle();
   if (!q) return new Response("not found", { status: 404 });
 
-  const { data: setting } = await supabase.from("company_settings").select("value").eq("key", "signature").maybeSingle();
-  const sigFile = setting?.value ? (await supabase.storage.from("files").download(setting.value)).data : null;
+  const { data: sig } = q.signature_id
+    ? await supabase.from("signatures").select("path").eq("id", q.signature_id).maybeSingle()
+    : { data: null };
+  const sigFile = sig?.path ? (await supabase.storage.from("files").download(sig.path)).data : null;
   const signature = sigFile ? new Uint8Array(await sigFile.arrayBuffer()) : null;
 
   const pdf = await buildQuotation({

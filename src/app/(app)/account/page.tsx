@@ -3,18 +3,18 @@ import { verifiedTotpFactor } from "@/lib/mfa";
 import { getRole } from "@/lib/role";
 import { createClient } from "@/lib/supabase/server";
 import { signedUrls } from "@/lib/storage";
-import { ImageUploader } from "@/components/ImageUploader";
 import { TwoFactor } from "./TwoFactor";
-import { removeSignature, setSignature } from "./signature-actions";
+import { SignatureManager, type SignatureItem } from "./SignatureManager";
 
 export default async function AccountPage() {
   const { t } = await getDictionary();
   const factor = await verifiedTotpFactor();
   const isAdmin = (await getRole()) === "admin";
-  let sigUrl: string | undefined;
+  let sigItems: SignatureItem[] = [];
   if (isAdmin) {
-    const { data } = await (await createClient()).from("company_settings").select("value").eq("key", "signature").maybeSingle();
-    if (data?.value) sigUrl = (await signedUrls([data.value])).get(data.value);
+    const { data } = await (await createClient()).from("signatures").select("id, name, path, is_default").order("created_at");
+    const urls = await signedUrls((data ?? []).map((r) => r.path));
+    sigItems = (data ?? []).map((r) => ({ id: r.id, name: r.name, url: urls.get(r.path), isDefault: r.is_default }));
   }
   return (
     <section className="flex max-w-xl flex-col gap-4">
@@ -34,24 +34,13 @@ export default async function AccountPage() {
         <div className="card flex flex-col gap-3 p-6">
           <h2 className="text-xl font-semibold text-navy">{t.signature}</h2>
           <p className="text-muted">{t.signatureHelp}</p>
-          {sigUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={sigUrl} alt="" className="h-20 w-fit rounded border border-[#cfc9dc] bg-white object-contain p-1" />
-          )}
-          <div className="flex flex-wrap items-center gap-3">
-            <ImageUploader
-              prefix="images/signature"
-              record={setSignature}
-              label={`🖼 ${t.signature}`}
-              failedText={t.uploadFailed}
-              accept="image/png,image/jpeg"
-            />
-            {sigUrl && (
-              <form action={removeSignature}>
-                <button className="text-sm text-red-600 underline">{t.removeSignature}</button>
-              </form>
-            )}
-          </div>
+          <SignatureManager
+            items={sigItems}
+            labels={{
+              name: t.signatureName, upload: `🖼 ${t.addSignature}`, makeDefault: t.makeDefault, isDefault: t.defaultLabel,
+              remove: t.removeSignature, confirm: t.confirmRemoveSignature, failed: t.uploadFailed, empty: t.noSignatures,
+            }}
+          />
         </div>
       )}
     </section>

@@ -70,6 +70,7 @@ export async function POST(
       vat: form.get("vat") === "1",
       quoted_by: text(form, "quoted_by"),
       lines,
+      signature_id: text(form, "signature_id"),
     })
     .select("id")
     .single();

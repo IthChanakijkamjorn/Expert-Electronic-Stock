@@ -66,6 +66,9 @@ export default async function ProjectPage({
       ? supabase.from("product_prices").select("product_id, cost")
       : Promise.resolve({ data: [] as { product_id: string; cost: number | null }[] }),
   ]);
+  const { data: sigs } = canManage
+    ? await supabase.from("signatures").select("id, name, is_default").order("created_at")
+    : { data: null };
   const { data: quotes } = canManage
     ? await supabase
         .from("quotations")
@@ -247,6 +250,12 @@ export default async function ProjectPage({
               <input name="payment_terms" className="input" defaultValue="เงินสด" placeholder={t.qPayment} />
               <input name="discount_pct" type="number" min={0} max={100} step="0.01" defaultValue={0} className="input" placeholder={t.qDiscount} title={t.qDiscount} />
               <input name="quoted_by" className="input" placeholder={t.qQuotedBy} />
+              <select name="signature_id" defaultValue={sigs?.find((x) => x.is_default)?.id ?? ""} className="input" title={t.qSignature}>
+                <option value="">{t.noSignatureOption}</option>
+                {sigs?.map((x) => (
+                  <option key={x.id} value={x.id}>{x.name}</option>
+                ))}
+              </select>
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" name="vat" value="1" defaultChecked /> {t.includeVat}
               </label>
