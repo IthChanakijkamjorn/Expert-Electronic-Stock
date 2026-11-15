@@ -71,13 +71,13 @@ export default async function AppLayout({
           </Link>
           <nav className="order-last flex w-full flex-wrap gap-x-6 gap-y-1 text-[11px] font-semibold uppercase tracking-[0.2em] md:order-none md:w-auto">
             {nav.map((n) => (
-              <div key={n.label} className="group relative" tabIndex={n.children ? 0 : undefined}>
+              <div key={n.label} className="group relative">
                 <Link href={n.href} className="block py-1 text-white/80 hover:text-white">
                   {n.label}
                   {n.children && " ▾"}
                 </Link>
                 {n.children && (
-                  <div className="absolute left-0 top-full z-50 hidden min-w-44 pt-1 group-focus-within:block group-hover:block">
+                  <div className="absolute left-0 top-full z-50 hidden min-w-44 pt-1 group-hover:block">
                     <div className="flex flex-col rounded-lg bg-navy py-1 shadow-xl ring-1 ring-white/15">
                       {n.children.map((c) => (
                         <Link key={c.href} href={c.href} className="whitespace-nowrap px-4 py-2 text-white/80 hover:bg-white/10 hover:text-white">

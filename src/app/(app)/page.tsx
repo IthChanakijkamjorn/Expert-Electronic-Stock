@@ -21,15 +21,44 @@ export default async function Dashboard() {
 
   const needs2fa = profile?.role === "admin" && !(await verifiedTotpFactor());
 
-  const links = [
-    { href: "/products", label: t.products },
-    { href: "/movements", label: t.movements },
-    { href: "/projects", label: t.projects },
-  ];
-  const docs = [
-    { href: "/invoices", label: t.taxInvoices, note: t.docStockLinked },
-    { href: "/quotations", label: t.quotation, note: t.docNotStock },
-    { href: "/receipts", label: t.receipt, note: t.docNotStock },
+  const manager = profile?.role === "admin" || profile?.role === "manager";
+  const groups = [
+    {
+      title: t.navStock,
+      items: [
+        { href: "/products", label: t.products },
+        { href: "/movements", label: t.movements },
+        { href: "/low-stock", label: t.lowStock },
+        { href: "/scan", label: t.scan },
+        ...(manager ? [{ href: "/stocktake", label: t.stocktake }, { href: "/locations", label: t.locations }] : []),
+      ],
+    },
+    {
+      title: t.documents,
+      items: [
+        { href: "/invoices", label: t.taxInvoices, note: t.docStockLinked },
+        ...(manager
+          ? [
+              { href: "/quotations", label: t.quotation, note: t.docNotStock },
+              { href: "/receipts", label: t.receipt, note: t.docNotStock },
+            ]
+          : []),
+      ],
+    },
+    {
+      title: t.projects,
+      items: [
+        { href: "/projects", label: t.projects },
+        { href: "/floorplans", label: t.floorPlans },
+      ],
+    },
+    ...(manager
+      ? [{ title: t.purchasing, items: [{ href: "/purchasing", label: t.purchasing }, { href: "/suppliers", label: t.suppliers }] }]
+      : []),
+    ...(profile?.role === "admin"
+      ? [{ title: t.navAdmin, items: [{ href: "/users", label: t.users }, { href: "/audit", label: t.auditLog }] }]
+      : []),
+    { title: t.account, items: [{ href: "/account", label: t.account }] },
   ];
   return (
     <section className="flex flex-col gap-6">
@@ -61,28 +90,22 @@ export default async function Dashboard() {
           <span className="arrow-chip">→</span>
         </Link>
       )}
-      <div className="grid gap-4 sm:grid-cols-3">
-        {links.map((l) => (
-          <Link key={l.href} href={l.href} className="card card-link flex items-center justify-between gap-3 text-xl font-semibold text-navy">
-            {l.label}
-            <span className="arrow-chip">→</span>
-          </Link>
-        ))}
-      </div>
-      <div>
-        <h2 className="mb-3 text-xl font-semibold">{t.documents}</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {docs.map((d) => (
-            <Link key={d.href} href={d.href} className="card card-link flex flex-col gap-1 text-navy">
-              <span className="flex items-center justify-between gap-3 text-xl font-semibold">
-                {d.label}
-                <span className="arrow-chip">→</span>
-              </span>
-              <span className="text-sm text-muted">{d.note}</span>
-            </Link>
-          ))}
+      {groups.map((g) => (
+        <div key={g.title}>
+          <h2 className="mb-3 text-xl font-semibold">{g.title}</h2>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {g.items.map((d) => (
+              <Link key={d.href} href={d.href} className="card card-link flex flex-col gap-1 text-navy">
+                <span className="flex items-center justify-between gap-3 text-xl font-semibold">
+                  {d.label}
+                  <span className="arrow-chip">→</span>
+                </span>
+                {"note" in d && <span className="text-sm text-muted">{d.note}</span>}
+              </Link>
+            ))}
+          </div>
         </div>
-      </div>
+      ))}
     </section>
   );
 }

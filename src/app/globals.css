@@ -21,6 +21,18 @@ body {
   font-family: Inter, "Noto Sans Thai", "Sarabun", system-ui, Tahoma, Arial, sans-serif;
 }
 
+a[href],
+button:not(:disabled),
+summary,
+select,
+label[for],
+[role="button"],
+input[type="checkbox"],
+input[type="radio"],
+input[type="file"] {
+  cursor: pointer;
+}
+
 h1 {
   font-family: var(--font-serif);
   color: var(--foreground);
