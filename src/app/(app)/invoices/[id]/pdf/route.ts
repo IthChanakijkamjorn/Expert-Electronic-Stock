@@ -19,6 +19,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     salesperson: inv.salesperson,
     vat: inv.vat,
     lines: inv.lines as QuoteLine[],
+    company: inv.company,
   });
   return new Response(Buffer.from(pdf), {
     headers: { "Content-Type": "application/pdf", "Content-Disposition": `inline; filename="${inv.number}.pdf"` },

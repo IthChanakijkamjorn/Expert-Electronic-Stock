@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { PDFDocument, rgb, type PDFPage } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
-import { COMPANY } from "@/lib/company";
+import { mergeDocCompany, type DocCompany } from "@/lib/company";
 import { fit, money, wrap, type QuoteLine } from "@/lib/quotation";
 
 export type TaxInvoiceData = {
@@ -16,6 +16,7 @@ export type TaxInvoiceData = {
   salesperson: string | null;
   vat: boolean;
   lines: QuoteLine[];
+  company?: Partial<DocCompany> | null;
 };
 
 export const invoiceTotals = (lines: QuoteLine[], vat: boolean) => {
@@ -64,6 +65,7 @@ export async function buildTaxInvoice(inv: TaxInvoiceData) {
   const hline = (yy: number, x1 = M, x2 = W - M) =>
     page.drawLine({ start: { x: x1, y: yy }, end: { x: x2, y: yy }, thickness: LINE, color: BLACK });
 
+  const co = mergeDocCompany(inv.company);
   const dateText = inv.date.toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" });
 
   const pageHeader = (first: boolean) => {
@@ -73,10 +75,10 @@ export async function buildTaxInvoice(inv: TaxInvoiceData) {
     } else {
       page.drawImage(logo, { x: M, y: H - M - 58, width: 58, height: 58 });
       const tx = M + 68;
-      text(COMPANY.nameTh, tx, H - M - 14, 11, bold);
-      text(COMPANY.addressTh, tx, H - M - 29, 8);
-      text(COMPANY.telTh, tx, H - M - 41, 8.5);
-      text(`Email: ${COMPANY.email}  ${COMPANY.web}`, tx, H - M - 53, 8.5);
+      text(co.name, tx, H - M - 14, 11, bold);
+      text(co.address, tx, H - M - 29, 8);
+      text(co.tel, tx, H - M - 41, 8.5);
+      text(`Email: ${co.email}  ${co.web}`, tx, H - M - 53, 8.5);
 
       const bx = 388;
       const bw = W - M - bx;
@@ -85,7 +87,7 @@ export async function buildTaxInvoice(inv: TaxInvoiceData) {
       box(bx, H - M - 44, bw, 22);
       centered("ORIGINAL TAX INVOICE", bx, bw, H - M - 37, 11, bold);
       box(bx, H - M - 64, bw, 20);
-      centered("เลขประจำตัวผู้เสียภาษีอากร: 010 5538 039 535", bx, bw, H - M - 58, 8);
+      centered(`เลขประจำตัวผู้เสียภาษีอากร: ${co.taxId}`, bx, bw, H - M - 58, 8);
 
       y = H - M - 82;
       const rx = 388;
@@ -197,7 +199,7 @@ export async function buildTaxInvoice(inv: TaxInvoiceData) {
   const payH = 22;
   box(M, payTop - payH, tableW, payH);
   text("ชำระโดย / PAID BY:", M + 5, payTop - 15, 9, bold);
-  text(COMPANY.invoiceBank, M + 118, payTop - 15, 9, bold);
+  text(co.bank, M + 118, payTop - 15, 9, bold);
 
   const sigH = payTop - payH - M;
   const labels: [string, string][] = [

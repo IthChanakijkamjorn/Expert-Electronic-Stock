@@ -19,17 +19,36 @@ export default async function AppLayout({
   const { lang, t } = await getDictionary();
   const [role, { data: aalOk }] = await Promise.all([getRole(), supabase.rpc("aal_ok")]);
   if (aalOk === false) redirect("/login/mfa");
-  const nav = [
+  const manager = role === "admin" || role === "manager";
+  type NavItem = { href: string; label: string; children?: { href: string; label: string }[] };
+  const nav: NavItem[] = [
     { href: "/", label: t.dashboard },
-    { href: "/products", label: t.products },
-    { href: "/movements", label: t.movements },
-    { href: "/invoices", label: t.taxInvoices },
-    { href: "/scan", label: t.scan },
-    { href: "/account", label: t.account },
+    {
+      href: "/products",
+      label: t.navStock,
+      children: [
+        { href: "/products", label: t.products },
+        { href: "/movements", label: t.movements },
+        { href: "/low-stock", label: t.lowStock },
+        { href: "/scan", label: t.scan },
+        ...(manager ? [{ href: "/stocktake", label: t.stocktake }, { href: "/locations", label: t.locations }] : []),
+      ],
+    },
+    {
+      href: "/documents",
+      label: t.documents,
+      children: [
+        { href: "/invoices", label: t.taxInvoices },
+        { href: "/documents#quotations", label: t.quotation },
+        { href: "/documents#receipts", label: t.receipt },
+      ],
+    },
     { href: "/projects", label: t.projects },
-    ...(role === "admin" || role === "manager" ? [{ href: "/stocktake", label: t.stocktake }, { href: "/locations", label: t.locations }, { href: "/purchasing", label: t.purchasing }] : []),
+    ...(manager
+      ? [{ href: "/purchasing", label: t.purchasing, children: [{ href: "/purchasing", label: t.purchasing }, { href: "/suppliers", label: t.suppliers }] }]
+      : []),
     ...(role === "admin"
-      ? [{ href: "/users", label: t.users }, { href: "/audit", label: t.auditLog }]
+      ? [{ href: "/users", label: t.navAdmin, children: [{ href: "/users", label: t.users }, { href: "/audit", label: t.auditLog }] }]
       : []),
   ];
 
@@ -43,14 +62,29 @@ export default async function AppLayout({
               Expert Electronic &amp; Communication
             </span>
           </Link>
-          <nav className="order-last flex w-full gap-5 overflow-x-auto whitespace-nowrap pb-1 text-[11px] md:order-none md:w-auto md:pb-0 font-semibold uppercase tracking-[0.2em]">
+          <nav className="order-last flex w-full flex-wrap gap-x-6 gap-y-1 text-[11px] font-semibold uppercase tracking-[0.2em] md:order-none md:w-auto">
             {nav.map((n) => (
-              <Link key={n.href} href={n.href} className="text-white/80 hover:text-white">
-                {n.label}
-              </Link>
+              <div key={n.label} className="group relative" tabIndex={n.children ? 0 : undefined}>
+                <Link href={n.href} className="block py-1 text-white/80 hover:text-white">
+                  {n.label}
+                  {n.children && " ▾"}
+                </Link>
+                {n.children && (
+                  <div className="absolute left-0 top-full z-50 hidden min-w-44 pt-1 group-focus-within:block group-hover:block">
+                    <div className="flex flex-col rounded-lg bg-navy py-1 shadow-xl ring-1 ring-white/15">
+                      {n.children.map((c) => (
+                        <Link key={c.href} href={c.href} className="whitespace-nowrap px-4 py-2 text-white/80 hover:bg-white/10 hover:text-white">
+                          {c.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             ))}
           </nav>
           <div className="flex items-center gap-3">
+            <Link href="/account" className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/80 hover:text-white">{t.account}</Link>
             <LangSwitch current={lang} />
             <form action={signOut}>
               <button className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/80 hover:text-white">

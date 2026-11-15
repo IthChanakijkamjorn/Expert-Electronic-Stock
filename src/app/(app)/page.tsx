@@ -25,6 +25,11 @@ export default async function Dashboard() {
     { href: "/movements", label: t.movements },
     { href: "/projects", label: t.projects },
   ];
+  const docs = [
+    { href: "/invoices", label: t.taxInvoices, note: t.docStockLinked },
+    { href: "/documents#quotations", label: t.quotation, note: t.docNotStock },
+    { href: "/documents#receipts", label: t.receipt, note: t.receiptSoon },
+  ];
   return (
     <section className="flex flex-col gap-6">
       <div>
@@ -56,6 +61,20 @@ export default async function Dashboard() {
             <span className="arrow-chip">→</span>
           </Link>
         ))}
+      </div>
+      <div>
+        <h2 className="mb-3 text-xl font-semibold">{t.documents}</h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {docs.map((d) => (
+            <Link key={d.href} href={d.href} className="card card-link flex flex-col gap-1 text-navy">
+              <span className="flex items-center justify-between gap-3 text-xl font-semibold">
+                {d.label}
+                <span className="arrow-chip">→</span>
+              </span>
+              <span className="text-sm text-muted">{d.note}</span>
+            </Link>
+          ))}
+        </div>
       </div>
     </section>
   );

@@ -27,6 +27,11 @@ export async function createInvoice(_prev: InvoiceState, formData: FormData): Pr
     wanted.set(l.product_id, { qty: (cur?.qty ?? 0) + qty, price });
   }
 
+  let company: unknown = null;
+  try {
+    company = JSON.parse(String(formData.get("company") ?? "null"));
+  } catch {}
+
   const supabase = await createClient();
   const { data: products } = await supabase
     .from("products")
@@ -55,6 +60,7 @@ export async function createInvoice(_prev: InvoiceState, formData: FormData): Pr
     p_location_id: text(formData, "location_id"),
     p_vat: formData.get("vat") === "1",
     p_lines: lines,
+    p_company: company,
   });
   if (error || !id) {
     return { error: error?.message.includes("insufficient_stock") ? "insufficient" : "failed" };

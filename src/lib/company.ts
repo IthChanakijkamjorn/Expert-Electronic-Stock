@@ -15,3 +15,29 @@ export const COMPANY = {
   bank:
     "ธนาคารกรุงเทพ สาขาถนนสุขาภิบาล 3 บึงกุม เลขที่บัญชี 056-0-35738-6 ชื่อบัญชี \"บริษัท เอ็กซ์เพิร์ท อีเล็คโทรนิค แอนด์ คอมมูนิเคชั่น จำกัด\" โอนเงินแล้วกรุณา โทร/แฟกซ์/เมล แจ้งบริษัทด้วย",
 };
+
+// Company block printed on tax invoices. Editable per document, so it is stored with each invoice.
+export type DocCompany = {
+  name: string;
+  address: string;
+  tel: string;
+  email: string;
+  web: string;
+  taxId: string;
+  bank: string;
+};
+
+export const defaultDocCompany = (): DocCompany => ({
+  name: COMPANY.nameTh,
+  address: COMPANY.addressTh,
+  tel: COMPANY.telTh,
+  email: COMPANY.email,
+  web: COMPANY.web,
+  taxId: "010 5538 039 535",
+  bank: COMPANY.invoiceBank,
+});
+
+export const mergeDocCompany = (c: Partial<DocCompany> | null | undefined): DocCompany => ({
+  ...defaultDocCompany(),
+  ...(c ?? {}),
+});
