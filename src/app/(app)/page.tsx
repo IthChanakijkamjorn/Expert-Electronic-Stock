@@ -14,6 +14,9 @@ export default async function Dashboard() {
     .eq("id", user!.id)
     .single();
 
+  const { data: stock } = await supabase.from("product_stock").select("stock, min_stock").eq("active", true).limit(5000);
+  const lowCount = (stock ?? []).filter((p) => p.stock <= p.min_stock).length;
+
   const links = [
     { href: "/products", label: t.products },
     { href: "/movements", label: t.movements },
@@ -32,6 +35,12 @@ export default async function Dashboard() {
           </p>
         )}
       </div>
+      {lowCount > 0 && (
+        <Link href="/low-stock" className="card card-link flex items-center justify-between gap-3 !border-amber-300 !bg-amber-50 text-lg font-semibold text-amber-800">
+          ⚠ {t.lowStockTitle}: {lowCount}
+          <span className="arrow-chip">→</span>
+        </Link>
+      )}
       <div className="grid gap-4 sm:grid-cols-3">
         {links.map((l) => (
           <Link key={l.href} href={l.href} className="card card-link flex items-center justify-between gap-3 text-xl font-semibold text-navy">

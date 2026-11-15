@@ -53,7 +53,10 @@ export default async function ProductsPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-semibold">{t.products}</h1>
         {(role === "admin" || role === "manager") && (
-          <Link href="/products/new" className="btn">{t.addProduct}</Link>
+          <span className="flex gap-2">
+            <a href="/export/products" className="btn-ghost">⬇ {t.exportCsv}</a>
+            <Link href="/products/new" className="btn">{t.addProduct}</Link>
+          </span>
         )}
       </div>
       <form className="flex gap-2">

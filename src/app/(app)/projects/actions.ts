@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logAudit } from "@/lib/audit";
 
 const text = (f: FormData, k: string) => String(f.get(k) ?? "").trim() || null;
 
@@ -96,10 +97,17 @@ export async function deleteProject(orgId: string, towerId: string, projectId: s
       .update({ revoked_at: new Date().toISOString() })
       .in("storage_path", paths);
   }
+  const nm = await nameOf(supabase, "projects", projectId);
   const { error } = await supabase.from("projects").delete().eq("id", projectId);
   if (error) throw new Error(error.message);
+  await logAudit("delete", "project", nm);
   revalidatePath("/projects", "layout");
   redirect(`/projects/${orgId}/${towerId}`);
+}
+
+async function nameOf(supabase: Awaited<ReturnType<typeof createClient>>, table: string, id: string) {
+  const { data } = await supabase.from(table).select("name").eq("id", id).maybeSingle();
+  return (data as { name?: string } | null)?.name ?? id;
 }
 
 async function purge(supabase: Awaited<ReturnType<typeof createClient>>, paths: (string | null)[]) {
@@ -126,8 +134,10 @@ export async function deleteTower(orgId: string, towerId: string, stay = false) 
     .eq("id", towerId)
     .single();
   if (data) await purge(supabase, towerPaths(data as unknown as TowerTree));
+  const nm = await nameOf(supabase, "towers", towerId);
   const { error } = await supabase.from("towers").delete().eq("id", towerId);
   if (error) throw new Error(error.message);
+  await logAudit("delete", "tower", nm);
   revalidatePath("/projects", "layout");
   if (!stay) redirect(`/projects/${orgId}`);
 }
@@ -143,8 +153,10 @@ export async function deleteOrganization(orgId: string, stay = false) {
     const o = data as unknown as { image_path: string | null; towers: TowerTree[] };
     await purge(supabase, [o.image_path, ...o.towers.flatMap(towerPaths)]);
   }
+  const nm = await nameOf(supabase, "organizations", orgId);
   const { error } = await supabase.from("organizations").delete().eq("id", orgId);
   if (error) throw new Error(error.message);
+  await logAudit("delete", "organization", nm);
   revalidatePath("/projects", "layout");
   if (!stay) redirect("/projects");
 }

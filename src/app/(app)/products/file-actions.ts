@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logAudit } from "@/lib/audit";
 
 export async function addProductFile(
   productId: string,
@@ -56,8 +57,10 @@ export async function revokeShare(shareId: string) {
 
 export async function deleteProduct(productId: string) {
   const supabase = await createClient();
+  const { data: prod } = await supabase.from("products").select("name").eq("id", productId).maybeSingle();
   const { error } = await supabase.from("products").update({ active: false }).eq("id", productId);
   if (error) throw new Error(error.message);
+  await logAudit("delete", "product", prod?.name);
   revalidatePath("/products", "layout");
   redirect("/products");
 }
@@ -66,8 +69,10 @@ export async function renameProduct(productId: string, name: string) {
   const clean = name.trim();
   if (!clean) throw new Error("empty name");
   const supabase = await createClient();
+  const { data: prod } = await supabase.from("products").select("name").eq("id", productId).maybeSingle();
   const { error } = await supabase.from("products").update({ name: clean }).eq("id", productId);
   if (error) throw new Error(error.message);
+  await logAudit("rename", "product", `${prod?.name} → ${clean}`);
   revalidatePath("/products", "layout");
   revalidatePath("/movements");
 }

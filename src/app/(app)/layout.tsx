@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n";
 import { LangSwitch } from "@/lib/i18n/LangSwitch";
+import { getRole } from "@/lib/role";
 import { signOut } from "../login/actions";
 
 export default async function AppLayout({
@@ -16,11 +17,15 @@ export default async function AppLayout({
   if (!claims?.claims) redirect("/login");
 
   const { lang, t } = await getDictionary();
+  const role = await getRole();
   const nav = [
     { href: "/", label: t.dashboard },
     { href: "/products", label: t.products },
     { href: "/movements", label: t.movements },
     { href: "/projects", label: t.projects },
+    ...(role === "admin"
+      ? [{ href: "/users", label: t.users }, { href: "/audit", label: t.auditLog }]
+      : []),
   ];
 
   return (

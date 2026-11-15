@@ -74,7 +74,10 @@ export default async function MovementsPage({
       <h1 className="text-3xl font-semibold">{t.movements}</h1>
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">
         <div>
-          <h2 className="mb-2 text-lg font-medium">{t.recent}</h2>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h2 className="text-lg font-medium">{t.recent}</h2>
+            <a href="/export/movements" className="btn-ghost">⬇ {t.exportCsv}</a>
+          </div>
           <form className="mb-2 flex gap-2">
             <input name="q" defaultValue={q} placeholder={t.searchHistory} className="input" />
             <button className="btn">{t.search}</button>
