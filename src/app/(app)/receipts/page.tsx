@@ -21,7 +21,7 @@ export default async function ReceiptsPage() {
         <h1 className="text-3xl font-semibold">{t.receipt}</h1>
         <Link href="/receipts/new" className="btn">{t.newReceipt}</Link>
       </div>
-      <DraftList rows={drafts} base="/receipts" t={t} lang={lang} />
+      <DraftList rows={drafts} base="/receipts" kind="receipts" t={t} lang={lang} />
       <div className="card overflow-x-auto p-4">
         {data?.length ? (
           <table className="data-table w-full text-left text-sm">

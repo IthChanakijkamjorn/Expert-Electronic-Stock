@@ -24,7 +24,7 @@ export default async function InvoicesPage() {
         <h1 className="text-3xl font-semibold">{t.taxInvoices}</h1>
         <Link href="/invoices/new" className="btn">{t.newTaxInvoice}</Link>
       </div>
-      <DraftList rows={drafts} base="/invoices" t={t} lang={lang} />
+      <DraftList rows={drafts} base="/invoices" kind="invoices" t={t} lang={lang} />
       <div className="card overflow-x-auto p-4">
         {invoices.length ? (
           <table className="data-table w-full text-left text-sm">

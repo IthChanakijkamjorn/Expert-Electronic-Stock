@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { deleteDraft } from "@/app/(app)/documents/actions";
+import { ConfirmButton } from "@/components/ConfirmButton";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 export type DraftRow = { id: string; customer: string; updated_at: string };
 
-export function DraftList({ rows, base, t, lang }: { rows: DraftRow[]; base: string; t: Dictionary; lang: string }) {
+export function DraftList({ rows, base, kind, t, lang }: { rows: DraftRow[]; base: string; kind: "invoices" | "quotations" | "receipts"; t: Dictionary; lang: string }) {
   if (!rows.length) return null;
   const stamp = (d: string) =>
     new Date(d).toLocaleString(lang === "th" ? "th-TH" : "en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Bangkok" });
@@ -18,6 +20,9 @@ export function DraftList({ rows, base, t, lang }: { rows: DraftRow[]; base: str
               {r.customer === "-" ? "—" : r.customer}
             </Link>
             <span className="text-muted">{t.lastUpdated}: {stamp(r.updated_at)}</span>
+            <form action={deleteDraft.bind(null, kind, r.id)} className="ml-auto">
+              <ConfirmButton message={t.deleteDraftConfirm} className="text-red-700 underline">{t.deleteDraft}</ConfirmButton>
+            </form>
           </li>
         ))}
       </ul>

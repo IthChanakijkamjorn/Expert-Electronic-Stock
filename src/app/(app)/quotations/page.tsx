@@ -20,7 +20,7 @@ export default async function QuotationsPage() {
         <h1 className="text-3xl font-semibold">{t.quotation}</h1>
         <Link href="/quotations/new" className="btn">{t.newQuotation}</Link>
       </div>
-      <DraftList rows={drafts} base="/quotations" t={t} lang={lang} />
+      <DraftList rows={drafts} base="/quotations" kind="quotations" t={t} lang={lang} />
       <div className="card overflow-x-auto p-4">
         {data?.length ? (
           <table className="data-table w-full text-left text-sm">
