@@ -61,14 +61,14 @@ export default async function AppLayout({
   return (
     <div className="flex flex-1 flex-col">
       <header className="sticky top-0 z-40 print:hidden bg-navy text-white shadow-[0_12px_30px_rgba(0,0,0,0.28)]">
-        <div className="mx-auto flex w-full max-w-[90rem] flex-wrap items-center justify-between gap-3 px-4 py-3 lg:flex-nowrap">
+        <div className="flex w-full flex-wrap items-center gap-3 px-4 py-3 lg:flex-nowrap lg:gap-8 lg:px-8">
           <Link href="/" className="flex shrink-0 items-center gap-3">
             <Image src="/logo.png" alt="" width={36} height={36} priority />
             <span className="font-serif text-base font-semibold lg:text-[15px] xl:text-lg">
               Expert Electronic &amp; Communication
             </span>
           </Link>
-          <nav className="order-last flex w-full flex-wrap gap-x-5 gap-y-1 text-[11px] font-semibold uppercase tracking-[0.12em] lg:order-none lg:w-auto lg:flex-nowrap lg:whitespace-nowrap">
+          <nav className="order-last flex w-full flex-wrap gap-x-5 lg:mr-auto gap-y-1 text-[11px] font-semibold uppercase tracking-[0.12em] lg:order-none lg:w-auto lg:flex-nowrap lg:whitespace-nowrap">
             {nav.map((n) => (
               <div key={n.label} className="group relative">
                 <Link href={n.href} className="block py-1 text-white/80 hover:text-white">
