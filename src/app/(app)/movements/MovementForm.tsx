@@ -54,7 +54,7 @@ export function MovementForm({
       <label>
         {t.reason}
         <select name="type" className={field} defaultValue={defaultType}>
-          {Object.entries(t.movementTypes).filter(([k]) => k !== "transfer").map(([k, v]) => (
+          {Object.entries(t.movementTypes).filter(([k]) => k !== "transfer" && k !== "sale").map(([k, v]) => (
             <option key={k} value={k}>{v}</option>
           ))}
         </select>

@@ -23,6 +23,7 @@ export default async function AppLayout({
     { href: "/", label: t.dashboard },
     { href: "/products", label: t.products },
     { href: "/movements", label: t.movements },
+    { href: "/invoices", label: t.taxInvoices },
     { href: "/scan", label: t.scan },
     { href: "/account", label: t.account },
     { href: "/projects", label: t.projects },

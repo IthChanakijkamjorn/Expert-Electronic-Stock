@@ -27,9 +27,9 @@ export type QuoteData = {
 };
 
 const BLACK = rgb(0, 0, 0);
-const money = (n: number) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+export const money = (n: number) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-function wrap(text: string, font: PDFFont, size: number, width: number) {
+export function wrap(text: string, font: PDFFont, size: number, width: number) {
   const out: string[] = [];
   let cur = "";
   for (const ch of text) {
@@ -42,7 +42,7 @@ function wrap(text: string, font: PDFFont, size: number, width: number) {
   return out.length ? out : [""];
 }
 
-function fit(text: string, font: PDFFont, size: number, width: number) {
+export function fit(text: string, font: PDFFont, size: number, width: number) {
   if (font.widthOfTextAtSize(text, size) <= width) return text;
   let t = text;
   while (t && font.widthOfTextAtSize(t + "…", size) > width) t = t.slice(0, -1);
