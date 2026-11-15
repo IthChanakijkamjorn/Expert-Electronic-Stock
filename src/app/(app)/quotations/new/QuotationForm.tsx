@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { createQuotation } from "../actions";
+import { saveQuotation } from "../actions";
 import { QuotationPaper, type QuotePaperData, type QuoteHandlers } from "@/components/QuotationPaper";
 import { DocVariantSelect } from "@/components/DocVariantSelect";
 import { BrandPicker } from "@/components/BrandPicker";
@@ -21,6 +21,7 @@ export function QuotationForm({
   initialLines,
   customer,
   quotedBy,
+  existing,
 }: {
   t: Dictionary;
   products: Product[];
@@ -31,15 +32,16 @@ export function QuotationForm({
   initialLines: { id: string; qty: number }[];
   customer: string;
   quotedBy: string;
+  existing?: { id: string; data: QuotePaperData; projectId: string; sigId: string; dropped: number };
 }) {
-  const [state, action, pending] = useActionState(createQuotation, null);
+  const [state, action, pending] = useActionState(saveQuotation.bind(null, existing?.id ?? null), null);
   const byId = new Map(products.map((p) => [p.id, p]));
   const toLine = (p: Product, qty: number): PaperLine => ({
     key: p.id, brand: p.brand ?? "", model: p.sku ?? "", name: p.name, unit: p.unit, qty: String(qty), price: String(sellPrice[p.id] ?? 0),
   });
-  const [sigId, setSigId] = useState(signatures.find((s) => s.is_default)?.id ?? "");
-  const [projectId, setProjectId] = useState(initialProject);
-  const [data, setData] = useState<QuotePaperData>({
+  const [sigId, setSigId] = useState(existing?.sigId ?? signatures.find((s) => s.is_default)?.id ?? "");
+  const [projectId, setProjectId] = useState(existing?.projectId ?? initialProject);
+  const [data, setData] = useState<QuotePaperData>(existing?.data ?? {
     number: "QT-____-____",
     company: defaultDocCompany("quote"),
     customer,
@@ -139,7 +141,8 @@ export function QuotationForm({
               ✎ {editCompany ? t.docDoneEditing : t.docEditCompany}
             </button>
             <DocVariantSelect value={data.variant ?? "original"} label={t.docVariant} onChange={(v) => setData((d) => ({ ...d, variant: v }))} />
-            <button type="button" className="btn ml-auto" disabled={invalid} onClick={() => { setPreview(true); window.scrollTo({ top: 0 }); }}>
+            <button name="intent" value="draft" formNoValidate disabled={pending} className="btn-ghost ml-auto">💾 {t.saveDraft}</button>
+            <button type="button" className="btn" disabled={invalid} onClick={() => { setPreview(true); window.scrollTo({ top: 0 }); }}>
               {t.docPreview} →
             </button>
           </>
@@ -147,10 +150,12 @@ export function QuotationForm({
           <>
             <button type="button" className="btn-ghost" onClick={() => setPreview(false)}>← {t.docBackToEdit}</button>
             <button type="button" className="btn-ghost" onClick={() => window.print()}>🖨 {t.docPrint}</button>
-            <button disabled={pending} className="btn ml-auto">{t.createQuotation}</button>
+            <button name="intent" value="draft" disabled={pending} className="btn-ghost ml-auto">💾 {t.saveDraft}</button>
+            <button name="intent" value="final" disabled={pending} className="btn">{t.createQuotation}</button>
           </>
         )}
         <p className="w-full text-sm text-muted">{preview ? t.docPreviewNote : t.quotationHelp}</p>
+        {!!existing?.dropped && <p className="w-full text-sm text-amber-700">{t.docDroppedLines.replace("{n}", String(existing.dropped))}</p>}
         {state?.error && <p className="w-full text-red-600">{t.saveFailed}</p>}
       </div>
 

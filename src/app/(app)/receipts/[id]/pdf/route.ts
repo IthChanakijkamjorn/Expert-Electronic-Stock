@@ -12,7 +12,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   if (!r) return new Response("not found", { status: 404 });
 
   const pdf = await buildReceipt({
-    number: r.number,
+    number: r.number ?? "DRAFT",
     date: new Date(r.receipt_date),
     variant: parseVariant(new URL(req.url).searchParams.get("doc")),
     customerCode: r.customer_code,
@@ -29,6 +29,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     company: r.company,
   });
   return new Response(Buffer.from(pdf), {
-    headers: { "Content-Type": "application/pdf", "Content-Disposition": `inline; filename="${r.number}.pdf"` },
+    headers: { "Content-Type": "application/pdf", "Content-Disposition": `inline; filename="${r.number ?? "DRAFT"}.pdf"` },
   });
 }

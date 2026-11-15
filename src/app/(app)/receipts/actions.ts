@@ -14,10 +14,11 @@ const money = (f: FormData, k: string) => {
   return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : NaN;
 };
 
-export async function createReceipt(_prev: ReceiptState, formData: FormData): Promise<ReceiptState> {
+export async function saveReceipt(id: string | null, _prev: ReceiptState, formData: FormData): Promise<ReceiptState> {
   const role = await getRole();
   if (role !== "admin" && role !== "manager") return { error: "failed" };
-  const customer = text(formData, "customer");
+  const draft = formData.get("intent") === "draft";
+  const customer = text(formData, "customer") ?? (draft ? "-" : null);
   let raw: { desc: string; qty: string; amount: number }[] = [];
   let company: unknown = null;
   try {
@@ -31,14 +32,12 @@ export async function createReceipt(_prev: ReceiptState, formData: FormData): Pr
     .filter((l) => l.desc);
   const cash = money(formData, "cash_amount");
   const cheque = money(formData, "cheque_amount");
-  if (!customer || !lines.length || lines.length > RECEIPT_MAX_LINES || lines.some((l) => !(l.amount >= 0)) || Number.isNaN(cash) || Number.isNaN(cheque)) {
+  if (!customer || (!draft && !lines.length) || lines.length > RECEIPT_MAX_LINES || lines.some((l) => !(l.amount >= 0)) || Number.isNaN(cash) || Number.isNaN(cheque)) {
     return { error: "invalid" };
   }
 
   const supabase = await createClient();
-  const { data: created, error } = await supabase
-    .from("receipts")
-    .insert({
+  const payload = {
       receipt_date: text(formData, "receipt_date") ?? undefined,
       customer_code: text(formData, "customer_code"),
       customer,
@@ -52,9 +51,12 @@ export async function createReceipt(_prev: ReceiptState, formData: FormData): Pr
       cheque_date: text(formData, "cheque_date"),
       cheque_amount: cheque,
       company,
-    })
-    .select("id")
-    .single();
+      status: draft ? "draft" : "final",
+      updated_at: new Date().toISOString(),
+    };
+  const { data: created, error } = id
+    ? await supabase.from("receipts").update(payload).eq("id", id).select("id").single()
+    : await supabase.from("receipts").insert(payload).select("id").single();
   if (error || !created) return { error: "failed" };
   revalidatePath("/receipts");
   revalidatePath("/documents");

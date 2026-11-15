@@ -2,16 +2,19 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n";
 import { invoiceTotals } from "@/lib/taxInvoice";
+import { DraftList } from "@/components/DraftList";
 import type { QuoteLine } from "@/lib/quotation";
 
 export default async function InvoicesPage() {
   const { lang, t } = await getDictionary();
   const supabase = await createClient();
-  const { data: invoices } = await supabase
+  const { data: all } = await supabase
     .from("tax_invoices")
-    .select("id, number, invoice_date, customer, vat, lines")
-    .order("created_at", { ascending: false })
+    .select("id, number, invoice_date, customer, vat, lines, status, updated_at")
+    .order("updated_at", { ascending: false })
     .limit(200);
+  const drafts = (all ?? []).filter((i) => i.status === "draft");
+  const invoices = (all ?? []).filter((i) => i.status === "final");
   const money = (n: number) =>
     n.toLocaleString(lang === "th" ? "th-TH" : "en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -21,8 +24,9 @@ export default async function InvoicesPage() {
         <h1 className="text-3xl font-semibold">{t.taxInvoices}</h1>
         <Link href="/invoices/new" className="btn">{t.newTaxInvoice}</Link>
       </div>
+      <DraftList rows={drafts} base="/invoices" t={t} lang={lang} />
       <div className="card overflow-x-auto p-4">
-        {invoices?.length ? (
+        {invoices.length ? (
           <table className="data-table w-full text-left text-sm">
             <thead>
               <tr>

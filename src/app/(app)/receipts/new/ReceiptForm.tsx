@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { createReceipt } from "../actions";
+import { saveReceipt } from "../actions";
 import { ReceiptPaper, type ReceiptHandlers, type ReceiptPaperData } from "@/components/ReceiptPaper";
 import { DocVariantSelect } from "@/components/DocVariantSelect";
 import { defaultDocCompany } from "@/lib/company";
@@ -9,9 +9,21 @@ import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 type InvoiceOption = { id: string; number: string; customerCode: string; customer: string; total: number };
 
-export function ReceiptForm({ t, invoices, salesperson }: { t: Dictionary; invoices: InvoiceOption[]; salesperson: string }) {
-  const [state, action, pending] = useActionState(createReceipt, null);
-  const [data, setData] = useState<ReceiptPaperData>({
+export function ReceiptForm({
+  t,
+  invoices,
+  salesperson,
+  existingId,
+  existing,
+}: {
+  t: Dictionary;
+  invoices: InvoiceOption[];
+  salesperson: string;
+  existingId?: string;
+  existing?: ReceiptPaperData;
+}) {
+  const [state, action, pending] = useActionState(saveReceipt.bind(null, existingId ?? null), null);
+  const [data, setData] = useState<ReceiptPaperData>(existing ?? {
     number: "RC-____-____",
     company: defaultDocCompany("receipt"),
     variant: "original",
@@ -86,7 +98,8 @@ export function ReceiptForm({ t, invoices, salesperson }: { t: Dictionary; invoi
               ✎ {editCompany ? t.docDoneEditing : t.docEditCompany}
             </button>
             <DocVariantSelect value={data.variant ?? "original"} label={t.docVariant} onChange={(v) => setData((d) => ({ ...d, variant: v }))} />
-            <button type="button" className="btn ml-auto" disabled={invalid} onClick={() => { setPreview(true); window.scrollTo({ top: 0 }); }}>
+            <button name="intent" value="draft" formNoValidate disabled={pending} className="btn-ghost ml-auto">💾 {t.saveDraft}</button>
+            <button type="button" className="btn" disabled={invalid} onClick={() => { setPreview(true); window.scrollTo({ top: 0 }); }}>
               {t.docPreview} →
             </button>
           </>
@@ -94,7 +107,8 @@ export function ReceiptForm({ t, invoices, salesperson }: { t: Dictionary; invoi
           <>
             <button type="button" className="btn-ghost" onClick={() => setPreview(false)}>← {t.docBackToEdit}</button>
             <button type="button" className="btn-ghost" onClick={() => window.print()}>🖨 {t.docPrint}</button>
-            <button disabled={pending} className="btn ml-auto">{t.recCreate}</button>
+            <button name="intent" value="draft" disabled={pending} className="btn-ghost ml-auto">💾 {t.saveDraft}</button>
+            <button name="intent" value="final" disabled={pending} className="btn">{t.recCreate}</button>
           </>
         )}
         <p className="w-full text-sm text-muted">{preview ? t.docPreviewNote : t.recNote}</p>

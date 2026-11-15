@@ -35,19 +35,21 @@ export default async function QuotationPage({
   return (
     <section className="flex flex-col gap-4">
       <div className="card flex flex-wrap items-center gap-3 print:hidden">
-        <h1 className="text-2xl font-semibold">{q.number}</h1>
+        <h1 className="text-2xl font-semibold">{q.number ?? t.draftLabel}</h1>
+        {q.status === "draft" && <span className="pill">{t.draftLabel}</span>}
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <Link href="/quotations" className="btn-ghost">← {t.quotation}</Link>
+          <Link href={`/quotations/${id}/edit`} className="btn-ghost">✎ {t.docEdit}</Link>
           <DocVariantSelect value={variant} label={t.docVariant} />
           <PrintButton label={`🖨 ${t.docPrint}`} />
           <a href={`/quotations/${id}/pdf?doc=${variant}`} target="_blank" className="btn">{t.invOpenPdf}</a>
         </div>
-        {created && <p className="w-full rounded-lg bg-emerald-50 px-3 py-2 text-emerald-700">{t.docSaved}</p>}
+        {created && <p className="w-full rounded-lg bg-emerald-50 px-3 py-2 text-emerald-700">{q.status === "draft" ? t.draftSaved : t.docSaved}</p>}
       </div>
       <div className="overflow-x-auto pb-4">
         <QuotationPaper
           data={{
-            number: q.number,
+            number: q.number ?? "DRAFT",
             company: mergeDocCompany(q.company, "quote"),
             customer: q.customer,
             attention: q.attention ?? "",

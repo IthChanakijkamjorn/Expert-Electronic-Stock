@@ -21,7 +21,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const pdf = await buildQuotation({
     signature,
     variant: parseVariant(new URL(req.url).searchParams.get("doc")),
-    number: q.number,
+    number: q.number ?? "DRAFT",
     date: new Date(q.quote_date),
     customer: q.customer,
     attention: q.attention,
@@ -39,6 +39,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     lines: q.lines as QuoteLine[],
   });
   return new Response(Buffer.from(pdf), {
-    headers: { "Content-Type": "application/pdf", "Content-Disposition": `inline; filename="${q.number}.pdf"` },
+    headers: { "Content-Type": "application/pdf", "Content-Disposition": `inline; filename="${q.number ?? "DRAFT"}.pdf"` },
   });
 }

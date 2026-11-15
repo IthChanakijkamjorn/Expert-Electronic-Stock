@@ -247,7 +247,7 @@ export default async function ProjectPage({
                 <ul className="space-y-1 text-sm">
                   {quotes.map((q) => (
                     <li key={q.id}>
-                      <Link className="underline" href={`/quotations/${q.id}`}>{q.number}</Link>
+                      <Link className="underline" href={`/quotations/${q.id}`}>{q.number ?? t.draftLabel}</Link>
                       <span className="text-muted"> · {q.customer} · {q.created_at.slice(0, 10)}</span>
                     </li>
                   ))}

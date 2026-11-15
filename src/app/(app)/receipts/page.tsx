@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n";
 import { getRole } from "@/lib/role";
+import { DraftList } from "@/components/DraftList";
 import { money } from "@/lib/quotation";
 
 export default async function ReceiptsPage() {
@@ -10,14 +11,17 @@ export default async function ReceiptsPage() {
   if (role !== "admin" && role !== "manager") redirect("/documents");
   const { lang, t } = await getDictionary();
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("receipts").select("id, number, receipt_date, customer, lines").order("created_at", { ascending: false }).limit(200);
+  const { data: all } = await supabase
+    .from("receipts").select("id, number, receipt_date, customer, lines, status, updated_at").order("updated_at", { ascending: false }).limit(200);
+  const drafts = (all ?? []).filter((r) => r.status === "draft");
+  const data = (all ?? []).filter((r) => r.status === "final");
   return (
     <section className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-semibold">{t.receipt}</h1>
         <Link href="/receipts/new" className="btn">{t.newReceipt}</Link>
       </div>
+      <DraftList rows={drafts} base="/receipts" t={t} lang={lang} />
       <div className="card overflow-x-auto p-4">
         {data?.length ? (
           <table className="data-table w-full text-left text-sm">

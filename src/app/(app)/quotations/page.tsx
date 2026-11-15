@@ -3,20 +3,24 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n";
 import { getRole } from "@/lib/role";
+import { DraftList } from "@/components/DraftList";
 
 export default async function QuotationsPage() {
   const role = await getRole();
   if (role !== "admin" && role !== "manager") redirect("/documents");
   const { lang, t } = await getDictionary();
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("quotations").select("id, number, quote_date, customer").order("created_at", { ascending: false }).limit(200);
+  const { data: all } = await supabase
+    .from("quotations").select("id, number, quote_date, customer, status, updated_at").order("updated_at", { ascending: false }).limit(200);
+  const drafts = (all ?? []).filter((q) => q.status === "draft");
+  const data = (all ?? []).filter((q) => q.status === "final");
   return (
     <section className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-semibold">{t.quotation}</h1>
         <Link href="/quotations/new" className="btn">{t.newQuotation}</Link>
       </div>
+      <DraftList rows={drafts} base="/quotations" t={t} lang={lang} />
       <div className="card overflow-x-auto p-4">
         {data?.length ? (
           <table className="data-table w-full text-left text-sm">

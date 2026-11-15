@@ -27,19 +27,21 @@ export default async function InvoicePage({
   return (
     <section className="flex flex-col gap-4">
       <div className="card flex flex-wrap items-center gap-3 print:hidden">
-        <h1 className="text-2xl font-semibold">{inv.number}</h1>
+        <h1 className="text-2xl font-semibold">{inv.number ?? t.draftLabel}</h1>
+        {inv.status === "draft" && <span className="pill">{t.draftLabel}</span>}
         <div className="ml-auto flex flex-wrap gap-2">
           <Link href="/invoices" className="btn-ghost">← {t.taxInvoices}</Link>
+          <Link href={`/invoices/${id}/edit`} className="btn-ghost">✎ {t.docEdit}</Link>
           <DocVariantSelect value={variant} label={t.docVariant} />
           <PrintButton label={`🖨 ${t.docPrint}`} />
           <a href={`/invoices/${id}/pdf?doc=${variant}`} target="_blank" className="btn">{t.invOpenPdf}</a>
         </div>
-        {created && <p className="w-full rounded-lg bg-emerald-50 px-3 py-2 text-emerald-700">{t.invCreated}</p>}
+        {created && <p className="w-full rounded-lg bg-emerald-50 px-3 py-2 text-emerald-700">{inv.status === "draft" ? t.draftSaved : t.invCreated}</p>}
       </div>
       <div className="overflow-x-auto pb-4">
         <InvoicePaper
           data={{
-            number: inv.number,
+            number: inv.number ?? "DRAFT",
             company: mergeDocCompany(inv.company),
             customerCode: inv.customer_code ?? "",
             customer: inv.customer,

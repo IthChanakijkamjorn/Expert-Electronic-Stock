@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
-import { createInvoice } from "../actions";
+import { saveInvoice } from "../actions";
 import { InvoicePaper, type PaperData, type PaperHandlers, type PaperLine } from "@/components/InvoicePaper";
 import { DocVariantSelect } from "@/components/DocVariantSelect";
 import { BrandPicker } from "@/components/BrandPicker";
@@ -18,6 +18,7 @@ export function InvoiceForm({
   projects,
   locations,
   salesperson,
+  existing,
 }: {
   t: Dictionary;
   products: Product[];
@@ -26,9 +27,10 @@ export function InvoiceForm({
   projects: { id: string; label: string }[];
   locations: { id: string; name: string; is_default: boolean }[];
   salesperson: string;
+  existing?: { id: string; status: "draft" | "final"; data: PaperData; projectId: string; locationId: string };
 }) {
-  const [state, action, pending] = useActionState(createInvoice, null);
-  const [data, setData] = useState<PaperData>({
+  const [state, action, pending] = useActionState(saveInvoice.bind(null, existing?.id ?? null), null);
+  const [data, setData] = useState<PaperData>(existing?.data ?? {
     number: "IV-____-____",
     company: defaultDocCompany(),
     customerCode: "",
@@ -44,8 +46,8 @@ export function InvoiceForm({
   });
   const [preview, setPreview] = useState(false);
   const [editCompany, setEditCompany] = useState(false);
-  const [projectId, setProjectId] = useState("");
-  const [locationId, setLocationId] = useState(locations.find((l) => l.is_default)?.id ?? locations[0]?.id ?? "");
+  const [projectId, setProjectId] = useState(existing?.projectId ?? "");
+  const [locationId, setLocationId] = useState(existing?.locationId ?? locations.find((l) => l.is_default)?.id ?? locations[0]?.id ?? "");
 
   const byId = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
   const available = (id: string) => stock[id]?.[locationId] ?? 0;
@@ -136,7 +138,8 @@ export function InvoiceForm({
               ✎ {editCompany ? t.docDoneEditing : t.docEditCompany}
             </button>
             <DocVariantSelect value={data.variant ?? "original"} label={t.docVariant} onChange={(v) => setData((d) => ({ ...d, variant: v }))} />
-            <button type="button" className="btn ml-auto" disabled={invalid} onClick={() => { setPreview(true); window.scrollTo({ top: 0 }); }}>
+            <button name="intent" value="draft" formNoValidate disabled={pending} className="btn-ghost ml-auto">💾 {t.saveDraft}</button>
+            <button type="button" className="btn" disabled={invalid} onClick={() => { setPreview(true); window.scrollTo({ top: 0 }); }}>
               {t.docPreview} →
             </button>
           </>
@@ -145,10 +148,12 @@ export function InvoiceForm({
           <>
             <button type="button" className="btn-ghost" onClick={() => setPreview(false)}>← {t.docBackToEdit}</button>
             <button type="button" className="btn-ghost" onClick={() => window.print()}>🖨 {t.docPrint}</button>
-            <button disabled={pending} className="btn ml-auto">{t.invCreate}</button>
+            <button name="intent" value="draft" disabled={pending} className="btn-ghost ml-auto">💾 {t.saveDraft}</button>
+            <button name="intent" value="final" disabled={pending} className="btn">{t.invCreate}</button>
           </>
         )}
         <p className="w-full text-sm text-muted">{preview ? t.docPreviewNote : t.invStockNote}</p>
+        {existing?.status === "final" && <p className="w-full text-sm text-amber-700">{t.invEditNote}</p>}
         {state?.error && (
           <p className="w-full text-red-600">{state.error === "insufficient" ? t.insufficientStock : t.saveFailed}</p>
         )}

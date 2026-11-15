@@ -30,19 +30,21 @@ export default async function ReceiptPage({
   return (
     <section className="flex flex-col gap-4">
       <div className="card flex flex-wrap items-center gap-3 print:hidden">
-        <h1 className="text-2xl font-semibold">{r.number}</h1>
+        <h1 className="text-2xl font-semibold">{r.number ?? t.draftLabel}</h1>
+        {r.status === "draft" && <span className="pill">{t.draftLabel}</span>}
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <Link href="/receipts" className="btn-ghost">← {t.receipt}</Link>
+          <Link href={`/receipts/${id}/edit`} className="btn-ghost">✎ {t.docEdit}</Link>
           <DocVariantSelect value={variant} label={t.docVariant} />
           <PrintButton label={`🖨 ${t.docPrint}`} />
           <a href={`/receipts/${id}/pdf?doc=${variant}`} target="_blank" className="btn">{t.invOpenPdf}</a>
         </div>
-        {created && <p className="w-full rounded-lg bg-emerald-50 px-3 py-2 text-emerald-700">{t.docSaved}</p>}
+        {created && <p className="w-full rounded-lg bg-emerald-50 px-3 py-2 text-emerald-700">{r.status === "draft" ? t.draftSaved : t.docSaved}</p>}
       </div>
       <div className="overflow-x-auto pb-4">
         <ReceiptPaper
           data={{
-            number: r.number,
+            number: r.number ?? "DRAFT",
             company: mergeDocCompany(r.company, "receipt"),
             variant,
             customerCode: r.customer_code ?? "",

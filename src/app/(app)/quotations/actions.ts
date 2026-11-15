@@ -13,10 +13,11 @@ const num = (f: FormData, k: string) => {
   return v === null || Number.isNaN(Number(v)) ? null : Math.max(0, Number(v));
 };
 
-export async function createQuotation(_prev: QuotationState, formData: FormData): Promise<QuotationState> {
+export async function saveQuotation(id: string | null, _prev: QuotationState, formData: FormData): Promise<QuotationState> {
   const role = await getRole();
   if (role !== "admin" && role !== "manager") return { error: "failed" };
-  const customer = text(formData, "customer");
+  const draft = formData.get("intent") === "draft";
+  const customer = text(formData, "customer") ?? (draft ? "-" : null);
   let raw: { product_id: string; qty: number; price: number }[] = [];
   let company: unknown = null;
   try {
@@ -25,29 +26,29 @@ export async function createQuotation(_prev: QuotationState, formData: FormData)
   } catch {
     return { error: "invalid" };
   }
-  if (!customer || !Array.isArray(raw) || !raw.length) return { error: "invalid" };
+  if (!customer || !Array.isArray(raw) || (!draft && !raw.length)) return { error: "invalid" };
 
   const wanted = new Map<string, { qty: number; price: number }>();
   for (const l of raw) {
-    const qty = Math.floor(Number(l.qty));
-    const price = Number(l.price);
+    const qty = draft ? Math.max(1, Math.floor(Number(l.qty)) || 1) : Math.floor(Number(l.qty));
+    const price = draft ? Math.max(0, Number(l.price) || 0) : Number(l.price);
     if (!l.product_id || !(qty > 0) || !(price >= 0)) return { error: "invalid" };
     wanted.set(l.product_id, { qty: (wanted.get(l.product_id)?.qty ?? 0) + qty, price });
   }
 
   const supabase = await createClient();
-  const { data: products } = await supabase.from("products").select("id, name, sku, brand, unit").in("id", [...wanted.keys()]);
-  if (products?.length !== wanted.size) return { error: "invalid" };
+  const { data: products } = wanted.size
+    ? await supabase.from("products").select("id, name, sku, brand, unit").in("id", [...wanted.keys()])
+    : { data: [] };
+  if (!products || products.length !== wanted.size) return { error: "invalid" };
   const order = raw.map((l) => l.product_id);
   const lines = [...new Set(order)].map((id) => {
     const p = products.find((x) => x.id === id)!;
     const w = wanted.get(id)!;
-    return { brand: p.brand ?? "", model: p.sku ?? "", name: p.name, unit: p.unit, qty: w.qty, price: w.price };
+    return { product_id: id, brand: p.brand ?? "", model: p.sku ?? "", name: p.name, unit: p.unit, qty: w.qty, price: w.price };
   });
 
-  const { data: created, error } = await supabase
-    .from("quotations")
-    .insert({
+  const payload = {
       project_id: text(formData, "project_id"),
       project_label: text(formData, "project_label"),
       quote_date: text(formData, "quote_date") ?? undefined,
@@ -65,9 +66,12 @@ export async function createQuotation(_prev: QuotationState, formData: FormData)
       signature_id: text(formData, "signature_id"),
       company,
       lines,
-    })
-    .select("id")
-    .single();
+      status: draft ? "draft" : "final",
+      updated_at: new Date().toISOString(),
+    };
+  const { data: created, error } = id
+    ? await supabase.from("quotations").update(payload).eq("id", id).select("id").single()
+    : await supabase.from("quotations").insert(payload).select("id").single();
   if (error || !created) return { error: "failed" };
   revalidatePath("/quotations");
   revalidatePath("/documents");

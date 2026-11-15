@@ -11,7 +11,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   if (!inv) return new Response("not found", { status: 404 });
 
   const pdf = await buildTaxInvoice({
-    number: inv.number,
+    number: inv.number ?? "DRAFT",
     date: new Date(inv.invoice_date),
     customerCode: inv.customer_code,
     customer: inv.customer,
@@ -25,6 +25,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     company: inv.company,
   });
   return new Response(Buffer.from(pdf), {
-    headers: { "Content-Type": "application/pdf", "Content-Disposition": `inline; filename="${inv.number}.pdf"` },
+    headers: { "Content-Type": "application/pdf", "Content-Disposition": `inline; filename="${inv.number ?? "DRAFT"}.pdf"` },
   });
 }
