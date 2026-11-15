@@ -12,6 +12,8 @@ import { RenameForm } from "@/components/RenameForm";
 import { ImageUploader } from "@/components/ImageUploader";
 import { BrandLogo } from "@/components/BrandLogo";
 import { setProductImage } from "../image-actions";
+import { addSerials, deleteSerial, issueSerial, returnSerial } from "../serial-actions";
+import { AddForm } from "@/components/AddForm";
 import { addProductFile, deleteProduct, deleteProductFile, renameProduct } from "../file-actions";
 
 const formatSize = (n: number | null) =>
@@ -49,6 +51,12 @@ export default async function ProductFilesPage({
         .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: false })
     : { data: [] };
+  const { data: serials } = await supabase
+    .from("product_serials")
+    .select("id, serial, status, issued_to")
+    .eq("product_id", productId)
+    .order("serial")
+    .limit(1000);
   const { data: brandRow } = product.brand
     ? await supabase.from("brands").select("logo_path").eq("name", product.brand).maybeSingle()
     : { data: null };
@@ -125,6 +133,54 @@ export default async function ProductFilesPage({
               <DeleteButton action={deleteProduct.bind(null, productId)} name={product.name} labels={{ delete: t.deleteProduct, warning: t.deleteWarning, message: t.confirmDeleteProduct, ok: t.ok, cancel: t.cancel }} />
             )}
           </div>
+        )}
+      </div>
+      <h2 className="text-xl font-semibold text-navy">{t.serials}</h2>
+      <div className="card flex flex-col gap-3 p-4">
+        {serials?.length ? (
+          <div className="overflow-x-auto">
+            <table className="data-table w-full text-left text-sm">
+              <tbody>
+                {serials.map((s) => (
+                  <tr key={s.id} className="border-t border-zinc-100">
+                    <td className="py-2 pr-3 font-mono">{s.serial}</td>
+                    <td className="pr-3">
+                      <span className={`pill ${s.status === "issued" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
+                        {s.status === "issued" ? t.issuedTo : t.inStock}
+                      </span>
+                      {s.issued_to && <span className="ml-2 text-muted">{s.issued_to}</span>}
+                    </td>
+                    <td className="text-right">
+                      {canManage && (
+                        <span className="flex flex-wrap items-center justify-end gap-3">
+                          {s.status === "issued" ? (
+                            <form action={returnSerial.bind(null, productId, s.id)}>
+                              <button className="font-semibold text-navy underline">{t.returnSerial}</button>
+                            </form>
+                          ) : (
+                            <form action={issueSerial.bind(null, productId, s.id)} className="flex gap-2">
+                              <input name="issued_to" className="input w-44" placeholder={t.issueTo} />
+                              <button className="font-semibold text-navy underline">{t.issue}</button>
+                            </form>
+                          )}
+                          <form action={deleteSerial.bind(null, productId, s.id)}>
+                            <button className="text-red-600 underline">{t.remove}</button>
+                          </form>
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-muted">{t.noSerials}</p>
+        )}
+        {canManage && (
+          <AddForm action={addSerials.bind(null, productId)} submitLabel={t.addSerials}>
+            <textarea name="serials" rows={3} required className="input" placeholder={t.serialsHelp} />
+          </AddForm>
         )}
       </div>
       <h2 className="text-xl font-semibold text-navy">{t.files}</h2>
