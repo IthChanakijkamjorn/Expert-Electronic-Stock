@@ -23,6 +23,7 @@ export type QuoteData = {
   vat: boolean;
   quotedBy: string | null;
   lines: QuoteLine[];
+  signature?: Uint8Array | null;
 };
 
 const BLACK = rgb(0, 0, 0);
@@ -48,6 +49,15 @@ function fit(text: string, font: PDFFont, size: number, width: number) {
   return t + "…";
 }
 
+async function embedSignature(doc: PDFDocument, bytes: Uint8Array) {
+  try {
+    const isPng = bytes[0] === 0x89 && bytes[1] === 0x50;
+    return await (isPng ? doc.embedPng(bytes) : doc.embedJpg(bytes));
+  } catch {
+    return null;
+  }
+}
+
 export async function buildQuotation(q: QuoteData) {
   const [regularBytes, boldBytes, logoBytes] = await Promise.all([
     readFile(path.join(process.cwd(), "fonts", "Sarabun-Regular.ttf")),
@@ -63,7 +73,7 @@ export async function buildQuotation(q: QuoteData) {
   const W = 595;
   const H = 842;
   const M = 28;
-  const FOOT = 178;
+  const FOOT = 200;
   const LINE = 0.6;
   const tableW = W - 2 * M;
   const widths = [32, 66, 78, 168, 52, 56, 32, 55];
@@ -214,7 +224,7 @@ export async function buildQuotation(q: QuoteData) {
     rightAt(value, W - M - 5, by + 7, sizeText, strong ? bold : font);
   });
 
-  const row2H = 62;
+  const row2H = 84;
   const y2 = fy - row1H - row2H;
   const split = 300;
   box(M, y2, split - M, row2H);
@@ -223,6 +233,17 @@ export async function buildQuotation(q: QuoteData) {
   hline(y2 + row2H - 18, M, split);
   centered(q.paymentTerms ?? "", M, split - M, y2 + row2H - 36);
   centered("ผู้อนุมัติ / APPROVED BY", split, W - M - split, y2 + row2H - 13, sizeText, bold);
+  if (q.signature) {
+    const img = await embedSignature(doc, q.signature);
+    if (img) {
+      const maxW = W - M - split - 40;
+      const maxH = 40;
+      const scale = Math.min(maxW / img.width, maxH / img.height);
+      const w = img.width * scale;
+      const h = img.height * scale;
+      page.drawImage(img, { x: split + (W - M - split - w) / 2, y: y2 + 30 + (maxH - h) / 2, width: w, height: h });
+    }
+  }
   centered(COMPANY.approverName, split, W - M - split, y2 + 16);
   centered(`( ${COMPANY.approverTitle} )`, split, W - M - split, y2 + 4);
 

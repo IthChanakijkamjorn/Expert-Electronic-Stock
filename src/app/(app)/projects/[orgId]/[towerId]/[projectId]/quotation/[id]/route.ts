@@ -19,7 +19,12 @@ export async function GET(
     .maybeSingle();
   if (!q) return new Response("not found", { status: 404 });
 
+  const { data: setting } = await supabase.from("company_settings").select("value").eq("key", "signature").maybeSingle();
+  const sigFile = setting?.value ? (await supabase.storage.from("files").download(setting.value)).data : null;
+  const signature = sigFile ? new Uint8Array(await sigFile.arrayBuffer()) : null;
+
   const pdf = await buildQuotation({
+    signature,
     number: q.number,
     date: new Date(q.created_at),
     customer: q.customer,

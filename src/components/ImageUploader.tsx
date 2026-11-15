@@ -9,11 +9,13 @@ export function ImageUploader({
   record,
   label,
   failedText,
+  accept = "image/png,image/jpeg,image/webp,image/svg+xml",
 }: {
   prefix: string;
   record: (path: string) => Promise<void>;
   label: string;
   failedText: string;
+  accept?: string;
 }) {
   const router = useRouter();
   const [status, setStatus] = useState<"idle" | "busy" | "failed">("idle");
@@ -36,7 +38,7 @@ export function ImageUploader({
         {status === "busy" ? "…" : label}
         <input
           type="file"
-          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+          accept={accept}
           disabled={status === "busy"}
           onChange={(e) => {
             onChange(e.target.files?.[0]);
