@@ -9,6 +9,9 @@ import { ActiveShares } from "@/components/ActiveShares";
 import { ShareButton } from "@/components/ShareButton";
 import { DeleteButton } from "@/components/DeleteButton";
 import { RenameForm } from "@/components/RenameForm";
+import { ImageUploader } from "@/components/ImageUploader";
+import { BrandLogo } from "@/components/BrandLogo";
+import { setProductImage } from "../image-actions";
 import { addProductFile, deleteProduct, deleteProductFile, renameProduct } from "../file-actions";
 
 const formatSize = (n: number | null) =>
@@ -27,7 +30,7 @@ export default async function ProductFilesPage({
 
   const { data: product } = await supabase
     .from("product_stock")
-    .select("id, name, sku, brand, unit, location, min_stock, stock")
+    .select("id, name, sku, brand, unit, location, min_stock, stock, image_path")
     .eq("id", productId)
     .maybeSingle();
   if (!product) notFound();
@@ -46,7 +49,16 @@ export default async function ProductFilesPage({
         .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: false })
     : { data: [] };
-  const urls = await signedUrls((files ?? []).map((f) => f.storage_path));
+  const { data: brandRow } = product.brand
+    ? await supabase.from("brands").select("logo_path").eq("name", product.brand).maybeSingle()
+    : { data: null };
+  const urls = await signedUrls([
+    ...(files ?? []).map((f) => f.storage_path),
+    product.image_path,
+    brandRow?.logo_path,
+  ]);
+  const imageUrl = product.image_path ? urls.get(product.image_path) : undefined;
+  const logoUrl = brandRow?.logo_path ? urls.get(brandRow.logo_path) : undefined;
   const renameLabels = { rename: t.rename, save: t.save, cancel: t.cancel, failed: t.saveFailed };
   const shareLabels = {
     share: t.share,
@@ -61,10 +73,33 @@ export default async function ProductFilesPage({
   return (
     <section className="flex flex-col gap-6">
       <div className="card flex flex-col gap-5">
-        <div>
-          <Link href={product.brand ? `/products/brand/${encodeURIComponent(product.brand)}` : "/products"} className="text-sm text-muted hover:underline">{t.back}</Link>
-          <p className="eyebrow mt-3">{[product.brand, product.sku].filter(Boolean).join(" · ")}</p>
-          <h1 className="text-3xl font-semibold">{product.name}</h1>
+        <div className="flex flex-col gap-5 sm:flex-row">
+          <div className="flex w-full shrink-0 flex-col items-start gap-2 sm:w-56">
+            <div className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl bg-[#f5f5ff]">
+              {imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={imageUrl} alt={product.name} className="h-full w-full object-contain p-2" />
+              ) : (
+                <span className="text-6xl opacity-30">📦</span>
+              )}
+            </div>
+            {canManage && (
+              <ImageUploader
+                prefix={`images/products/${productId}`}
+                record={setProductImage.bind(null, productId)}
+                label={imageUrl ? t.changePhoto : t.addPhoto}
+                failedText={t.uploadFailed}
+              />
+            )}
+          </div>
+          <div>
+            <Link href={product.brand ? `/products/brand/${encodeURIComponent(product.brand)}` : "/products"} className="text-sm text-muted hover:underline">{t.back}</Link>
+            <div className="mt-3 flex items-center gap-3">
+              {product.brand && <BrandLogo name={product.brand} url={logoUrl} size={44} />}
+              <p className="eyebrow">{[product.brand, product.sku].filter(Boolean).join(" · ")}</p>
+            </div>
+            <h1 className="mt-2 text-3xl font-semibold">{product.name}</h1>
+          </div>
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="rounded-2xl bg-[#f5f5ff] p-4">

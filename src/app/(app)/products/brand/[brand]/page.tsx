@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n";
+import { getRole } from "@/lib/role";
+import { signedUrls } from "@/lib/storage";
+import { BrandLogo } from "@/components/BrandLogo";
+import { ImageUploader } from "@/components/ImageUploader";
+import { setBrandLogo } from "../../image-actions";
 
 export default async function BrandPage({
   params,
@@ -18,17 +23,22 @@ export default async function BrandPage({
 
   let query = supabase
     .from("product_stock")
-    .select("id, sku, name, unit, min_stock, stock")
+    .select("id, sku, name, unit, min_stock, stock, image_path")
     .eq("active", true)
     .order("name")
     .limit(1000);
   query = brand === "_" ? query.is("brand", null) : query.eq("brand", brand);
   const term = q.replace(/[%,()*\\]/g, " ").trim();
   if (term) query = query.or(`name.ilike.%${term}%,sku.ilike.%${term}%`);
-  const [{ data: products }, { data: fileRows }] = await Promise.all([
+  const role = await getRole();
+  const canManage = role === "admin" || role === "manager";
+  const [{ data: products }, { data: fileRows }, { data: brandRow }] = await Promise.all([
     query,
     supabase.from("product_files").select("product_id").limit(10000),
+    title ? supabase.from("brands").select("logo_path").eq("name", title).maybeSingle() : Promise.resolve({ data: null }),
   ]);
+  const urls = await signedUrls([brandRow?.logo_path, ...(products ?? []).map((p) => p.image_path)]);
+  const logoUrl = brandRow?.logo_path ? urls.get(brandRow.logo_path) : undefined;
   const counts = new Map<string, number>();
   fileRows?.forEach((r) => counts.set(r.product_id, (counts.get(r.product_id) ?? 0) + 1));
 
@@ -37,13 +47,19 @@ export default async function BrandPage({
       <div>
         <Link href="/products" className="text-sm text-muted hover:underline">{t.back}</Link>
         <div className="mt-3 flex items-center gap-4">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-navy font-serif text-2xl text-white">
-            {(title ?? t.noBrand).charAt(0).toUpperCase()}
-          </span>
+          <BrandLogo name={title ?? t.noBrand} url={logoUrl} size={64} />
           <div>
             <p className="eyebrow">{t.brand}</p>
             <h1 className="text-3xl font-semibold">{title ?? t.noBrand}</h1>
           </div>
+          {canManage && title && (
+            <ImageUploader
+              prefix="images/brands"
+              record={setBrandLogo.bind(null, title)}
+              label={logoUrl ? t.changeLogo : t.addLogo}
+              failedText={t.uploadFailed}
+            />
+          )}
           <span className="pill ml-auto bg-white text-navy shadow-sm">{products?.length ?? 0} {t.items}</span>
         </div>
       </div>
@@ -59,6 +75,14 @@ export default async function BrandPage({
             const files = counts.get(p.id) ?? 0;
             return (
               <Link key={p.id} href={`/products/${p.id}`} className="card card-link flex flex-col gap-4">
+                <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-2xl bg-[#f5f5ff]">
+                  {p.image_path && urls.get(p.image_path) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={urls.get(p.image_path)} alt={p.name} loading="lazy" className="h-full w-full object-contain p-2" />
+                  ) : (
+                    <span className="text-4xl opacity-30">📦</span>
+                  )}
+                </div>
                 <div className="flex items-start justify-between gap-3">
                   <h3 className="font-semibold leading-snug text-navy">{p.name}</h3>
                   <span className={`pill shrink-0 ${out ? "bg-red-100 text-red-700" : low ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>

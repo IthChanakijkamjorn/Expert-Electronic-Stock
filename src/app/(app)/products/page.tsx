@@ -2,6 +2,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n";
 import { getRole } from "@/lib/role";
+import { BrandLogo } from "@/components/BrandLogo";
+import { signedUrls } from "@/lib/storage";
 import { ActiveShares } from "@/components/ActiveShares";
 
 export const NO_BRAND = "_";
@@ -33,6 +35,9 @@ export default async function ProductsPage({
       .limit(100),
   ]);
 
+  const { data: brandRows } = await supabase.from("brands").select("name, logo_path");
+  const logoUrls = await signedUrls((brandRows ?? []).map((b) => b.logo_path));
+  const logos = new Map((brandRows ?? []).map((b) => [b.name, b.logo_path ? logoUrls.get(b.logo_path) : undefined]));
   const brands = new Map<string, number>();
   products?.forEach((p) => {
     const b = p.brand?.trim() || NO_BRAND;
@@ -93,9 +98,7 @@ export default async function ProductsPage({
               href={`/products/brand/${encodeURIComponent(brand)}`}
               className="card card-link flex items-center gap-4"
             >
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-navy font-serif text-xl text-white">
-                {(brand === NO_BRAND ? t.noBrand : brand).charAt(0).toUpperCase()}
-              </span>
+              <BrandLogo name={brand === NO_BRAND ? t.noBrand : brand} url={logos.get(brand)} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-lg font-semibold text-navy">{brand === NO_BRAND ? t.noBrand : brand}</span>
                 <span className="block text-sm text-muted">{count} {t.items}</span>
