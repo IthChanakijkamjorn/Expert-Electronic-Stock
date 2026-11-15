@@ -68,7 +68,8 @@ export default async function AppLayout({
               Expert Electronic &amp; Communication
             </span>
           </Link>
-          <nav className="order-last flex w-full flex-wrap gap-x-6 gap-y-1 text-[11px] font-semibold uppercase tracking-[0.12em] lg:order-none lg:w-auto lg:flex-nowrap lg:whitespace-nowrap lg:gap-x-4">
+          <div className="contents lg:flex lg:items-center lg:gap-6">
+          <nav className="order-last flex w-full flex-wrap gap-x-6 gap-y-1 text-[11px] font-semibold uppercase tracking-[0.12em] lg:order-none lg:w-auto lg:flex-nowrap lg:whitespace-nowrap lg:gap-x-6">
             {nav.map((n) => (
               <div key={n.label} className="group relative">
                 <Link href={n.href} className="block py-1 text-white/80 hover:text-white">
@@ -97,6 +98,7 @@ export default async function AppLayout({
                 {t.logout}
               </button>
             </form>
+          </div>
           </div>
         </div>
       </header>
