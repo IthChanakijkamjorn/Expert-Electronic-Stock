@@ -29,8 +29,8 @@ export default async function AppLayout({
       children: [
         { href: "/products", label: t.products },
         { href: "/movements", label: t.movements },
-        { href: "/low-stock", label: t.lowStock },
-        ...(manager ? [{ href: "/stocktake", label: t.stocktake }, { href: "/locations", label: t.locations }] : []),
+        { href: "/stock-list", label: t.stockList },
+        ...(manager ? [{ href: "/locations", label: t.locations }] : []),
       ],
     },
     {

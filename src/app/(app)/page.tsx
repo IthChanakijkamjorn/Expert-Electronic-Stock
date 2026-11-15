@@ -28,8 +28,8 @@ export default async function Dashboard() {
       items: [
         { href: "/products", label: t.products },
         { href: "/movements", label: t.movements },
-        { href: "/low-stock", label: t.lowStock },
-        ...(manager ? [{ href: "/stocktake", label: t.stocktake }, { href: "/locations", label: t.locations }] : []),
+        { href: "/stock-list", label: t.stockList },
+        ...(manager ? [{ href: "/locations", label: t.locations }] : []),
       ],
     },
     {
@@ -78,13 +78,13 @@ export default async function Dashboard() {
         </Link>
       )}
       {negCount > 0 && (
-        <Link href="/low-stock" className="card card-link flex items-center justify-between gap-3 !border-red-300 !bg-red-50 text-lg font-semibold text-red-800">
+        <Link href="/stock-list?low=1" className="card card-link flex items-center justify-between gap-3 !border-red-300 !bg-red-50 text-lg font-semibold text-red-800">
           🔴 {t.negativeStockTitle}: {negCount}
           <span className="arrow-chip">→</span>
         </Link>
       )}
       {lowCount > 0 && (
-        <Link href="/low-stock" className="card card-link flex items-center justify-between gap-3 !border-amber-300 !bg-amber-50 text-lg font-semibold text-amber-800">
+        <Link href="/stock-list?low=1" className="card card-link flex items-center justify-between gap-3 !border-amber-300 !bg-amber-50 text-lg font-semibold text-amber-800">
           ⚠ {t.lowStockTitle}: {lowCount}
           <span className="arrow-chip">→</span>
         </Link>

@@ -2,13 +2,14 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n";
 
-export default async function LowStockPage() {
+export default async function StockListPage({ searchParams }: { searchParams: Promise<{ low?: string }> }) {
+  const { low: onlyLow } = await searchParams;
   const { t } = await getDictionary();
   const supabase = await createClient();
   const { data } = await supabase
     .from("product_stock").select("id, name, sku, brand, unit, min_stock, stock")
-    .eq("active", true).order("name").limit(2000);
-  const low = (data ?? []).filter((p) => p.stock <= p.min_stock);
+    .eq("active", true).order("name").limit(5000);
+  const low = (data ?? []).filter((p) => !onlyLow || p.stock <= p.min_stock);
   const groups = new Map<string, typeof low>();
   low.forEach((p) => {
     const b = p.brand?.trim() || t.noBrand;
@@ -17,10 +18,13 @@ export default async function LowStockPage() {
   return (
     <section className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-semibold">{t.lowStockTitle}</h1>
-        <a href="/export/products?low=1" className="btn-ghost">⬇ {t.exportCsv}</a>
+        <h1 className="text-3xl font-semibold">{onlyLow ? t.lowStockTitle : t.stockList}</h1>
+        <div className="flex flex-wrap gap-2">
+          <Link href={onlyLow ? "/stock-list" : "/stock-list?low=1"} className="btn-ghost">{onlyLow ? t.showAllProducts : t.showLowOnly}</Link>
+          <a href={onlyLow ? "/export/products?low=1" : "/export/products"} className="btn-ghost">⬇ {t.exportCsv}</a>
+        </div>
       </div>
-      {low.length === 0 && <p className="text-muted">{t.noLowStock}</p>}
+      {low.length === 0 && <p className="text-muted">{onlyLow ? t.noLowStock : t.noItems}</p>}
       {[...groups.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([brand, items]) => (
         <div key={brand} className="card p-4">
           <h2 className="mb-2 font-semibold text-navy">{brand} <span className="text-muted">({items.length})</span></h2>
@@ -31,7 +35,7 @@ export default async function LowStockPage() {
                 <tr key={p.id} className="border-t border-zinc-100">
                   <td className="py-2 pr-3">{p.sku}</td>
                   <td className="pr-3"><Link href={`/products/${p.id}`} className="font-semibold text-navy underline">{p.name}</Link></td>
-                  <td className={`pr-3 text-right font-semibold ${p.stock <= 0 ? "text-red-700" : "text-amber-700"}`}>{p.stock} {p.unit}</td>
+                  <td className={`pr-3 text-right font-semibold ${p.stock <= 0 ? "text-red-700" : p.stock <= p.min_stock ? "text-amber-700" : ""}`}>{p.stock} {p.unit}</td>
                   <td className="text-right">{p.min_stock}</td>
                 </tr>
               ))}
