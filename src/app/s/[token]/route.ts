@@ -7,7 +7,7 @@ const page = (title: string, body: string, status: number) =>
     { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } },
   );
 
-export async function GET(_req: Request, { params }: { params: Promise<{ token: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,7 +25,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
   }
   const { data: signed } = await supabase.storage
     .from("files")
-    .createSignedUrl(share.storage_path, 120, { download: share.file_name });
+    .createSignedUrl(
+      share.storage_path,
+      120,
+      new URL(req.url).searchParams.has("download") ? { download: share.file_name } : undefined,
+    );
   if (!signed?.signedUrl) return page("File not found / ไม่พบไฟล์", "The file is no longer available.", 404);
   const res = NextResponse.redirect(signed.signedUrl);
   res.headers.set("cache-control", "no-store");
