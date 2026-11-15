@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n";
 import { getRole } from "@/lib/role";
 import { signedUrls } from "@/lib/storage";
+import { ActiveShares } from "@/components/ActiveShares";
 import { ShareButton } from "@/components/ShareButton";
 import { FileUploader } from "@/components/FileUploader";
 import { MovementForm } from "../../../../movements/MovementForm";
@@ -56,6 +57,15 @@ export default async function ProjectPage({
       .order("name")
       .limit(1000),
   ]);
+  const { data: shares } = files?.length
+    ? await supabase
+        .from("file_shares")
+        .select("id, token, file_name, expires_at")
+        .in("storage_path", files.map((f) => f.storage_path))
+        .is("revoked_at", null)
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false })
+    : { data: [] };
   const urls = await signedUrls((files ?? []).map((f) => f.storage_path));
 
   const usage = new Map<string, { name: string; unit: string; net: number }>();
@@ -136,6 +146,12 @@ export default async function ProjectPage({
           </div>
         ) : (
           <p className="text-muted">{t.noFiles}</p>
+        )}
+        {!!shares?.length && (
+          <div className="card p-4">
+            <h3 className="mb-2 font-medium">{t.activeLinks}</h3>
+            <ActiveShares shares={shares} locale={lang === "th" ? "th-TH" : "en-GB"} labels={{ copy: t.copy, copied: t.copied, revoke: t.revoke, expires: t.expires }} />
+          </div>
         )}
       </div>
 

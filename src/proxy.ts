@@ -21,9 +21,8 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: claims } = await supabase.auth.getClaims();
+  const user = claims?.claims ?? null;
 
   const isLogin = request.nextUrl.pathname.startsWith("/login");
   const isShare = request.nextUrl.pathname.startsWith("/s/");

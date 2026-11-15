@@ -12,10 +12,8 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { data: claims } = await supabase.auth.getClaims();
+  if (!claims?.claims) redirect("/login");
 
   const { lang, t } = await getDictionary();
   const nav = [

@@ -5,6 +5,7 @@ import { getDictionary } from "@/lib/i18n";
 import { getRole } from "@/lib/role";
 import { signedUrls } from "@/lib/storage";
 import { FileUploader } from "@/components/FileUploader";
+import { ActiveShares } from "@/components/ActiveShares";
 import { ShareButton } from "@/components/ShareButton";
 import { DeleteButton } from "@/components/DeleteButton";
 import { RenameForm } from "@/components/RenameForm";
@@ -36,6 +37,15 @@ export default async function ProductFilesPage({
     .select("id, storage_path, file_name, size_bytes, created_at")
     .eq("product_id", productId)
     .order("created_at", { ascending: false });
+  const { data: shares } = files?.length
+    ? await supabase
+        .from("file_shares")
+        .select("id, token, file_name, expires_at")
+        .in("storage_path", files.map((f) => f.storage_path))
+        .is("revoked_at", null)
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false })
+    : { data: [] };
   const urls = await signedUrls((files ?? []).map((f) => f.storage_path));
   const renameLabels = { rename: t.rename, save: t.save, cancel: t.cancel, failed: t.saveFailed };
   const shareLabels = {
@@ -120,6 +130,14 @@ export default async function ProductFilesPage({
         </div>
       ) : (
         <p className="text-muted">{t.noFiles}</p>
+      )}
+      {!!shares?.length && (
+        <>
+          <h2 className="text-xl font-semibold text-navy">{t.activeLinks}</h2>
+          <div className="card p-4">
+            <ActiveShares shares={shares} locale={lang === "th" ? "th-TH" : "en-GB"} labels={{ copy: t.copy, copied: t.copied, revoke: t.revoke, expires: t.expires }} />
+          </div>
+        </>
       )}
     </section>
   );

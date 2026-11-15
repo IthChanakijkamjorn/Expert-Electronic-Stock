@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n";
 import { getRole } from "@/lib/role";
-import { revokeShare } from "./file-actions";
+import { ActiveShares } from "@/components/ActiveShares";
 
 export const NO_BRAND = "_";
 
@@ -26,7 +26,7 @@ export default async function ProductsPage({
     query,
     supabase
       .from("file_shares")
-      .select("id, file_name, expires_at")
+      .select("id, token, file_name, expires_at")
       .is("revoked_at", null)
       .gt("expires_at", new Date().toISOString())
       .order("created_at", { ascending: false })
@@ -113,19 +113,7 @@ export default async function ProductsPage({
           <h2 className="text-xl font-semibold text-navy">{t.activeLinks}</h2>
           {shares?.length ? (
             <div className="card p-4">
-              <ul className="divide-y divide-[#ece8f2] text-sm">
-                {shares.map((s) => (
-                  <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
-                    <span>{s.file_name}</span>
-                    <span className="flex items-center gap-4">
-                      <span className="text-muted">{t.expires} {fmt(s.expires_at)}</span>
-                      <form action={revokeShare.bind(null, s.id)}>
-                        <button className="text-red-600 underline">{t.revoke}</button>
-                      </form>
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <ActiveShares shares={shares} locale={lang === "th" ? "th-TH" : "en-GB"} labels={{ copy: t.copy, copied: t.copied, revoke: t.revoke, expires: t.expires }} />
             </div>
           ) : (
             <p className="text-muted">{t.noLinks}</p>
