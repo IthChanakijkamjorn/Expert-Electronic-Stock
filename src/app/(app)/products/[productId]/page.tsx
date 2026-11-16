@@ -30,7 +30,7 @@ export default async function ProductFilesPage({
 
   const { data: product } = await supabase
     .from("product_stock")
-    .select("id, name, model, brand, unit, stock, image_path")
+    .select("id, name, model, brand, unit, stock, image_path, category, sub_category, description")
     .eq("id", productId)
     .maybeSingle();
   if (!product) notFound();
@@ -101,6 +101,10 @@ export default async function ProductFilesPage({
               <p className="eyebrow">{[product.brand, product.model].filter(Boolean).join(" · ")}</p>
             </div>
             <h1 className="mt-2 text-3xl font-semibold">{product.name}</h1>
+            {(product.category || product.sub_category) && (
+              <p className="mt-1 text-sm text-muted">{[product.category, product.sub_category].filter(Boolean).join(" / ")}</p>
+            )}
+            {product.description && <p className="mt-3 max-w-2xl text-sm leading-relaxed">{product.description}</p>}
           </div>
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
@@ -119,6 +123,8 @@ export default async function ProductFilesPage({
               <form action={updateProductDetails.bind(null, productId)} className="mt-3 grid gap-3 sm:grid-cols-3">
                 <label className="text-sm">{t.brand}<input name="brand" defaultValue={product.brand ?? ""} className="input mt-1" /></label>
                 <label className="text-sm">{t.modelLabel}<input name="model" defaultValue={product.model ?? ""} className="input mt-1" /></label>
+                <label className="text-sm">{t.category}<input name="category" defaultValue={product.category ?? ""} className="input mt-1" /></label>
+                <label className="text-sm">{t.subCategory}<input name="sub_category" defaultValue={product.sub_category ?? ""} className="input mt-1" /></label>
                 <label className="text-sm">{t.descriptionLabel}<input name="name" required defaultValue={product.name} className="input mt-1" /></label>
                 <button className="btn sm:col-span-3 sm:w-fit">{t.save}</button>
               </form>

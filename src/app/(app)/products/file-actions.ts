@@ -82,8 +82,10 @@ export async function updateProductDetails(productId: string, formData: FormData
   const model = String(formData.get("model") ?? "").trim() || null;
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return;
+  const category = String(formData.get("category") ?? "").trim() || null;
+  const sub_category = String(formData.get("sub_category") ?? "").trim() || null;
   const supabase = await createClient();
-  const { error } = await supabase.from("products").update({ brand, model, name }).eq("id", productId);
+  const { error } = await supabase.from("products").update({ brand, model, name, category, sub_category }).eq("id", productId);
   if (error) throw new Error(error.message);
   revalidatePath("/products", "layout");
 }

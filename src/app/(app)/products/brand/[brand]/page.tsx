@@ -23,8 +23,10 @@ export default async function BrandPage({
 
   let query = supabase
     .from("product_stock")
-    .select("id, model, name, unit, stock, image_path")
+    .select("id, model, name, unit, stock, image_path, category, sub_category")
     .eq("active", true)
+    .order("category", { nullsFirst: false })
+    .order("sub_category", { nullsFirst: false })
     .order("name")
     .limit(1000);
   query = brand === "_" ? query.is("brand", null) : query.eq("brand", brand);
@@ -41,6 +43,11 @@ export default async function BrandPage({
   const logoUrl = brandRow?.logo_path ? urls.get(brandRow.logo_path) : undefined;
   const counts = new Map<string, number>();
   fileRows?.forEach((r) => counts.set(r.product_id, (counts.get(r.product_id) ?? 0) + 1));
+
+  const groups = [...(products ?? []).reduce((m, p) => {
+    const k = [p.category, p.sub_category].filter(Boolean).join(" / ");
+    return m.set(k, [...(m.get(k) ?? []), p]);
+  }, new Map<string, NonNullable<typeof products>>())];
 
   return (
     <section className="flex flex-col gap-6">
@@ -68,8 +75,12 @@ export default async function BrandPage({
         <button className="btn-ghost">{t.search}</button>
       </form>
       {products?.length ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {products.map((p) => {
+        <div className="flex flex-col gap-8">
+          {groups.map(([cat, list]) => (
+            <div key={cat} className="flex flex-col gap-3">
+              {cat && <h2 className="eyebrow">{cat}</h2>}
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {list.map((p) => {
             const out = p.stock <= 0;
             const low = !out && p.stock < 5;
             const files = counts.get(p.id) ?? 0;
@@ -99,6 +110,9 @@ export default async function BrandPage({
               </Link>
             );
           })}
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <p className="text-muted">{t.noProducts}</p>
