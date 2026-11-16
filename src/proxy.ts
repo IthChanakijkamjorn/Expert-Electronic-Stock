@@ -1,6 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const IDLE_MS = 60 * 60 * 1000;
+const ACTIVE = "last_active";
+
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -24,9 +27,23 @@ export async function proxy(request: NextRequest) {
   const { data: claims } = await supabase.auth.getClaims();
   const user = claims?.claims ?? null;
 
+  if (user) {
+    const last = Number(request.cookies.get(ACTIVE)?.value);
+    if (last && Date.now() - last > IDLE_MS) {
+      const out = NextResponse.redirect(new URL("/login", request.url));
+      request.cookies.getAll().forEach(({ name }) => {
+        if (name.startsWith("sb-") || name === ACTIVE) out.cookies.delete(name);
+      });
+      return out;
+    }
+  }
+
   const isLogin = request.nextUrl.pathname.startsWith("/login");
   const isShare = request.nextUrl.pathname.startsWith("/s/");
   if (isShare) return response;
+  if (user) {
+    response.cookies.set(ACTIVE, String(Date.now()), { httpOnly: true, sameSite: "lax", secure: true, path: "/" });
+  }
   if (!user && !isLogin) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
