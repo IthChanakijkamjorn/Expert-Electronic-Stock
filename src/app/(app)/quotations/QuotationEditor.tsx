@@ -62,7 +62,7 @@ export async function QuotationEditor({ id, project }: { id?: string; project?: 
         dropped++;
         continue;
       }
-      lines.push({ key: p.id, brand: l.brand, model: l.model, name: l.name, unit: l.unit, qty: String(l.qty), price: String(l.price) });
+      lines.push({ key: p.id, productId: p.id, brand: l.brand, model: l.model, name: l.name, unit: l.unit, qty: String(l.qty), price: String(l.price) });
     }
     const sigPath = (sigs ?? []).find((s) => s.id === q.signature_id)?.path;
     const data: QuotePaperData = {

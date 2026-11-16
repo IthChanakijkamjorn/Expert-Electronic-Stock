@@ -1,9 +1,10 @@
 import { docHead, type DocVariant } from "@/lib/docType";
-import type { ReactNode } from "react";
 import type { DocCompany } from "@/lib/company";
+import { LineCells, type PickerProduct } from "./LineCells";
 
 export type PaperLine = {
   key: string;
+  productId?: string;
   brand: string;
   model: string;
   name: string;
@@ -34,6 +35,7 @@ export type PaperHandlers = {
   onCompany: (patch: Partial<DocCompany>) => void;
   onLine: (key: string, patch: Partial<PaperLine>) => void;
   onRemove: (key: string) => void;
+  onPick?: (key: string, p: PickerProduct) => void;
 };
 
 export const money = (n: number) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -46,13 +48,13 @@ export function InvoicePaper({
   h,
   salesSlot,
   editCompany = false,
-  addRow,
+  pickProducts = [],
 }: {
   data: PaperData;
   salesSlot?: React.ReactNode;
   h?: PaperHandlers;
   editCompany?: boolean;
-  addRow?: ReactNode;
+  pickProducts?: PickerProduct[];
 }) {
   const co = data.company;
   const subtotal = data.lines.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.price) || 0), 0);
@@ -166,12 +168,15 @@ export function InvoicePaper({
                   </button>
                 )}
               </td>
-              <td className={td}>{l.brand}</td>
-              <td className={td}>{l.model}</td>
-              <td className={td}>
-                {l.name}
-                {h && l.hint && <div className={`text-[11px] ${l.over ? "text-red-600" : "text-zinc-500"}`}>{l.hint}</div>}
-              </td>
+              {h ? (
+                <LineCells l={l} h={h} products={pickProducts} td={td} />
+              ) : (
+                <>
+                  <td className={td}>{l.brand}</td>
+                  <td className={td}>{l.model}</td>
+                  <td className={td}>{l.name}</td>
+                </>
+              )}
               <td className={`${td} text-center`}>
                 {h ? (
                   <div className="flex items-center gap-1">
@@ -200,7 +205,6 @@ export function InvoicePaper({
           ))}
         </tbody>
       </table>
-      {addRow && <div className="mt-2 print:hidden">{addRow}</div>}
 
       <div className="flex justify-end">
         <table className="w-[280px] border-collapse border-x border-b border-black">

@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import { saveQuotation } from "../actions";
 import { QuotationPaper, type QuotePaperData, type QuoteHandlers } from "@/components/QuotationPaper";
 import { DocVariantSelect } from "@/components/DocVariantSelect";
-import { BrandPicker } from "@/components/BrandPicker";
+import { withBlank, isBlankLine } from "@/components/LineCells";
 import type { DocCompany } from "@/lib/company";
 import { saveCompanyDefault, type Salesperson } from "../../documents/actions";
 import { SalesPicker } from "@/components/SalesPicker";
@@ -43,11 +43,11 @@ export function QuotationForm({
   const [state, action, pending] = useActionState(saveQuotation.bind(null, existing?.id ?? null), null);
   const byId = new Map(products.map((p) => [p.id, p]));
   const toLine = (p: Product, qty: number): PaperLine => ({
-    key: p.id, brand: p.brand ?? "", model: p.sku ?? "", name: p.name, unit: p.unit, qty: String(qty), price: String(sellPrice[p.id] ?? 0),
+    key: p.id, productId: p.id, brand: p.brand ?? "", model: p.sku ?? "", name: p.name, unit: p.unit, qty: String(qty), price: String(sellPrice[p.id] ?? 0),
   });
   const [sigId, setSigId] = useState(existing?.sigId ?? signatures.find((s) => s.is_default)?.id ?? "");
   const [projectId, setProjectId] = useState(existing?.projectId ?? initialProject);
-  const [data, setData] = useState<QuotePaperData>(existing?.data ?? {
+  const [data, setData] = useState<QuotePaperData>(existing ? { ...existing.data, lines: withBlank(existing.data.lines) } : {
     number: "QT-____-____",
     company: defaultCompany,
     customer,
@@ -65,27 +65,33 @@ export function QuotationForm({
     vat: true,
     variant: "original",
     signatureUrl: signatures.find((s) => s.is_default)?.url ?? null,
-    lines: initialLines.flatMap((l) => (byId.get(l.id) ? [toLine(byId.get(l.id)!, l.qty)] : [])),
+    lines: withBlank(initialLines.flatMap((l) => (byId.get(l.id) ? [toLine(byId.get(l.id)!, l.qty)] : []))),
   });
   const [preview, setPreview] = useState(false);
   const [editCompany, setEditCompany] = useState(false);
 
-  const addProduct = (p: Product) =>
-    setData((d) => ({
-      ...d,
-      lines: d.lines.some((l) => l.key === p.id)
-        ? d.lines.map((l) => (l.key === p.id ? { ...l, qty: String(Number(l.qty) + 1) } : l))
-        : [...d.lines, toLine(p, 1)],
-    }));
+  const setLines = (fn: (l: PaperLine[]) => PaperLine[]) => setData((d) => ({ ...d, lines: withBlank(fn(d.lines)) }));
 
   const h: QuoteHandlers = {
     onField: (patch) => setData((d) => ({ ...d, ...patch })),
     onCompany: (patch) => setData((d) => ({ ...d, company: { ...d.company, ...patch } })),
-    onLine: (key, patch) => setData((d) => ({ ...d, lines: d.lines.map((l) => (l.key === key ? { ...l, ...patch } : l)) })),
-    onRemove: (key) => setData((d) => ({ ...d, lines: d.lines.filter((l) => l.key !== key) })),
+    onLine: (key, patch) =>
+      setLines((ls) =>
+        ls.map((l) => (l.key === key ? { ...l, ...patch, ...("brand" in patch || "model" in patch || "name" in patch ? { productId: undefined } : {}) } : l)),
+      ),
+    onRemove: (key) => setLines((ls) => ls.filter((l) => l.key !== key)),
+    onPick: (key, p) =>
+      setLines((ls) =>
+        ls.map((l) =>
+          l.key === key
+            ? { ...l, productId: p.id, brand: p.brand ?? "", model: p.sku ?? "", name: p.name, unit: p.unit, qty: l.qty || "1", price: String(sellPrice[p.id] ?? 0) }
+            : l,
+        ),
+      ),
   };
+  const filled = data.lines.filter((l) => !isBlankLine(l));
   const invalid =
-    !data.customer.trim() || !data.lines.length || data.lines.some((l) => !(Math.floor(Number(l.qty)) > 0) || !(Number(l.price) >= 0));
+    !data.customer.trim() || !filled.length || filled.some((l) => !l.name.trim() || !(Math.floor(Number(l.qty)) > 0) || !(Number(l.price) >= 0));
 
   return (
     <form action={action} className="flex flex-col gap-4">
@@ -105,7 +111,7 @@ export function QuotationForm({
       <input type="hidden" name="vat" value={data.vat ? "1" : "0"} />
       <input type="hidden" name="signature_id" value={sigId} />
       <input type="hidden" name="company" value={JSON.stringify(data.company)} />
-      <input type="hidden" name="lines" value={JSON.stringify(data.lines.map((l) => ({ product_id: l.key, qty: Number(l.qty), price: Number(l.price) })))} />
+      <input type="hidden" name="lines" value={JSON.stringify(filled.map((l) => ({ product_id: l.productId ?? null, brand: l.brand, model: l.model, name: l.name, unit: l.unit, qty: Number(l.qty), price: Number(l.price) })))} />
 
       <div className="card flex flex-wrap items-end gap-4 print:hidden">
         {!preview ? (
@@ -170,13 +176,11 @@ export function QuotationForm({
 
       <div className="overflow-x-auto pb-4">
         <QuotationPaper
-          data={data}
+          data={preview ? { ...data, lines: filled } : data}
           h={preview ? undefined : h}
           salesSlot={<SalesPicker initial={salespeople} value={data.quotedBy} onChange={(v) => setData((d) => ({ ...d, quotedBy: v }))} labels={{ add: t.salesAdd, remove: t.remove, save: t.save, confirm: t.salesRemoveConfirm }} />}
           editCompany={editCompany && !preview}
-          addRow={preview ? undefined : (
-            <BrandPicker products={products} placeholder={`+ ${t.invAddItem}`} emptyText={t.noMatches} noBrandText={t.invNoBrand} newText={t.addNewProduct} onPick={addProduct} />
-          )}
+          pickProducts={products}
         />
       </div>
     </form>

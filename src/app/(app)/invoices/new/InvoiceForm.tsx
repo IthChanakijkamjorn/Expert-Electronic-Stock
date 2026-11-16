@@ -4,7 +4,7 @@ import { useActionState, useMemo, useState } from "react";
 import { saveInvoice } from "../actions";
 import { InvoicePaper, type PaperData, type PaperHandlers, type PaperLine } from "@/components/InvoicePaper";
 import { DocVariantSelect } from "@/components/DocVariantSelect";
-import { BrandPicker } from "@/components/BrandPicker";
+import { withBlank, isBlankLine } from "@/components/LineCells";
 import type { DocCompany } from "@/lib/company";
 import { saveCompanyDefault, type Salesperson } from "../../documents/actions";
 import { SalesPicker } from "@/components/SalesPicker";
@@ -55,17 +55,8 @@ export function InvoiceForm({
   const byId = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
   const available = (id: string) => stock[id] ?? 0;
 
-  const addProduct = (p: Product) => {
-    setData((d) => ({
-      ...d,
-      lines: d.lines.some((l) => l.key === p.id)
-        ? d.lines.map((l) => (l.key === p.id ? { ...l, qty: String(Number(l.qty) + 1) } : l))
-        : [
-            ...d.lines,
-            { key: p.id, brand: p.brand ?? "", model: p.sku ?? "", name: p.name, unit: p.unit, qty: "1", price: String(sellPrice[p.id] ?? 0) },
-          ],
-    }));
-  };
+  const setLines = (fn: (l: PaperLine[]) => PaperLine[]) => setData((d) => ({ ...d, lines: withBlank(fn(d.lines)) }));
+  const priceOf = (id: string) => String(sellPrice[id] ?? 0);
 
   const salesSlot = (
     <SalesPicker initial={salespeople} value={data.salesperson} onChange={(v) => setData((d) => ({ ...d, salesperson: v }))} labels={{ add: t.salesAdd, remove: t.remove, save: t.save, confirm: t.salesRemoveConfirm }} />
@@ -74,29 +65,30 @@ export function InvoiceForm({
   const handlers: PaperHandlers = {
     onField: (patch) => setData((d) => ({ ...d, ...patch })),
     onCompany: (patch) => setData((d) => ({ ...d, company: { ...d.company, ...patch } })),
-    onLine: (key, patch) => setData((d) => ({ ...d, lines: d.lines.map((l) => (l.key === key ? { ...l, ...patch } : l)) })),
-    onRemove: (key) => setData((d) => ({ ...d, lines: d.lines.filter((l) => l.key !== key) })),
+    onLine: (key, patch) =>
+      setLines((ls) =>
+        ls.map((l) => (l.key === key ? { ...l, ...patch, ...("brand" in patch || "model" in patch || "name" in patch ? { productId: undefined } : {}) } : l)),
+      ),
+    onRemove: (key) => setLines((ls) => ls.filter((l) => l.key !== key)),
+    onPick: (key, p) =>
+      setLines((ls) =>
+        ls.map((l) =>
+          l.key === key
+            ? { ...l, productId: p.id, brand: p.brand ?? "", model: p.sku ?? "", name: p.name, unit: p.unit, qty: l.qty || "1", price: priceOf(p.id) }
+            : l,
+        ),
+      ),
   };
 
   const lines: PaperLine[] = data.lines.map((l) => {
-    const left = available(l.key);
+    if (!l.productId) return { ...l, hint: l.name.trim() ? t.addNewProduct : undefined };
+    const left = available(l.productId);
     const over = Number(l.qty) > left;
-    return { ...l, over, hint: `${over ? `${t.invOverStock} — ` : ""}${t.invAvailable}: ${left} ${byId.get(l.key)?.unit ?? ""}` };
+    return { ...l, over, hint: `${over ? `${t.invOverStock} — ` : ""}${t.invAvailable}: ${left} ${byId.get(l.productId)?.unit ?? ""}` };
   });
+  const filled = lines.filter((l) => !isBlankLine(l));
   const invalid =
-    !data.customer.trim() || !lines.length || lines.some((l) => !(Math.floor(Number(l.qty)) > 0) || !(Number(l.price) >= 0));
-
-  const addRow = (
-    <BrandPicker
-      products={products}
-      placeholder={`+ ${t.invAddItem}`}
-      emptyText={t.noMatches}
-      noBrandText={t.invNoBrand} newText={t.addNewProduct}
-      available={available}
-      allowOver
-      onPick={addProduct}
-    />
-  );
+    !data.customer.trim() || !filled.length || filled.some((l) => !l.name.trim() || !(Math.floor(Number(l.qty)) > 0) || !(Number(l.price) >= 0));
 
   return (
     <form action={action} className="flex flex-col gap-4">
@@ -113,7 +105,7 @@ export function InvoiceForm({
       <input
         type="hidden"
         name="lines"
-        value={JSON.stringify(data.lines.map((l) => ({ product_id: l.key, qty: Number(l.qty), price: Number(l.price) })))}
+        value={JSON.stringify(data.lines.filter((l) => !isBlankLine(l)).map((l) => ({ product_id: l.productId ?? null, brand: l.brand, model: l.model, name: l.name, unit: l.unit, qty: Number(l.qty), price: Number(l.price) })))}
       />
 
       <div className="card flex flex-wrap items-end gap-4 print:hidden">
@@ -162,11 +154,11 @@ export function InvoiceForm({
 
       <div className="overflow-x-auto pb-4">
         <InvoicePaper
-          data={{ ...data, lines }}
+          data={{ ...data, lines: preview ? filled : lines }}
           h={preview ? undefined : handlers}
+          pickProducts={products}
           salesSlot={salesSlot}
           editCompany={editCompany && !preview}
-          addRow={preview ? undefined : addRow}
         />
       </div>
     </form>

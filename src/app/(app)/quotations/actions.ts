@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getRole } from "@/lib/role";
+import { resolveLines, type RawLine } from "@/lib/resolveLines";
 
 export type QuotationState = { error?: "invalid" | "failed" } | null;
 
@@ -18,7 +19,7 @@ export async function saveQuotation(id: string | null, _prev: QuotationState, fo
   if (role !== "admin" && role !== "manager") return { error: "failed" };
   const draft = formData.get("intent") === "draft";
   const customer = text(formData, "customer") ?? (draft ? "-" : null);
-  let raw: { product_id: string; qty: number; price: number }[] = [];
+  let raw: RawLine[] = [];
   let company: unknown = null;
   try {
     raw = JSON.parse(String(formData.get("lines") ?? "[]"));
@@ -26,27 +27,13 @@ export async function saveQuotation(id: string | null, _prev: QuotationState, fo
   } catch {
     return { error: "invalid" };
   }
-  if (!customer || !Array.isArray(raw) || (!draft && !raw.length)) return { error: "invalid" };
-
-  const wanted = new Map<string, { qty: number; price: number }>();
-  for (const l of raw) {
-    const qty = draft ? Math.max(1, Math.floor(Number(l.qty)) || 1) : Math.floor(Number(l.qty));
-    const price = draft ? Math.max(0, Number(l.price) || 0) : Number(l.price);
-    if (!l.product_id || !(qty > 0) || !(price >= 0)) return { error: "invalid" };
-    wanted.set(l.product_id, { qty: (wanted.get(l.product_id)?.qty ?? 0) + qty, price });
-  }
+  if (!customer || !Array.isArray(raw)) return { error: "invalid" };
 
   const supabase = await createClient();
-  const { data: products } = wanted.size
-    ? await supabase.from("products").select("id, name, sku, brand, unit").in("id", [...wanted.keys()])
-    : { data: [] };
-  if (!products || products.length !== wanted.size) return { error: "invalid" };
-  const order = raw.map((l) => l.product_id);
-  const lines = [...new Set(order)].map((id) => {
-    const p = products.find((x) => x.id === id)!;
-    const w = wanted.get(id)!;
-    return { product_id: id, brand: p.brand ?? "", model: p.sku ?? "", name: p.name, unit: p.unit, qty: w.qty, price: w.price };
-  });
+  const resolved = await resolveLines(supabase, raw, draft);
+  if ("error" in resolved) return { error: resolved.error };
+  const lines = resolved.lines;
+  if (!draft && !lines.length) return { error: "invalid" };
 
   const payload = {
       project_id: text(formData, "project_id"),

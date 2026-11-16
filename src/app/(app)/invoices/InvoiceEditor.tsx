@@ -36,6 +36,7 @@ export async function InvoiceEditor({ id }: { id?: string }) {
     if (!inv) notFound();
     const lines = (inv.lines as { product_id: string; brand: string | null; model: string | null; name: string; unit: string; qty: number; price: number }[]).map((l) => ({
       key: l.product_id,
+      productId: l.product_id,
       brand: l.brand,
       model: l.model,
       name: l.name,

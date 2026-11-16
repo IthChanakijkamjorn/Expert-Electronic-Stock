@@ -3,6 +3,7 @@ import { docHead, type DocVariant } from "@/lib/docType";
 import type { DocCompany } from "@/lib/company";
 import { bahtText } from "@/lib/bahttext";
 import { blank, money, type PaperLine } from "@/components/InvoicePaper";
+import { LineCells, type PickerProduct } from "./LineCells";
 
 export type QuotePaperData = {
   number: string;
@@ -32,6 +33,7 @@ export type QuoteHandlers = {
   onCompany: (patch: Partial<DocCompany>) => void;
   onLine: (key: string, patch: Partial<PaperLine>) => void;
   onRemove: (key: string) => void;
+  onPick?: (key: string, p: PickerProduct) => void;
 };
 
 const MIN_ROWS = 12;
@@ -42,13 +44,13 @@ export function QuotationPaper({
   h,
   salesSlot,
   editCompany = false,
-  addRow,
+  pickProducts = [],
 }: {
   data: QuotePaperData;
   salesSlot?: ReactNode;
   h?: QuoteHandlers;
   editCompany?: boolean;
-  addRow?: ReactNode;
+  pickProducts?: PickerProduct[];
 }) {
   const co = data.company;
   const factor = 1 - (Number(data.discountPct) || 0) / 100;
@@ -166,9 +168,15 @@ export function QuotationPaper({
                   </button>
                 )}
               </td>
-              <td className={td}>{l.brand}</td>
-              <td className={td}>{l.model}</td>
-              <td className={td}>{l.name}</td>
+              {h ? (
+                <LineCells l={l} h={h} products={pickProducts} td={td} />
+              ) : (
+                <>
+                  <td className={td}>{l.brand}</td>
+                  <td className={td}>{l.model}</td>
+                  <td className={td}>{l.name}</td>
+                </>
+              )}
               <td className={`${td} text-center`}>
                 {h ? (
                   <input type="number" min={1} step={1} className={`${blank} text-center`} value={l.qty} onChange={(e) => h.onLine(l.key, { qty: e.target.value })} />
@@ -196,7 +204,6 @@ export function QuotationPaper({
           ))}
         </tbody>
       </table>
-      {addRow && <div className="mt-2 print:hidden">{addRow}</div>}
 
       <div className="grid grid-cols-[1fr_270px] border-x border-b border-black">
         <div className="flex items-center justify-center border-r border-black p-2 text-center text-[14px] font-bold">{bahtText(total)}</div>
