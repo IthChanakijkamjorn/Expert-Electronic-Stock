@@ -40,7 +40,7 @@ export default async function GoodsReceiptsPage() {
                 <tr key={r.id} className="border-t border-zinc-100">
                   <td className="py-2 pr-3">
                     <Link href={`/goods-receipts/${r.id}`} className="font-semibold text-navy underline">
-                      {new Date(r.received_date).toLocaleDateString(locale)}
+                      {new Date(r.received_date).toLocaleDateString(locale, { timeZone: "Asia/Bangkok" })}
                     </Link>
                   </td>
                   <td className="pr-3">{r.supplier}</td>

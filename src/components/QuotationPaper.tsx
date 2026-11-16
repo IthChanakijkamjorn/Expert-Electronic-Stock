@@ -58,7 +58,7 @@ export function QuotationPaper({
   const vat = data.vat ? gross * 0.07 : 0;
   const total = gross + vat;
   const dateText = data.date
-    ? new Date(data.date).toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" })
+    ? new Date(data.date).toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Bangkok" })
     : "";
 
   const coField = (k: keyof DocCompany, cls = "") =>

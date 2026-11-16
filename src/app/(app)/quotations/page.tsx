@@ -29,7 +29,7 @@ export default async function QuotationsPage() {
               {data.map((q) => (
                 <tr key={q.id} className="border-t border-zinc-100">
                   <td className="py-2 pr-3"><Link href={`/quotations/${q.id}`} className="font-semibold text-navy underline">{q.number}</Link></td>
-                  <td className="pr-3">{new Date(q.quote_date).toLocaleDateString(lang === "th" ? "th-TH" : "en-GB")}</td>
+                  <td className="pr-3">{new Date(q.quote_date).toLocaleDateString(lang === "th" ? "th-TH" : "en-GB", { timeZone: "Asia/Bangkok" })}</td>
                   <td className="pr-3">{q.customer}</td>
                   <td><a href={`/quotations/${q.id}/pdf`} target="_blank" className="btn-ghost">PDF</a></td>
                 </tr>

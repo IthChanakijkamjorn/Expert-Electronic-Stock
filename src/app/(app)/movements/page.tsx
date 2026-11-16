@@ -99,7 +99,7 @@ export default async function MovementsPage({
                 {(movements ?? []).map((m) => (
                   <tr key={m.id} className="border-b border-zinc-100">
                     <td className="py-2 pr-3 whitespace-nowrap">
-                      {new Date(m.created_at).toLocaleString(lang === "th" ? "th-TH" : "en-GB")}
+                      {new Date(m.created_at).toLocaleString(lang === "th" ? "th-TH" : "en-GB", { timeZone: "Asia/Bangkok" })}
                     </td>
                     <td className="pr-3">{(m.products as unknown as { name: string } | null)?.name}</td>
                     <td className="pr-3 text-right">{m.quantity > 0 ? `+${m.quantity}` : m.quantity}</td>

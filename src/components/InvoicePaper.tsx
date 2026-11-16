@@ -60,7 +60,7 @@ export function InvoicePaper({
   const subtotal = data.lines.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.price) || 0), 0);
   const vat = data.vat ? subtotal * 0.07 : 0;
   const dateText = data.date
-    ? new Date(data.date).toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" })
+    ? new Date(data.date).toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Bangkok" })
     : "";
 
   const coField = (k: keyof DocCompany, cls = "") =>

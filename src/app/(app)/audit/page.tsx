@@ -24,7 +24,7 @@ export default async function AuditPage() {
           <tbody>
             {(rows ?? []).map((r) => (
               <tr key={r.id} className="border-b border-zinc-100">
-                <td className="py-2 pr-3 whitespace-nowrap">{new Date(r.created_at).toLocaleString(lang === "th" ? "th-TH" : "en-GB")}</td>
+                <td className="py-2 pr-3 whitespace-nowrap">{new Date(r.created_at).toLocaleString(lang === "th" ? "th-TH" : "en-GB", { timeZone: "Asia/Bangkok" })}</td>
                 <td className="pr-3">{r.actor ? names.get(r.actor) : ""}</td>
                 <td className="pr-3">{r.action} · {r.entity}</td>
                 <td>{r.entity_name}</td>

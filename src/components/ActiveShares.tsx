@@ -17,7 +17,7 @@ export function ActiveShares({
   labels: { copy: string; copied: string; revoke: string; expires: string };
 }) {
   const [copied, setCopied] = useState("");
-  const fmt = (d: string) => new Date(d).toLocaleString(locale);
+  const fmt = (d: string) => new Date(d).toLocaleString(locale, { timeZone: "Asia/Bangkok" });
   return (
     <ul className="divide-y divide-[#ece8f2] text-sm">
       {shares.map((s) => {

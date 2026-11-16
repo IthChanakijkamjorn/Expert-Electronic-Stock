@@ -68,7 +68,7 @@ export async function buildTaxInvoice(inv: TaxInvoiceData) {
     page.drawLine({ start: { x: x1, y: yy }, end: { x: x2, y: yy }, thickness: LINE, color: BLACK });
 
   const co = mergeDocCompany(inv.company);
-  const dateText = inv.date.toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" });
+  const dateText = inv.date.toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Bangkok" });
 
   const pageHeader = (first: boolean) => {
     if (!first) {

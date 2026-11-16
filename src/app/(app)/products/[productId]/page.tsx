@@ -169,7 +169,7 @@ export default async function ProductFilesPage({
                 </span>
                 <span className="flex flex-wrap items-center gap-4">
                   <span className="text-muted">
-                    {new Date(f.created_at).toLocaleDateString(lang === "th" ? "th-TH" : "en-GB")}
+                    {new Date(f.created_at).toLocaleDateString(lang === "th" ? "th-TH" : "en-GB", { timeZone: "Asia/Bangkok" })}
                   </span>
                   {urls.get(f.storage_path) && (
                     <a href={urls.get(f.storage_path)} download={f.file_name} className="font-semibold text-navy underline">

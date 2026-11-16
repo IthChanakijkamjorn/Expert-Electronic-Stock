@@ -55,7 +55,7 @@ export function QuotationForm({
     project: projects.find((p) => p.id === initialProject)?.name ?? "",
     phone: "",
     email: "",
-    date: new Date().toISOString().slice(0, 10),
+    date: new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Bangkok" }),
     validDays: "30",
     leadDays: "",
     warrantyYears: "",

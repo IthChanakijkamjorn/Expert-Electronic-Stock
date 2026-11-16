@@ -46,7 +46,7 @@ export default async function ProductsPage({
   const sorted = [...brands.entries()].sort(([a], [b]) =>
     a === NO_BRAND ? 1 : b === NO_BRAND ? -1 : a.localeCompare(b),
   );
-  const fmt = (d: string) => new Date(d).toLocaleDateString(lang === "th" ? "th-TH" : "en-GB");
+  const fmt = (d: string) => new Date(d).toLocaleDateString(lang === "th" ? "th-TH" : "en-GB", { timeZone: "Asia/Bangkok" });
 
   return (
     <section className="flex flex-col gap-6">

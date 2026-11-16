@@ -43,7 +43,7 @@ export function InvoiceForm({
     taxId: "",
     branch: "",
     salesperson,
-    date: new Date().toISOString().slice(0, 10),
+    date: new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Bangkok" }),
     vat: true,
     variant: "original",
     lines: [],

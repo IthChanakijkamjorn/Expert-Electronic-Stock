@@ -8,7 +8,7 @@ export default async function DocumentsPage() {
   const role = await getRole();
   const manager = role === "admin" || role === "manager";
   const supabase = await createClient();
-  const date = (d: string) => new Date(d).toLocaleDateString(lang === "th" ? "th-TH" : "en-GB");
+  const date = (d: string) => new Date(d).toLocaleDateString(lang === "th" ? "th-TH" : "en-GB", { timeZone: "Asia/Bangkok" });
 
   const stamp = (d: string) =>
     new Date(d).toLocaleString(lang === "th" ? "th-TH" : "en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Bangkok" });

@@ -43,7 +43,7 @@ export default async function InvoicesPage() {
                   <td className="py-2 pr-3">
                     <Link href={`/invoices/${i.id}`} className="font-semibold text-navy underline">{i.number}</Link>
                   </td>
-                  <td className="pr-3">{new Date(i.invoice_date).toLocaleDateString(lang === "th" ? "th-TH" : "en-GB")}</td>
+                  <td className="pr-3">{new Date(i.invoice_date).toLocaleDateString(lang === "th" ? "th-TH" : "en-GB", { timeZone: "Asia/Bangkok" })}</td>
                   <td className="pr-3">{i.customer}</td>
                   <td className="pr-3 text-right">{money(invoiceTotals(i.lines as QuoteLine[], i.vat).total)}</td>
                   <td>

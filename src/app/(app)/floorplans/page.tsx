@@ -25,7 +25,7 @@ export default async function PlansPage() {
                   <td className="py-2 pr-3"><Link href={`/floorplans/${p.id}`} className="font-semibold text-navy underline">{p.name}</Link></td>
                   <td className="pr-3">{Number(p.width_m)} × {Number(p.height_m)} m</td>
                   <td className="pr-3">{(p.projects as unknown as { name: string } | null)?.name ?? "—"}</td>
-                  <td className="pr-3">{new Date(p.updated_at).toLocaleDateString(lang === "th" ? "th-TH" : "en-GB")}</td>
+                  <td className="pr-3">{new Date(p.updated_at).toLocaleDateString(lang === "th" ? "th-TH" : "en-GB", { timeZone: "Asia/Bangkok" })}</td>
                   <td><a href={`/floorplans/${p.id}/pdf`} target="_blank" className="btn-ghost">PDF</a></td>
                 </tr>
               ))}

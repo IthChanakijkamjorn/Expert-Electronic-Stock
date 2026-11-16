@@ -26,7 +26,7 @@ export default async function GoodsReceiptPage({ params }: { params: Promise<{ i
     <section className="flex flex-col gap-6">
       <div>
         <Link href="/goods-receipts" className="text-sm text-muted hover:underline">{t.back}</Link>
-        <p className="eyebrow mt-3">{new Date(r.received_date).toLocaleDateString(locale)}</p>
+        <p className="eyebrow mt-3">{new Date(r.received_date).toLocaleDateString(locale, { timeZone: "Asia/Bangkok" })}</p>
         <h1 className="text-3xl font-semibold">{r.supplier}</h1>
         {r.reference && <p className="mt-1 text-muted">{r.reference}</p>}
         {r.note && <p className="mt-2 text-muted">{r.note}</p>}

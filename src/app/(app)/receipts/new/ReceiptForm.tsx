@@ -37,7 +37,7 @@ export function ReceiptForm({
     customer: "",
     receivedFrom: "",
     salesperson,
-    date: new Date().toISOString().slice(0, 10),
+    date: new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Bangkok" }),
     lines: [{ key: "r0", desc: "", qty: "", amount: "" }],
     cashAmount: "",
     chequeBank: "",

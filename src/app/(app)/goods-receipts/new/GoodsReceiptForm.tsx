@@ -53,7 +53,7 @@ export function GoodsReceiptForm({ t, products }: { t: Dictionary; products: Pro
         </label>
         <label className="text-sm">
           {t.date}
-          <input name="date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} className="input mt-1" />
+          <input name="date" type="date" defaultValue={new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Bangkok" })} className="input mt-1" />
         </label>
       </div>
 

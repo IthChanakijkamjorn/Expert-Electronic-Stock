@@ -30,7 +30,7 @@ export default async function ReceiptsPage() {
               {data.map((r) => (
                 <tr key={r.id} className="border-t border-zinc-100">
                   <td className="py-2 pr-3"><Link href={`/receipts/${r.id}`} className="font-semibold text-navy underline">{r.number}</Link></td>
-                  <td className="pr-3">{new Date(r.receipt_date).toLocaleDateString(lang === "th" ? "th-TH" : "en-GB")}</td>
+                  <td className="pr-3">{new Date(r.receipt_date).toLocaleDateString(lang === "th" ? "th-TH" : "en-GB", { timeZone: "Asia/Bangkok" })}</td>
                   <td className="pr-3">{r.customer}</td>
                   <td className="pr-3 text-right">{money((r.lines as { amount: number }[]).reduce((s, l) => s + Number(l.amount), 0))}</td>
                   <td><a href={`/receipts/${r.id}/pdf`} target="_blank" className="btn-ghost">PDF</a></td>

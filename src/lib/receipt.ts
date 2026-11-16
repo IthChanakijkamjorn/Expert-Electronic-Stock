@@ -58,7 +58,7 @@ export async function buildReceipt(r: ReceiptData) {
     page.drawRectangle({ x, y, width: w, height: h, borderWidth: LINE, borderColor: BLACK });
   const vline = (x: number, y1: number, y2: number) => page.drawLine({ start: { x, y: y1 }, end: { x, y: y2 }, thickness: LINE, color: BLACK });
   const hline = (y: number, x1 = M, x2 = W - M) => page.drawLine({ start: { x: x1, y }, end: { x: x2, y }, thickness: LINE, color: BLACK });
-  const fmtDate = (d: Date) => d.toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" });
+  const fmtDate = (d: Date) => d.toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Bangkok" });
 
   const co = mergeDocCompany(r.company, "receipt");
   const head = docHead("ใบเสร็จรับเงิน", "RECEIPT", r.variant);

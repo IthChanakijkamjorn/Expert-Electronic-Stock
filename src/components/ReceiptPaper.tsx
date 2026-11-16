@@ -38,7 +38,7 @@ export function ReceiptPaper({ data, h, salesSlot, editCompany = false }: { data
   const co = data.company;
   const head = docHead("ใบเสร็จรับเงิน", "RECEIPT", data.variant);
   const total = data.lines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
-  const fmt = (d: string) => (d ? new Date(d).toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" }) : "");
+  const fmt = (d: string) => (d ? new Date(d).toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Bangkok" }) : "");
 
   const coField = (k: keyof DocCompany) =>
     editCompany && h ? <input className={blank} value={co[k]} onChange={(e) => h.onCompany({ [k]: e.target.value })} /> : <span>{co[k]}</span>;
