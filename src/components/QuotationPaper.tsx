@@ -40,10 +40,12 @@ const MIN_ROWS = 12;
 export function QuotationPaper({
   data,
   h,
+  salesSlot,
   editCompany = false,
   addRow,
 }: {
   data: QuotePaperData;
+  salesSlot?: ReactNode;
   h?: QuoteHandlers;
   editCompany?: boolean;
   addRow?: ReactNode;
@@ -124,7 +126,7 @@ export function QuotationPaper({
           <span>การรับประกัน (ปี):</span>
           {field("warrantyYears", "number")}
           <span>ผู้เสนอราคา / Quoted by:</span>
-          {field("quotedBy")}
+          {h && salesSlot ? salesSlot : field("quotedBy")}
           <span>ส่วนลด / Discount %:</span>
           {field("discountPct", "number")}
         </div>

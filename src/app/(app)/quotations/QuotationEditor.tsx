@@ -14,14 +14,13 @@ export async function QuotationEditor({ id, project }: { id?: string; project?: 
   if (role !== "admin" && role !== "manager") redirect("/documents");
   const { t } = await getDictionary();
   const supabase = await createClient();
-  const { data: claims } = await supabase.auth.getClaims();
 
-  const [products, prices, { data: projects }, { data: sigs }, { data: me }] = await Promise.all([
+  const [products, prices, { data: projects }, { data: sigs }, { data: salespeople }] = await Promise.all([
     fetchAll((a, b) => supabase.from("products").select("id, name, sku, brand, unit").eq("active", true).order("id").range(a, b)),
     fetchAll((a, b) => supabase.from("product_prices").select("product_id, sell_price").order("product_id").range(a, b)),
     supabase.from("projects").select("id, name, year, towers(name, organizations(name))").order("year", { ascending: false }).limit(500),
     supabase.from("signatures").select("id, name, path, is_default").order("created_at"),
-    supabase.from("profiles").select("full_name").eq("id", claims?.claims.sub ?? "").maybeSingle(),
+    supabase.from("salespeople").select("id, name").order("name"),
   ]);
 
   const sellPrice: Record<string, number> = {};
@@ -101,7 +100,8 @@ export async function QuotationEditor({ id, project }: { id?: string; project?: 
         initialProject={chosen?.id ?? ""}
         initialLines={[...initial].filter(([, q]) => q > 0).map(([id, qty]) => ({ id, qty }))}
         customer={chosen?.org ?? ""}
-        quotedBy={me?.full_name ?? ""}
+        quotedBy=""
+        salespeople={salespeople ?? []}
         existing={existing}
       />
     </section>

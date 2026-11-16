@@ -100,13 +100,13 @@ export function ReceiptForm({
                 </select>
               </label>
             )}
+            <DocVariantSelect value={data.variant ?? "original"} label={t.docVariant} onChange={(v) => setData((d) => ({ ...d, variant: v }))} />
             <button type="button" className="btn-ghost" onClick={() => {
               if (editCompany) saveCompanyDefault("receipt", data.company);
               setEditCompany((v) => !v);
             }}>
               ✎ {editCompany ? t.docDoneEditing : t.docEditCompany}
             </button>
-            <DocVariantSelect value={data.variant ?? "original"} label={t.docVariant} onChange={(v) => setData((d) => ({ ...d, variant: v }))} />
             <button name="intent" value="draft" formNoValidate disabled={pending} className="btn-ghost ml-auto">💾 {t.saveDraft}</button>
             <button type="button" className="btn" disabled={invalid} onClick={() => { setPreview(true); window.scrollTo({ top: 0 }); }}>
               {t.docPreview} →

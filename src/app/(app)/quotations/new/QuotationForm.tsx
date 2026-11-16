@@ -6,7 +6,8 @@ import { QuotationPaper, type QuotePaperData, type QuoteHandlers } from "@/compo
 import { DocVariantSelect } from "@/components/DocVariantSelect";
 import { BrandPicker } from "@/components/BrandPicker";
 import type { DocCompany } from "@/lib/company";
-import { saveCompanyDefault } from "../../documents/actions";
+import { saveCompanyDefault, type Salesperson } from "../../documents/actions";
+import { SalesPicker } from "@/components/SalesPicker";
 import type { PaperLine } from "@/components/InvoicePaper";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
@@ -23,6 +24,7 @@ export function QuotationForm({
   initialLines,
   customer,
   quotedBy,
+  salespeople,
   existing,
 }: {
   t: Dictionary;
@@ -35,6 +37,7 @@ export function QuotationForm({
   initialLines: { id: string; qty: number }[];
   customer: string;
   quotedBy: string;
+  salespeople: Salesperson[];
   existing?: { id: string; data: QuotePaperData; projectId: string; sigId: string; dropped: number };
 }) {
   const [state, action, pending] = useActionState(saveQuotation.bind(null, existing?.id ?? null), null);
@@ -169,6 +172,7 @@ export function QuotationForm({
         <QuotationPaper
           data={data}
           h={preview ? undefined : h}
+          salesSlot={<SalesPicker initial={salespeople} value={data.quotedBy} onChange={(v) => setData((d) => ({ ...d, quotedBy: v }))} labels={{ add: t.salesAdd, remove: t.remove, save: t.save, confirm: t.salesRemoveConfirm }} />}
           editCompany={editCompany && !preview}
           addRow={preview ? undefined : (
             <BrandPicker products={products} placeholder={`+ ${t.invAddItem}`} emptyText={t.noMatches} noBrandText={t.invNoBrand} newText={t.addNewProduct} onPick={addProduct} />
