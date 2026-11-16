@@ -26,35 +26,14 @@ export const withBlank = (lines: PaperLine[]): PaperLine[] => {
   return last && isBlankLine(last) ? kept : [...kept, newBlankLine()];
 };
 
-// Typed cell that suggests saved products grouped by brand (A-Z); anything not in the list is kept as typed.
-function LineField({
-  value,
-  products,
-  onType,
-  onPick,
-  onPickBrand,
-}: {
-  value: string;
-  products: PickerProduct[];
-  onType: (v: string) => void;
-  onPick: (p: PickerProduct) => void;
-  onPickBrand: (brand: string) => void;
-}) {
+type Option = { id: string; label: string; onPick: () => void };
+
+// Typed cell with a suggestion list; anything not in the list is kept as typed.
+function LineField({ value, options, onType }: { value: string; options: Option[]; onType: (v: string) => void }) {
   const [open, setOpen] = useState(false);
   const [touched, setTouched] = useState(false);
-
-  const groups = useMemo(() => {
-    const q = touched ? value.trim().toLowerCase() : "";
-    const list = q ? products.filter((p) => `${p.brand ?? ""} ${p.sku ?? ""} ${p.name}`.toLowerCase().includes(q)) : products;
-    const byBrand = new Map<string, PickerProduct[]>();
-    list.slice(0, 400).forEach((p) => {
-      const k = p.brand?.trim() || "";
-      byBrand.set(k, [...(byBrand.get(k) ?? []), p]);
-    });
-    return [...byBrand.entries()]
-      .sort(([a], [b]) => (a === "" ? 1 : b === "" ? -1 : cmp(a, b)))
-      .map(([brand, items]) => ({ brand, items: [...items].sort((a, b) => cmp(a.name, b.name)) }));
-  }, [products, value, touched]);
+  const q = touched ? value.trim().toLowerCase() : "";
+  const shown = (q ? options.filter((o) => o.label.toLowerCase().includes(q)) : options).slice(0, 200);
 
   return (
     <div className="relative">
@@ -73,37 +52,21 @@ function LineField({
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         autoComplete="off"
       />
-      {open && groups.length > 0 && (
-        <div className="absolute left-0 top-full z-30 mt-1 max-h-72 w-[420px] overflow-auto rounded-lg border border-zinc-300 bg-white text-left text-sm font-normal shadow-lg">
-          {groups.map((g) => (
-            <div key={g.brand}>
-              <button
-                type="button"
-                disabled={!g.brand}
-                className="sticky top-0 block w-full bg-zinc-100 px-3 py-1 text-left text-xs font-semibold uppercase tracking-wider text-navy"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  onPickBrand(g.brand);
-                  setOpen(false);
-                }}
-              >
-                {g.brand || "—"}
-              </button>
-              {g.items.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  className="block w-full px-3 py-1.5 text-left hover:bg-zinc-100"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => {
-                    onPick(p);
-                    setOpen(false);
-                  }}
-                >
-                  {p.sku ? `${p.sku} · ` : ""}{p.name}
-                </button>
-              ))}
-            </div>
+      {open && shown.length > 0 && (
+        <div className="absolute left-0 top-full z-30 mt-1 max-h-72 w-[360px] overflow-auto rounded-lg border border-zinc-300 bg-white text-left text-sm font-normal shadow-lg">
+          {shown.map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              className="block w-full px-3 py-1.5 text-left hover:bg-zinc-100"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                o.onPick();
+                setOpen(false);
+              }}
+            >
+              {o.label}
+            </button>
           ))}
         </div>
       )}
@@ -116,30 +79,43 @@ export type LineHandlers = {
   onPick?: (key: string, p: PickerProduct) => void;
 };
 
-// Brand / Model / Description cells of one row: typeable, with product suggestions.
-export function LineCells({
-  l,
-  h,
-  products,
-  td,
-}: {
-  l: PaperLine;
-  h: LineHandlers;
-  products: PickerProduct[];
-  td: string;
-}) {
-  const pick = (p: PickerProduct) => h.onPick?.(l.key, p);
-  const brandPick = (brand: string) => h.onLine(l.key, { brand });
+// Brand -> Model -> Description cells of one row. Picking a model fills in the description, unit and price.
+export function LineCells({ l, h, products, td }: { l: PaperLine; h: LineHandlers; products: PickerProduct[]; td: string }) {
+  const brands = useMemo(
+    () => [...new Set(products.map((p) => p.brand?.trim() ?? "").filter(Boolean))].sort(cmp),
+    [products],
+  );
+  const models = useMemo(() => {
+    const b = l.brand.trim().toLowerCase();
+    return products
+      .filter((p) => (b ? (p.brand ?? "").trim().toLowerCase() === b : true))
+      .sort((a, c) => cmp(a.sku || a.name, c.sku || c.name));
+  }, [products, l.brand]);
+
+  const brandOptions: Option[] = brands.map((b) => ({ id: b, label: b, onPick: () => h.onLine(l.key, { brand: b }) }));
+  const modelOptions: Option[] = models.map((p) => ({
+    id: p.id,
+    label: `${l.brand.trim() ? "" : p.brand ? `${p.brand} · ` : ""}${p.sku ? `${p.sku} — ` : ""}${p.name}`,
+    onPick: () => h.onPick?.(l.key, p),
+  }));
+
+  const typeModel = (v: string) => {
+    h.onLine(l.key, { model: v });
+    const b = l.brand.trim().toLowerCase();
+    const hit = v.trim() && products.find((p) => (p.sku ?? "").toLowerCase() === v.trim().toLowerCase() && (!b || (p.brand ?? "").toLowerCase() === b));
+    if (hit) h.onPick?.(l.key, hit);
+  };
+
   return (
     <>
       <td className={td}>
-        <LineField value={l.brand} products={products} onType={(v) => h.onLine(l.key, { brand: v })} onPick={pick} onPickBrand={brandPick} />
+        <LineField value={l.brand} options={brandOptions} onType={(v) => h.onLine(l.key, { brand: v })} />
       </td>
       <td className={td}>
-        <LineField value={l.model} products={products} onType={(v) => h.onLine(l.key, { model: v })} onPick={pick} onPickBrand={brandPick} />
+        <LineField value={l.model} options={modelOptions} onType={typeModel} />
       </td>
       <td className={td}>
-        <LineField value={l.name} products={products} onType={(v) => h.onLine(l.key, { name: v })} onPick={pick} onPickBrand={brandPick} />
+        <input className={blank} value={l.name} onChange={(e) => h.onLine(l.key, { name: e.target.value })} autoComplete="off" />
         {l.hint && <div className={`text-[11px] ${l.over ? "text-red-600" : "text-zinc-500"}`}>{l.hint}</div>}
       </td>
     </>

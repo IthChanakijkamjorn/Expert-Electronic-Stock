@@ -8,14 +8,13 @@ import { FileUploader } from "@/components/FileUploader";
 import { ActiveShares } from "@/components/ActiveShares";
 import { ShareButton } from "@/components/ShareButton";
 import { DeleteButton } from "@/components/DeleteButton";
-import { RenameForm } from "@/components/RenameForm";
 import { ImageUploader } from "@/components/ImageUploader";
 import { BrandLogo } from "@/components/BrandLogo";
 import { setProductImage } from "../image-actions";
 import { addSerials, deleteSerial, issueSerial, returnSerial } from "../serial-actions";
 import { setPrices } from "../price-actions";
 import { AddForm } from "@/components/AddForm";
-import { addProductFile, deleteProduct, deleteProductFile, renameProduct } from "../file-actions";
+import { addProductFile, deleteProduct, deleteProductFile, updateProductDetails } from "../file-actions";
 
 const formatSize = (n: number | null) =>
   n == null ? "" : n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.ceil(n / 1024)} KB`;
@@ -71,7 +70,6 @@ export default async function ProductFilesPage({
   ]);
   const imageUrl = product.image_path ? urls.get(product.image_path) : undefined;
   const logoUrl = brandRow?.logo_path ? urls.get(brandRow.logo_path) : undefined;
-  const renameLabels = { rename: t.rename, save: t.save, cancel: t.cancel, failed: t.saveFailed };
   const shareLabels = {
     share: t.share,
     days: t.shareDays,
@@ -128,7 +126,15 @@ export default async function ProductFilesPage({
         </div>
         <div className="flex flex-wrap items-center gap-3 border-t border-[#ece8f2] pt-4">
           {canManage && (
-            <RenameForm initial={product.name} action={renameProduct.bind(null, productId)} labels={renameLabels} />
+            <details className="w-full">
+              <summary className="btn-ghost inline-block cursor-pointer">✎ {t.editDetails}</summary>
+              <form action={updateProductDetails.bind(null, productId)} className="mt-3 grid gap-3 sm:grid-cols-3">
+                <label className="text-sm">{t.brand}<input name="brand" defaultValue={product.brand ?? ""} className="input mt-1" /></label>
+                <label className="text-sm">{t.modelLabel}<input name="sku" defaultValue={product.sku ?? ""} className="input mt-1" /></label>
+                <label className="text-sm">{t.descriptionLabel}<input name="name" required defaultValue={product.name} className="input mt-1" /></label>
+                <button className="btn sm:col-span-3 sm:w-fit">{t.save}</button>
+              </form>
+            </details>
           )}
           {role === "admin" && (
             <DeleteButton action={deleteProduct.bind(null, productId)} name={product.name} labels={{ delete: t.deleteProduct, warning: t.deleteWarning, message: t.confirmDeleteProduct, ok: t.ok, cancel: t.cancel }} />
