@@ -56,12 +56,7 @@ export function GoodsReceiptForm({ t, products, locations }: { t: Dictionary; pr
           {t.date}
           <input name="date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} className="input mt-1" />
         </label>
-        <label className="text-sm">
-          {t.receiveInto}
-          <select name="location_id" className="input mt-1" defaultValue={locations.find((l) => l.is_default)?.id}>
-            {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-          </select>
-        </label>
+        <input type="hidden" name="location_id" value={locations.find((l) => l.is_default)?.id ?? locations[0]?.id ?? ""} />
       </div>
 
       <div className="flex flex-col gap-2">

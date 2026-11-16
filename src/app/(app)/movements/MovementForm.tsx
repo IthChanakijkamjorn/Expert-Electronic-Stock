@@ -9,7 +9,6 @@ export function MovementForm({
   t,
   products,
   projects = [],
-  locations = [],
   fixedProjectId,
   defaultDirection = "in",
   defaultType = "purchase",
@@ -41,16 +40,6 @@ export function MovementForm({
         {t.quantity}
         <input name="quantity" type="number" min={1} step={1} required className={field} />
       </label>
-      {locations.length > 1 && (
-        <label>
-          {t.location}
-          <select name="location_id" className={field} defaultValue={locations.find((l) => l.is_default)?.id}>
-            {locations.map((l) => (
-              <option key={l.id} value={l.id}>{l.name}</option>
-            ))}
-          </select>
-        </label>
-      )}
       <label>
         {t.reason}
         <select name="type" className={field} defaultValue={defaultType}>

@@ -53,7 +53,7 @@ export function InvoiceForm({
   const [preview, setPreview] = useState(false);
   const [editCompany, setEditCompany] = useState(false);
   const [projectId, setProjectId] = useState(existing?.projectId ?? "");
-  const [locationId, setLocationId] = useState(existing?.locationId ?? locations.find((l) => l.is_default)?.id ?? locations[0]?.id ?? "");
+  const [locationId] = useState(existing?.locationId ?? locations.find((l) => l.is_default)?.id ?? locations[0]?.id ?? "");
 
   const byId = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
   const available = (id: string) => stock[id]?.[locationId] ?? 0;
@@ -123,14 +123,6 @@ export function InvoiceForm({
       <div className="card flex flex-wrap items-end gap-4 print:hidden">
         {!preview && (
           <>
-            {locations.length > 1 && (
-              <label className="text-sm">
-                {t.location}
-                <select className="input mt-1" value={locationId} onChange={(e) => setLocationId(e.target.value)}>
-                  {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-                </select>
-              </label>
-            )}
             {projects.length > 0 && (
               <label className="text-sm">
                 {t.projects}
