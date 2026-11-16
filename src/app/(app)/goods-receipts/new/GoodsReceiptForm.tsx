@@ -8,9 +8,8 @@ import { createGoodsReceipt } from "../actions";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 type Product = { id: string; name: string; sku: string | null; brand: string | null; stock: number; unit: string };
-type Location = { id: string; name: string; is_default: boolean };
 
-export function GoodsReceiptForm({ t, products, locations }: { t: Dictionary; products: Product[]; locations: Location[] }) {
+export function GoodsReceiptForm({ t, products }: { t: Dictionary; products: Product[] }) {
   const router = useRouter();
   const [rows, setRows] = useState([0]);
   const [next, setNext] = useState(1);
@@ -56,7 +55,6 @@ export function GoodsReceiptForm({ t, products, locations }: { t: Dictionary; pr
           {t.date}
           <input name="date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} className="input mt-1" />
         </label>
-        <input type="hidden" name="location_id" value={locations.find((l) => l.is_default)?.id ?? locations[0]?.id ?? ""} />
       </div>
 
       <div className="flex flex-col gap-2">

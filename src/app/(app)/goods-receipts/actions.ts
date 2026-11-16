@@ -25,7 +25,6 @@ export async function createGoodsReceipt(formData: FormData): Promise<GoodsState
     p_supplier: supplier,
     p_reference: String(formData.get("reference") ?? ""),
     p_note: String(formData.get("note") ?? ""),
-    p_loc: String(formData.get("location_id") ?? "") || null,
     p_date: String(formData.get("date") ?? "") || null,
     p_file_path: filePath,
     p_file_name: filePath ? String(formData.get("file_name") ?? "") || null : null,

@@ -62,7 +62,6 @@ export async function saveInvoice(id: string | null, _prev: InvoiceState, formDa
     p_salesperson: text(formData, "salesperson"),
     p_invoice_date: text(formData, "invoice_date"),
     p_project_id: text(formData, "project_id"),
-    p_location_id: text(formData, "location_id"),
     p_vat: formData.get("vat") === "1",
     p_lines: lines,
     p_company: company,

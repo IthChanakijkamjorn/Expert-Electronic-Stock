@@ -13,7 +13,7 @@ export default async function GoodsReceiptPage({ params }: { params: Promise<{ i
   const supabase = await createClient();
   const { data: r } = await supabase
     .from("goods_receipts")
-    .select("id, supplier, reference, note, received_date, file_path, file_name, locations(name), goods_receipt_lines(id, qty, unit_cost, products(name, sku, unit))")
+    .select("id, supplier, reference, note, received_date, file_path, file_name, goods_receipt_lines(id, qty, unit_cost, products(name, sku, unit))")
     .eq("id", id)
     .maybeSingle();
   if (!r) notFound();
@@ -21,13 +21,12 @@ export default async function GoodsReceiptPage({ params }: { params: Promise<{ i
   const fileUrl = r.file_path ? urls.get(r.file_path) : undefined;
   const locale = lang === "th" ? "th-TH" : "en-GB";
   const money = (n: number) => n.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const where = (r.locations as unknown as { name: string } | null)?.name;
 
   return (
     <section className="flex flex-col gap-6">
       <div>
         <Link href="/goods-receipts" className="text-sm text-muted hover:underline">{t.back}</Link>
-        <p className="eyebrow mt-3">{new Date(r.received_date).toLocaleDateString(locale)}{where ? ` · ${where}` : ""}</p>
+        <p className="eyebrow mt-3">{new Date(r.received_date).toLocaleDateString(locale)}</p>
         <h1 className="text-3xl font-semibold">{r.supplier}</h1>
         {r.reference && <p className="mt-1 text-muted">{r.reference}</p>}
         {r.note && <p className="mt-2 text-muted">{r.note}</p>}

@@ -9,14 +9,13 @@ export default async function NewGoodsReceiptPage() {
   if (role !== "admin" && role !== "manager") redirect("/");
   const { t } = await getDictionary();
   const supabase = await createClient();
-  const [{ data: products }, { data: locations }] = await Promise.all([
+  const [{ data: products }] = await Promise.all([
     supabase.from("product_stock").select("id, name, sku, brand, stock, unit").eq("active", true).order("name").limit(2000),
-    supabase.from("locations").select("id, name, is_default").order("name"),
   ]);
   return (
     <section className="flex flex-col gap-6">
       <h1 className="text-3xl font-semibold">{t.newGoodsReceipt}</h1>
-      <GoodsReceiptForm t={t} products={products ?? []} locations={locations ?? []} />
+      <GoodsReceiptForm t={t} products={products ?? []} />
     </section>
   );
 }

@@ -19,7 +19,6 @@ export function InvoiceForm({
   stock,
   sellPrice,
   projects,
-  locations,
   salesperson,
   salespeople,
   existing,
@@ -27,13 +26,12 @@ export function InvoiceForm({
   t: Dictionary;
   defaultCompany: DocCompany;
   products: Product[];
-  stock: Record<string, Record<string, number>>;
+  stock: Record<string, number>;
   sellPrice: Record<string, number>;
   projects: { id: string; label: string }[];
-  locations: { id: string; name: string; is_default: boolean }[];
   salesperson: string;
   salespeople: Salesperson[];
-  existing?: { id: string; status: "draft" | "final"; data: PaperData; projectId: string; locationId: string };
+  existing?: { id: string; status: "draft" | "final"; data: PaperData; projectId: string };
 }) {
   const [state, action, pending] = useActionState(saveInvoice.bind(null, existing?.id ?? null), null);
   const [data, setData] = useState<PaperData>(existing?.data ?? {
@@ -53,10 +51,9 @@ export function InvoiceForm({
   const [preview, setPreview] = useState(false);
   const [editCompany, setEditCompany] = useState(false);
   const [projectId, setProjectId] = useState(existing?.projectId ?? "");
-  const [locationId] = useState(existing?.locationId ?? locations.find((l) => l.is_default)?.id ?? locations[0]?.id ?? "");
 
   const byId = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
-  const available = (id: string) => stock[id]?.[locationId] ?? 0;
+  const available = (id: string) => stock[id] ?? 0;
 
   const addProduct = (p: Product) => {
     setData((d) => ({
@@ -112,7 +109,6 @@ export function InvoiceForm({
       <input type="hidden" name="invoice_date" value={data.date} />
       <input type="hidden" name="vat" value={data.vat ? "1" : "0"} />
       <input type="hidden" name="project_id" value={projectId} />
-      <input type="hidden" name="location_id" value={locationId} />
       <input type="hidden" name="company" value={JSON.stringify(data.company)} />
       <input
         type="hidden"

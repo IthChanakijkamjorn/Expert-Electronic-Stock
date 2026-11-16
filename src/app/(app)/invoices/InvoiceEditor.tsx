@@ -11,12 +11,12 @@ export async function InvoiceEditor({ id }: { id?: string }) {
   const { t } = await getDictionary();
   const supabase = await createClient();
 
-  const [products, locStock, prices, { data: projects }, { data: locations }, { data: salespeople }] = await Promise.all([
+  const [products, stockRows, prices, { data: projects }, { data: salespeople }] = await Promise.all([
     fetchAll((a, b) =>
       supabase.from("product_stock").select("id, name, sku, brand, unit").eq("active", true).order("id").range(a, b),
     ),
     fetchAll((a, b) =>
-      supabase.from("product_location_stock").select("product_id, location_id, qty").order("product_id").range(a, b),
+      supabase.from("product_stock").select("id, stock").eq("active", true).order("id").range(a, b),
     ),
     // Only managers can read prices; for staff this is empty and they type the price.
     fetchAll((a, b) => supabase.from("product_prices").select("product_id, sell_price").order("product_id").range(a, b)),
@@ -25,18 +25,15 @@ export async function InvoiceEditor({ id }: { id?: string }) {
       .select("id, name, year, towers(name, organizations(name))")
       .order("year", { ascending: false })
       .limit(500),
-    supabase.from("locations").select("id, name, is_default").order("name"),
     supabase.from("salespeople").select("id, name").order("name"),
   ]);
 
-  const locStockBase: Record<string, Record<string, number>> = {};
-  locStock.forEach((r) => ((locStockBase[r.product_id] ??= {})[r.location_id] = r.qty));
+  const stock: Record<string, number> = {};
+  stockRows.forEach((r) => (stock[r.id] = r.stock));
   let existing: React.ComponentProps<typeof InvoiceForm>["existing"];
-  let oldLoc = "";
   if (id) {
     const { data: inv } = await supabase.from("tax_invoices").select("*").eq("id", id).maybeSingle();
     if (!inv) notFound();
-    oldLoc = inv.location_id ?? locations?.find((l) => l.is_default)?.id ?? "";
     const lines = (inv.lines as { product_id: string; brand: string | null; model: string | null; name: string; unit: string; qty: number; price: number }[]).map((l) => ({
       key: l.product_id,
       brand: l.brand,
@@ -60,17 +57,13 @@ export async function InvoiceEditor({ id }: { id?: string }) {
       variant: "original",
       lines,
     } as PaperData;
-    existing = { id, status: inv.status, data, projectId: inv.project_id ?? "", locationId: oldLoc };
+    existing = { id, status: inv.status, data, projectId: inv.project_id ?? "" };
     if (inv.status === "final") {
       // This invoice's own quantities are already deducted, so they count as available while editing.
-      lines.forEach((l) => {
-        const row = ((locStockBase[l.key] ??= {}));
-        row[oldLoc] = (row[oldLoc] ?? 0) + Number(l.qty);
-      });
+      lines.forEach((l) => (stock[l.key] = (stock[l.key] ?? 0) + Number(l.qty)));
     }
   }
 
-  const stock = locStockBase;
   const sellPrice: Record<string, number> = {};
   prices.forEach((p) => {
     if (p.sell_price !== null) sellPrice[p.product_id] = Number(p.sell_price);
@@ -90,7 +83,6 @@ export async function InvoiceEditor({ id }: { id?: string }) {
         stock={stock}
         sellPrice={sellPrice}
         projects={projectOptions}
-        locations={locations ?? []}
         salesperson=""
         salespeople={salespeople ?? []}
         existing={existing}
