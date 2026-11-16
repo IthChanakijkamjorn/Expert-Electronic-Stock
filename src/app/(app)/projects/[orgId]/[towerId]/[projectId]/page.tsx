@@ -6,6 +6,7 @@ import { getRole } from "@/lib/role";
 import { signedUrls } from "@/lib/storage";
 import { ActiveShares } from "@/components/ActiveShares";
 import { ShareButton } from "@/components/ShareButton";
+import { PublishPanel } from "@/components/PublishPanel";
 import { FileUploader } from "@/components/FileUploader";
 import { DeleteButton } from "@/components/DeleteButton";
 import { RenameForm } from "@/components/RenameForm";
@@ -166,6 +167,13 @@ export default async function ProjectPage({
           </div>
         ) : (
           <p className="text-muted">{t.noPhotos}</p>
+        )}
+        {canManage && !!photos?.length && (
+          <PublishPanel
+            projectId={projectId}
+            photos={photos.flatMap((p) => (urls.get(p.storage_path) ? [{ id: p.id, url: urls.get(p.storage_path)! }] : []))}
+            labels={{ title: t.publishTitle, help: t.publishHelp, location: t.publishLocation, publish: t.publish, unpublish: t.unpublish, busy: t.uploading, done: t.publishDone, removed: t.publishRemoved, failed: t.saveFailed }}
+          />
         )}
       </div>
 
