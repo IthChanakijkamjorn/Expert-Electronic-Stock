@@ -13,7 +13,6 @@ import { ImageUploader } from "@/components/ImageUploader";
 import { BrandLogo } from "@/components/BrandLogo";
 import { setProductImage } from "../image-actions";
 import { addSerials, deleteSerial, issueSerial, returnSerial } from "../serial-actions";
-import { TransferForm } from "@/components/TransferForm";
 import { setPrices } from "../price-actions";
 import { AddForm } from "@/components/AddForm";
 import { addProductFile, deleteProduct, deleteProductFile, renameProduct } from "../file-actions";
@@ -59,11 +58,6 @@ export default async function ProductFilesPage({
     .eq("product_id", productId)
     .order("serial")
     .limit(1000);
-  const [{ data: locations }, { data: locStock }] = await Promise.all([
-    supabase.from("locations").select("id, name").order("name"),
-    supabase.from("product_location_stock").select("location_id, qty").eq("product_id", productId),
-  ]);
-  const qtyAt = new Map((locStock ?? []).map((r) => [r.location_id, r.qty]));
   const { data: price } = canManage
     ? await supabase.from("product_prices").select("cost, sell_price").eq("product_id", productId).maybeSingle()
     : { data: null };
@@ -145,25 +139,6 @@ export default async function ProductFilesPage({
           )}
         </div>
       </div>
-      {(locations?.length ?? 0) > 1 && (
-        <>
-          <h2 className="text-xl font-semibold text-navy">{t.stockByLocation}</h2>
-          <div className="card flex flex-col gap-4 p-4">
-            <ul className="grid gap-3 sm:grid-cols-3">
-              {locations!.map((l) => (
-                <li key={l.id} className="rounded-2xl bg-[#f5f5ff] p-4">
-                  <p className="eyebrow">{l.name}</p>
-                  <p className="mt-1 text-2xl font-bold text-navy">
-                    {qtyAt.get(l.id) ?? 0}
-                    <span className="ml-1 text-sm font-medium text-muted">{product.unit}</span>
-                  </p>
-                </li>
-              ))}
-            </ul>
-            <TransferForm productId={productId} locations={locations!} t={t} />
-          </div>
-        </>
-      )}
       {canManage && (
         <>
           <h2 className="text-xl font-semibold text-navy">{t.prices}</h2>

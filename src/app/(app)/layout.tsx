@@ -30,7 +30,7 @@ export default async function AppLayout({
         { href: "/products", label: t.products },
         { href: "/movements", label: t.movements },
         { href: "/stock-list", label: t.stockList },
-        ...(manager ? [{ href: "/goods-receipts", label: t.goodsReceived }, { href: "/locations", label: t.locations }] : []),
+        ...(manager ? [{ href: "/goods-receipts", label: t.goodsReceived }] : []),
       ],
     },
     {
