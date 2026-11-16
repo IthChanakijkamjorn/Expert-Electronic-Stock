@@ -5,7 +5,8 @@ import { saveReceipt } from "../actions";
 import { ReceiptPaper, type ReceiptHandlers, type ReceiptPaperData } from "@/components/ReceiptPaper";
 import { DocVariantSelect } from "@/components/DocVariantSelect";
 import type { DocCompany } from "@/lib/company";
-import { saveCompanyDefault } from "../../documents/actions";
+import { saveCompanyDefault, type Salesperson } from "../../documents/actions";
+import { SalesPicker } from "@/components/SalesPicker";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 type InvoiceOption = { id: string; number: string; customerCode: string; customer: string; total: number };
@@ -15,6 +16,7 @@ export function ReceiptForm({
   defaultCompany,
   invoices,
   salesperson,
+  salespeople,
   existingId,
   existing,
 }: {
@@ -22,6 +24,7 @@ export function ReceiptForm({
   defaultCompany: DocCompany;
   invoices: InvoiceOption[];
   salesperson: string;
+  salespeople: Salesperson[];
   existingId?: string;
   existing?: ReceiptPaperData;
 }) {
@@ -122,7 +125,10 @@ export function ReceiptForm({
       </div>
 
       <div className="overflow-x-auto pb-4">
-        <ReceiptPaper data={data} h={preview ? undefined : h} editCompany={editCompany && !preview} />
+        <ReceiptPaper
+          data={data}
+          h={preview ? undefined : h}
+          salesSlot={<SalesPicker initial={salespeople} value={data.salesperson} onChange={(v) => setData((d) => ({ ...d, salesperson: v }))} labels={{ add: t.salesAdd, remove: t.remove, save: t.save, confirm: t.salesRemoveConfirm }} />} editCompany={editCompany && !preview} />
       </div>
     </form>
   );

@@ -6,7 +6,8 @@ import { InvoicePaper, type PaperData, type PaperHandlers, type PaperLine } from
 import { DocVariantSelect } from "@/components/DocVariantSelect";
 import { BrandPicker } from "@/components/BrandPicker";
 import type { DocCompany } from "@/lib/company";
-import { saveCompanyDefault } from "../../documents/actions";
+import { saveCompanyDefault, type Salesperson } from "../../documents/actions";
+import { SalesPicker } from "@/components/SalesPicker";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 type Product = { id: string; name: string; sku: string | null; brand: string | null; unit: string };
@@ -20,6 +21,7 @@ export function InvoiceForm({
   projects,
   locations,
   salesperson,
+  salespeople,
   existing,
 }: {
   t: Dictionary;
@@ -30,6 +32,7 @@ export function InvoiceForm({
   projects: { id: string; label: string }[];
   locations: { id: string; name: string; is_default: boolean }[];
   salesperson: string;
+  salespeople: Salesperson[];
   existing?: { id: string; status: "draft" | "final"; data: PaperData; projectId: string; locationId: string };
 }) {
   const [state, action, pending] = useActionState(saveInvoice.bind(null, existing?.id ?? null), null);
@@ -66,6 +69,10 @@ export function InvoiceForm({
           ],
     }));
   };
+
+  const salesSlot = (
+    <SalesPicker initial={salespeople} value={data.salesperson} onChange={(v) => setData((d) => ({ ...d, salesperson: v }))} labels={{ add: t.salesAdd, remove: t.remove, save: t.save, confirm: t.salesRemoveConfirm }} />
+  );
 
   const handlers: PaperHandlers = {
     onField: (patch) => setData((d) => ({ ...d, ...patch })),
@@ -169,6 +176,7 @@ export function InvoiceForm({
         <InvoicePaper
           data={{ ...data, lines }}
           h={preview ? undefined : handlers}
+          salesSlot={salesSlot}
           editCompany={editCompany && !preview}
           addRow={preview ? undefined : addRow}
         />

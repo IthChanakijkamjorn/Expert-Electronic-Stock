@@ -10,10 +10,8 @@ import type { PaperData } from "@/components/InvoicePaper";
 export async function InvoiceEditor({ id }: { id?: string }) {
   const { t } = await getDictionary();
   const supabase = await createClient();
-  const { data: claims } = await supabase.auth.getClaims();
-  const userId = claims?.claims.sub ?? "";
 
-  const [products, locStock, prices, { data: projects }, { data: locations }, { data: me }] = await Promise.all([
+  const [products, locStock, prices, { data: projects }, { data: locations }, { data: salespeople }] = await Promise.all([
     fetchAll((a, b) =>
       supabase.from("product_stock").select("id, name, sku, brand, unit").eq("active", true).order("id").range(a, b),
     ),
@@ -28,7 +26,7 @@ export async function InvoiceEditor({ id }: { id?: string }) {
       .order("year", { ascending: false })
       .limit(500),
     supabase.from("locations").select("id, name, is_default").order("name"),
-    supabase.from("profiles").select("full_name").eq("id", userId).maybeSingle(),
+    supabase.from("salespeople").select("id, name").order("name"),
   ]);
 
   const locStockBase: Record<string, Record<string, number>> = {};
@@ -93,7 +91,8 @@ export async function InvoiceEditor({ id }: { id?: string }) {
         sellPrice={sellPrice}
         projects={projectOptions}
         locations={locations ?? []}
-        salesperson={me?.full_name ?? ""}
+        salesperson=""
+        salespeople={salespeople ?? []}
         existing={existing}
       />
     </section>

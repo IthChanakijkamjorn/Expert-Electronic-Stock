@@ -44,10 +44,12 @@ const MIN_ROWS = 14;
 export function InvoicePaper({
   data,
   h,
+  salesSlot,
   editCompany = false,
   addRow,
 }: {
   data: PaperData;
+  salesSlot?: React.ReactNode;
   h?: PaperHandlers;
   editCompany?: boolean;
   addRow?: ReactNode;
@@ -128,7 +130,7 @@ export function InvoicePaper({
             <span>{dateText}</span>
           )}
           <span>พนักงานขาย:</span>
-          {field("salesperson")}
+          {h && salesSlot ? salesSlot : field("salesperson")}
         </div>
       </div>
 

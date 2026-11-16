@@ -18,3 +18,26 @@ export async function deleteDraft(kind: keyof typeof TABLES, id: string) {
   revalidatePath(`/${kind}`);
   revalidatePath("/documents");
 }
+
+export type Salesperson = { id: string; name: string };
+
+export async function addSalesperson(name: string): Promise<Salesperson | null> {
+  const clean = name.trim();
+  if (!clean) return null;
+  const supabase = await createClient();
+  const { data } = await supabase.from("salespeople").insert({ name: clean }).select("id, name").single();
+  return data;
+}
+
+export async function renameSalesperson(id: string, name: string): Promise<boolean> {
+  const clean = name.trim();
+  if (!clean) return false;
+  const supabase = await createClient();
+  const { error } = await supabase.from("salespeople").update({ name: clean }).eq("id", id);
+  return !error;
+}
+
+export async function deleteSalesperson(id: string) {
+  const supabase = await createClient();
+  await supabase.from("salespeople").delete().eq("id", id);
+}

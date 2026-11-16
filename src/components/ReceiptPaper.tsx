@@ -34,7 +34,7 @@ export type ReceiptHandlers = {
 
 export const RECEIPT_ROWS = 14;
 
-export function ReceiptPaper({ data, h, editCompany = false }: { data: ReceiptPaperData; h?: ReceiptHandlers; editCompany?: boolean }) {
+export function ReceiptPaper({ data, h, salesSlot, editCompany = false }: { data: ReceiptPaperData; h?: ReceiptHandlers; salesSlot?: React.ReactNode; editCompany?: boolean }) {
   const co = data.company;
   const head = docHead("ใบเสร็จรับเงิน", "RECEIPT", data.variant);
   const total = data.lines.reduce((s, l) => s + (Number(l.amount) || 0), 0);
@@ -84,7 +84,7 @@ export function ReceiptPaper({ data, h, editCompany = false }: { data: ReceiptPa
           <span>เลขที่ / No.:</span><span>{data.number}</span>
           <span>วันที่ / Date:</span>
           {h ? <input type="date" className={blank} value={data.date} onChange={(e) => h.onField({ date: e.target.value })} /> : <span>{fmt(data.date)}</span>}
-          <span>พนักงานขาย / Sales:</span>{field("salesperson")}
+          <span>พนักงานขาย / Sales:</span>{h && salesSlot ? salesSlot : field("salesperson")}
         </div>
       </div>
 
