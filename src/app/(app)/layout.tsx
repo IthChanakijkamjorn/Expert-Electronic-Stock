@@ -30,7 +30,7 @@ export default async function AppLayout({
         { href: "/products", label: t.products },
         { href: "/movements", label: t.movements },
         { href: "/stock-list", label: t.stockList },
-        ...(manager ? [{ href: "/locations", label: t.locations }] : []),
+        ...(manager ? [{ href: "/goods-receipts", label: t.goodsReceived }, { href: "/locations", label: t.locations }] : []),
       ],
     },
     {
@@ -50,9 +50,6 @@ export default async function AppLayout({
         { href: "/floorplans", label: t.floorPlans },
       ],
     },
-    ...(manager
-      ? [{ href: "/purchasing", label: t.purchasing, children: [{ href: "/purchasing", label: t.purchasing }, { href: "/suppliers", label: t.suppliers }] }]
-      : []),
     ...(role === "admin"
       ? [{ href: "/users", label: t.navAdmin, children: [{ href: "/users", label: t.users }, { href: "/audit", label: t.auditLog }] }]
       : []),
