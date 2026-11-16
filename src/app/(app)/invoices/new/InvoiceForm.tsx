@@ -84,7 +84,7 @@ export function InvoiceForm({
       products={products}
       placeholder={`+ ${t.invAddItem}`}
       emptyText={t.noMatches}
-      noBrandText={t.invNoBrand}
+      noBrandText={t.invNoBrand} newText={t.addNewProduct}
       available={available}
       allowOver
       onPick={addProduct}

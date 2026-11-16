@@ -67,7 +67,7 @@ export function GoodsReceiptForm({ t, products, locations }: { t: Dictionary; pr
       <div className="flex flex-col gap-2">
         {rows.map((key) => (
           <div key={key} className="grid items-start gap-2 sm:grid-cols-[minmax(0,1fr)_110px_130px_auto]">
-            <ProductPicker products={products} placeholder={t.searchProducts} emptyText={t.noMatches} />
+            <ProductPicker products={products} placeholder={t.searchProducts} emptyText={t.noMatches} newText={t.addNewProduct} />
             <input name="qty" type="number" min={1} className="input mt-1" placeholder={t.quantity} />
             <input name="unit_cost" type="number" min={0} step="0.01" className="input mt-1" placeholder={t.unitCost} />
             {rows.length > 1 ? (

@@ -165,7 +165,7 @@ export function QuotationForm({
           h={preview ? undefined : h}
           editCompany={editCompany && !preview}
           addRow={preview ? undefined : (
-            <BrandPicker products={products} placeholder={`+ ${t.invAddItem}`} emptyText={t.noMatches} noBrandText={t.invNoBrand} onPick={addProduct} />
+            <BrandPicker products={products} placeholder={`+ ${t.invAddItem}`} emptyText={t.noMatches} noBrandText={t.invNoBrand} newText={t.addNewProduct} onPick={addProduct} />
           )}
         />
       </div>

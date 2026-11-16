@@ -28,7 +28,7 @@ export function MovementForm({
     <form action={action} className="card flex flex-col gap-3">
       <div>
         <span>{t.product}</span>
-        <ProductPicker products={products} placeholder={t.searchProducts} emptyText={t.noMatches} />
+        <ProductPicker products={products} placeholder={t.searchProducts} emptyText={t.noMatches} newText={t.addNewProduct} />
       </div>
       <label>
         {t.direction}
