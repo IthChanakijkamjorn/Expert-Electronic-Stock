@@ -5,7 +5,8 @@ import { saveQuotation } from "../actions";
 import { QuotationPaper, type QuotePaperData, type QuoteHandlers } from "@/components/QuotationPaper";
 import { DocVariantSelect } from "@/components/DocVariantSelect";
 import { BrandPicker } from "@/components/BrandPicker";
-import { defaultDocCompany } from "@/lib/company";
+import type { DocCompany } from "@/lib/company";
+import { saveCompanyDefault } from "../../documents/actions";
 import type { PaperLine } from "@/components/InvoicePaper";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
@@ -13,6 +14,7 @@ type Product = { id: string; name: string; sku: string | null; brand: string | n
 
 export function QuotationForm({
   t,
+  defaultCompany,
   products,
   sellPrice,
   projects,
@@ -24,6 +26,7 @@ export function QuotationForm({
   existing,
 }: {
   t: Dictionary;
+  defaultCompany: DocCompany;
   products: Product[];
   sellPrice: Record<string, number>;
   projects: { id: string; label: string; name: string }[];
@@ -43,7 +46,7 @@ export function QuotationForm({
   const [projectId, setProjectId] = useState(existing?.projectId ?? initialProject);
   const [data, setData] = useState<QuotePaperData>(existing?.data ?? {
     number: "QT-____-____",
-    company: defaultDocCompany("quote"),
+    company: defaultCompany,
     customer,
     attention: "",
     project: projects.find((p) => p.id === initialProject)?.name ?? "",
@@ -133,14 +136,17 @@ export function QuotationForm({
                 {signatures.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </label>
+            <DocVariantSelect value={data.variant ?? "original"} label={t.docVariant} onChange={(v) => setData((d) => ({ ...d, variant: v }))} />
+            <button type="button" className="btn-ghost" onClick={() => {
+              if (editCompany) saveCompanyDefault("quote", data.company);
+              setEditCompany((v) => !v);
+            }}>
+              ✎ {editCompany ? t.docDoneEditing : t.docEditCompany}
+            </button>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={data.vat} onChange={(e) => setData((d) => ({ ...d, vat: e.target.checked }))} />
               {t.includeVat}
             </label>
-            <button type="button" className="btn-ghost" onClick={() => setEditCompany((v) => !v)}>
-              ✎ {editCompany ? t.docDoneEditing : t.docEditCompany}
-            </button>
-            <DocVariantSelect value={data.variant ?? "original"} label={t.docVariant} onChange={(v) => setData((d) => ({ ...d, variant: v }))} />
             <button name="intent" value="draft" formNoValidate disabled={pending} className="btn-ghost ml-auto">💾 {t.saveDraft}</button>
             <button type="button" className="btn" disabled={invalid} onClick={() => { setPreview(true); window.scrollTo({ top: 0 }); }}>
               {t.docPreview} →

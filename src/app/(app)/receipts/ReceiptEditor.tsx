@@ -1,3 +1,4 @@
+import { loadCompanyDefault } from "@/lib/companyDefaults";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n";
@@ -49,6 +50,7 @@ export async function ReceiptEditor({ id }: { id?: string }) {
       <h1 className="text-3xl font-semibold">{id ? t.docEdit : t.newReceipt}</h1>
       <ReceiptForm
         t={t}
+        defaultCompany={await loadCompanyDefault("receipt")}
         salesperson={me?.full_name ?? ""}
         existingId={id}
         existing={existing}

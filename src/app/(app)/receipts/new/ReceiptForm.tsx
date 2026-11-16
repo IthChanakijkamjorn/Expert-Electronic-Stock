@@ -4,19 +4,22 @@ import { useActionState, useState } from "react";
 import { saveReceipt } from "../actions";
 import { ReceiptPaper, type ReceiptHandlers, type ReceiptPaperData } from "@/components/ReceiptPaper";
 import { DocVariantSelect } from "@/components/DocVariantSelect";
-import { defaultDocCompany } from "@/lib/company";
+import type { DocCompany } from "@/lib/company";
+import { saveCompanyDefault } from "../../documents/actions";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 type InvoiceOption = { id: string; number: string; customerCode: string; customer: string; total: number };
 
 export function ReceiptForm({
   t,
+  defaultCompany,
   invoices,
   salesperson,
   existingId,
   existing,
 }: {
   t: Dictionary;
+  defaultCompany: DocCompany;
   invoices: InvoiceOption[];
   salesperson: string;
   existingId?: string;
@@ -25,7 +28,7 @@ export function ReceiptForm({
   const [state, action, pending] = useActionState(saveReceipt.bind(null, existingId ?? null), null);
   const [data, setData] = useState<ReceiptPaperData>(existing ?? {
     number: "RC-____-____",
-    company: defaultDocCompany("receipt"),
+    company: defaultCompany,
     variant: "original",
     customerCode: "",
     customer: "",
@@ -94,7 +97,10 @@ export function ReceiptForm({
                 </select>
               </label>
             )}
-            <button type="button" className="btn-ghost" onClick={() => setEditCompany((v) => !v)}>
+            <button type="button" className="btn-ghost" onClick={() => {
+              if (editCompany) saveCompanyDefault("receipt", data.company);
+              setEditCompany((v) => !v);
+            }}>
               ✎ {editCompany ? t.docDoneEditing : t.docEditCompany}
             </button>
             <DocVariantSelect value={data.variant ?? "original"} label={t.docVariant} onChange={(v) => setData((d) => ({ ...d, variant: v }))} />

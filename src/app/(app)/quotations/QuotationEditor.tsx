@@ -1,3 +1,4 @@
+import { loadCompanyDefault } from "@/lib/companyDefaults";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n";
@@ -92,6 +93,7 @@ export async function QuotationEditor({ id, project }: { id?: string; project?: 
       <h1 className="text-3xl font-semibold">{id ? t.docEdit : t.newQuotation}</h1>
       <QuotationForm
         t={t}
+        defaultCompany={await loadCompanyDefault("quote")}
         products={products}
         sellPrice={sellPrice}
         projects={projectOptions}

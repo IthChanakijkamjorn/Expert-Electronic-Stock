@@ -3,6 +3,7 @@ import { getDictionary } from "@/lib/i18n";
 import { fetchAll } from "@/lib/fetchAll";
 import { InvoiceForm } from "./new/InvoiceForm";
 import { mergeDocCompany } from "@/lib/company";
+import { loadCompanyDefault } from "@/lib/companyDefaults";
 import { notFound } from "next/navigation";
 import type { PaperData } from "@/components/InvoicePaper";
 
@@ -86,6 +87,7 @@ export async function InvoiceEditor({ id }: { id?: string }) {
       <h1 className="text-3xl font-semibold">{id ? t.docEdit : t.newTaxInvoice}</h1>
       <InvoiceForm
         t={t}
+        defaultCompany={await loadCompanyDefault("invoice")}
         products={products}
         stock={stock}
         sellPrice={sellPrice}
