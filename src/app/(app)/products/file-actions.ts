@@ -79,11 +79,11 @@ export async function renameProduct(productId: string, name: string) {
 
 export async function updateProductDetails(productId: string, formData: FormData) {
   const brand = String(formData.get("brand") ?? "").trim() || null;
-  const sku = String(formData.get("sku") ?? "").trim() || null;
+  const model = String(formData.get("model") ?? "").trim() || null;
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return;
   const supabase = await createClient();
-  const { error } = await supabase.from("products").update({ brand, sku, name }).eq("id", productId);
+  const { error } = await supabase.from("products").update({ brand, model, name }).eq("id", productId);
   if (error) throw new Error(error.message);
   revalidatePath("/products", "layout");
 }

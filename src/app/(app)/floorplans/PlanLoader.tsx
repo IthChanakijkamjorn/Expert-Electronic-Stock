@@ -16,7 +16,7 @@ export async function PlanLoader({
   const supabase = await createClient();
   const [products, { data: projects }] = await Promise.all([
     fetchAll((a, b) =>
-      supabase.from("products").select("id, name, sku, brand, unit, image_path").eq("active", true).order("id").range(a, b),
+      supabase.from("products").select("id, name, model, brand, unit, image_path").eq("active", true).order("id").range(a, b),
     ),
     supabase.from("projects").select("id, name, year, towers(name, organizations(name))").order("year", { ascending: false }).limit(500),
   ]);
@@ -37,7 +37,7 @@ export async function PlanLoader({
       <PlanEditor
         t={t}
         id={plan?.id ?? null}
-        products={products.map((p) => ({ id: p.id, name: p.name, sku: p.sku, brand: p.brand, unit: p.unit }))}
+        products={products.map((p) => ({ id: p.id, name: p.name, model: p.model, brand: p.brand, unit: p.unit }))}
         imageUrls={imageUrls}
         projects={projectOptions}
         initial={{

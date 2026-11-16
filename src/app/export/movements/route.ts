@@ -4,7 +4,7 @@ import { csvResponse, toCsv } from "@/lib/csv";
 export async function GET() {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("stock_movements").select("created_at, quantity, type, comment, created_by, products(name, sku, brand)")
+    .from("stock_movements").select("created_at, quantity, type, comment, created_by, products(name, model, brand)")
     .order("created_at", { ascending: false }).limit(50000);
   if (error) return new Response("forbidden", { status: 403 });
   const ids = [...new Set((data ?? []).map((m) => m.created_by))];
@@ -13,10 +13,10 @@ export async function GET() {
   return csvResponse(
     "movements.csv",
     toCsv([
-      ["Date", "SKU", "Product", "Brand", "Quantity", "Reason", "Comment", "By"],
+      ["Date", "Model", "Product", "Brand", "Quantity", "Reason", "Comment", "By"],
       ...(data ?? []).map((m) => {
-        const p = m.products as unknown as { name: string; sku: string | null; brand: string | null } | null;
-        return [m.created_at, p?.sku, p?.name, p?.brand, m.quantity, m.type, m.comment, names.get(m.created_by)];
+        const p = m.products as unknown as { name: string; model: string | null; brand: string | null } | null;
+        return [m.created_at, p?.model, p?.name, p?.brand, m.quantity, m.type, m.comment, names.get(m.created_by)];
       }),
     ]),
   );

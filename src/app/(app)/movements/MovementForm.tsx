@@ -18,7 +18,7 @@ export function MovementForm({
   defaultType?: string;
   t: Dictionary;
   projects?: { id: string; label: string }[];
-  products: { id: string; name: string; sku: string | null; brand?: string | null; stock: number; unit: string }[];
+  products: { id: string; name: string; model: string | null; brand?: string | null; stock: number; unit: string }[];
 }) {
   const [state, action, pending] = useActionState(recordMovement, null);
   const field = "input mt-1";

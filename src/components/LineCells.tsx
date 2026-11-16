@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { blank, type PaperLine } from "./InvoicePaper";
 
-export type PickerProduct = { id: string; name: string; sku: string | null; brand: string | null; unit: string };
+export type PickerProduct = { id: string; name: string; model: string | null; brand: string | null; unit: string };
 
 const cmp = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: "base", numeric: true });
 
@@ -89,20 +89,20 @@ export function LineCells({ l, h, products, td }: { l: PaperLine; h: LineHandler
     const b = l.brand.trim().toLowerCase();
     return products
       .filter((p) => (b ? (p.brand ?? "").trim().toLowerCase() === b : true))
-      .sort((a, c) => cmp(a.sku || a.name, c.sku || c.name));
+      .sort((a, c) => cmp(a.model || a.name, c.model || c.name));
   }, [products, l.brand]);
 
   const brandOptions: Option[] = brands.map((b) => ({ id: b, label: b, onPick: () => h.onLine(l.key, { brand: b }) }));
   const modelOptions: Option[] = models.map((p) => ({
     id: p.id,
-    label: `${l.brand.trim() ? "" : p.brand ? `${p.brand} · ` : ""}${p.sku ? `${p.sku} — ` : ""}${p.name}`,
+    label: `${l.brand.trim() ? "" : p.brand ? `${p.brand} · ` : ""}${p.model ? `${p.model} — ` : ""}${p.name}`,
     onPick: () => h.onPick?.(l.key, p),
   }));
 
   const typeModel = (v: string) => {
     h.onLine(l.key, { model: v });
     const b = l.brand.trim().toLowerCase();
-    const hit = v.trim() && products.find((p) => (p.sku ?? "").toLowerCase() === v.trim().toLowerCase() && (!b || (p.brand ?? "").toLowerCase() === b));
+    const hit = v.trim() && products.find((p) => (p.model ?? "").toLowerCase() === v.trim().toLowerCase() && (!b || (p.brand ?? "").toLowerCase() === b));
     if (hit) h.onPick?.(l.key, hit);
   };
 

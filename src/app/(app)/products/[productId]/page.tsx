@@ -30,7 +30,7 @@ export default async function ProductFilesPage({
 
   const { data: product } = await supabase
     .from("product_stock")
-    .select("id, name, sku, brand, unit, stock, image_path")
+    .select("id, name, model, brand, unit, stock, image_path")
     .eq("id", productId)
     .maybeSingle();
   if (!product) notFound();
@@ -98,7 +98,7 @@ export default async function ProductFilesPage({
             <Link href={product.brand ? `/products/brand/${encodeURIComponent(product.brand)}` : "/products"} className="text-sm text-muted hover:underline">{t.back}</Link>
             <div className="mt-3 flex items-center gap-3">
               {product.brand && <BrandLogo name={product.brand} url={logoUrl} size={44} />}
-              <p className="eyebrow">{[product.brand, product.sku].filter(Boolean).join(" · ")}</p>
+              <p className="eyebrow">{[product.brand, product.model].filter(Boolean).join(" · ")}</p>
             </div>
             <h1 className="mt-2 text-3xl font-semibold">{product.name}</h1>
           </div>
@@ -118,7 +118,7 @@ export default async function ProductFilesPage({
               <summary className="btn-ghost inline-block cursor-pointer">✎ {t.editDetails}</summary>
               <form action={updateProductDetails.bind(null, productId)} className="mt-3 grid gap-3 sm:grid-cols-3">
                 <label className="text-sm">{t.brand}<input name="brand" defaultValue={product.brand ?? ""} className="input mt-1" /></label>
-                <label className="text-sm">{t.modelLabel}<input name="sku" defaultValue={product.sku ?? ""} className="input mt-1" /></label>
+                <label className="text-sm">{t.modelLabel}<input name="model" defaultValue={product.model ?? ""} className="input mt-1" /></label>
                 <label className="text-sm">{t.descriptionLabel}<input name="name" required defaultValue={product.name} className="input mt-1" /></label>
                 <button className="btn sm:col-span-3 sm:w-fit">{t.save}</button>
               </form>

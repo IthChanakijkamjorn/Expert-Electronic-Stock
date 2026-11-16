@@ -23,13 +23,13 @@ export default async function BrandPage({
 
   let query = supabase
     .from("product_stock")
-    .select("id, sku, name, unit, stock, image_path")
+    .select("id, model, name, unit, stock, image_path")
     .eq("active", true)
     .order("name")
     .limit(1000);
   query = brand === "_" ? query.is("brand", null) : query.eq("brand", brand);
   const term = q.replace(/[%,()*\\]/g, " ").trim();
-  if (term) query = query.or(`name.ilike.%${term}%,sku.ilike.%${term}%`);
+  if (term) query = query.or(`name.ilike.%${term}%,model.ilike.%${term}%`);
   const role = await getRole();
   const canManage = role === "admin" || role === "manager";
   const [{ data: products }, { data: fileRows }, { data: brandRow }] = await Promise.all([
@@ -92,7 +92,7 @@ export default async function BrandPage({
                 <div className="mt-auto flex items-end justify-between">
                   <div>
                     <p className="text-3xl font-bold text-navy">{p.stock}<span className="ml-1 text-sm font-medium text-muted">{p.unit}</span></p>
-                    <p className="text-xs text-muted">{p.sku || "—"}</p>
+                    <p className="text-xs text-muted">{p.model || "—"}</p>
                   </div>
                   <span className="pill bg-[#eeeefa] text-navy">📎 {files}</span>
                 </div>

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { quickCreateProduct } from "@/app/(app)/products/new/quick";
 
-export type PickerProduct = { id: string; name: string; sku: string | null; brand: string | null; unit: string };
+export type PickerProduct = { id: string; name: string; model: string | null; brand: string | null; unit: string };
 
 const cmp = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: "base", numeric: true });
 
@@ -48,7 +48,7 @@ export function BrandPicker({
   const groups = useMemo(() => {
     const q = query.trim().toLowerCase();
     const list = q
-      ? products.filter((p) => `${p.brand ?? ""} ${p.sku ?? ""} ${p.name}`.toLowerCase().includes(q))
+      ? products.filter((p) => `${p.brand ?? ""} ${p.model ?? ""} ${p.name}`.toLowerCase().includes(q))
       : products;
     const byBrand = new Map<string, PickerProduct[]>();
     list.forEach((p) => {
@@ -109,7 +109,7 @@ export function BrandPicker({
                       setOpen(false);
                     }}
                   >
-                    <span>{p.sku ? `${p.sku} · ` : ""}{p.name}</span>
+                    <span>{p.model ? `${p.model} · ` : ""}{p.name}</span>
                     {left !== undefined && <span className={`shrink-0 ${left <= 0 ? "text-red-600" : "text-muted"}`}>{left} {p.unit}</span>}
                   </button>
                 );

@@ -19,10 +19,10 @@ export default async function ProductsPage({
   const role = await getRole();
   const term = q.replace(/[%,()*\\]/g, " ").trim();
 
-  const columns = "id, sku, name, brand, unit, stock";
+  const columns = "id, model, name, brand, unit, stock";
   let query = supabase.from("product_stock").select(columns).eq("active", true).order("name").limit(1000);
   if (term) {
-    query = query.or(`name.ilike.%${term}%,sku.ilike.%${term}%,brand.ilike.%${term}%`);
+    query = query.or(`name.ilike.%${term}%,model.ilike.%${term}%,brand.ilike.%${term}%`);
   }
   const [{ data: products }, { data: shares }] = await Promise.all([
     query,
@@ -79,7 +79,7 @@ export default async function ProductsPage({
               <tbody>
                 {products.map((p) => (
                   <tr key={p.id}>
-                    <td className="py-2 pr-3">{p.sku}</td>
+                    <td className="py-2 pr-3">{p.model}</td>
                     <td className="pr-3">
                       <Link href={`/products/${p.id}`} className="font-semibold text-navy underline">{p.name}</Link>
                     </td>

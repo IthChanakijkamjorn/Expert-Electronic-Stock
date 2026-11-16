@@ -7,7 +7,7 @@ import { ProductPicker } from "../../movements/ProductPicker";
 import { createGoodsReceipt } from "../actions";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
-type Product = { id: string; name: string; sku: string | null; brand: string | null; stock: number; unit: string };
+type Product = { id: string; name: string; model: string | null; brand: string | null; stock: number; unit: string };
 
 export function GoodsReceiptForm({ t, products }: { t: Dictionary; products: Product[] }) {
   const router = useRouter();

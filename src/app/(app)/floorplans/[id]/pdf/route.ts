@@ -13,7 +13,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   if (!plan) return new Response("not found", { status: 404 });
   const data = plan.data as PlanData;
   const { data: products } = data.used.length
-    ? await supabase.from("products").select("id, name, sku, brand, image_path").in("id", data.used)
+    ? await supabase.from("products").select("id, name, model, brand, image_path").in("id", data.used)
     : { data: [] };
 
   const [regularBytes, boldBytes] = await Promise.all([
@@ -116,7 +116,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const tx = lx + 68;
     const tw = LEG - 68;
     pg.drawText(fit(p.name, bold, 9, tw), { x: tx, y: top - 15, size: 9, font: bold, color: black });
-    pg.drawText(fit([p.brand, p.sku].filter(Boolean).join(" · "), font, 8, tw), { x: tx, y: top - 27, size: 8, font, color: rgb(0.35, 0.35, 0.4) });
+    pg.drawText(fit([p.brand, p.model].filter(Boolean).join(" · "), font, 8, tw), { x: tx, y: top - 27, size: 8, font, color: rgb(0.35, 0.35, 0.4) });
     pg.drawText(`x ${counts.get(pid) ?? 0}`, { x: tx, y: top - 39, size: 9, font: bold, color: black });
     y -= ROW;
   });

@@ -10,7 +10,7 @@ export function ProductForm({ t }: { t: Dictionary }) {
   return (
     <form action={action} className="card flex max-w-md flex-col gap-3">
       <label>{t.name}<input name="name" required className={field} /></label>
-      <label>{t.modelLabel}<input name="sku" className={field} /></label>
+      <label>{t.modelLabel}<input name="model" className={field} /></label>
       <label>{t.brand}<input name="brand" className={field} /></label>
       <label>{t.category}<input name="category" className={field} /></label>
       <label>{t.unit}<input name="unit" defaultValue="pcs" className={field} /></label>

@@ -10,7 +10,7 @@ export default async function NewGoodsReceiptPage() {
   const { t } = await getDictionary();
   const supabase = await createClient();
   const [{ data: products }] = await Promise.all([
-    supabase.from("product_stock").select("id, name, sku, brand, stock, unit").eq("active", true).order("name").limit(2000),
+    supabase.from("product_stock").select("id, name, model, brand, stock, unit").eq("active", true).order("name").limit(2000),
   ]);
   return (
     <section className="flex flex-col gap-6">

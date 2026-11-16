@@ -6,7 +6,7 @@ import { BrandPicker } from "@/components/BrandPicker";
 import type { PlanData, PlanItem, Wall } from "@/lib/floorplan";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
-type Product = { id: string; name: string; sku: string | null; brand: string | null; unit: string };
+type Product = { id: string; name: string; model: string | null; brand: string | null; unit: string };
 type Sel = { kind: "item" | "wall"; id: string | number } | null;
 const MARGIN = 1;
 const snap = (v: number) => Math.round(v * 10) / 10;
@@ -253,7 +253,7 @@ export function PlanEditor({
                   )}
                   <span className="min-w-0 flex-1 text-sm">
                     <span className="block truncate font-semibold">{p.name}</span>
-                    <span className="block truncate text-muted">{[p.brand, p.sku].filter(Boolean).join(" · ")}</span>
+                    <span className="block truncate text-muted">{[p.brand, p.model].filter(Boolean).join(" · ")}</span>
                     <span className="text-muted">{t.fpPlaced}: {counts.get(pid) ?? 0}</span>
                   </span>
                   <button type="button" title={t.fpPlaceHere} className="btn-ghost !px-2" onClick={() => place(pid, W / 2, H / 2)}>＋</button>

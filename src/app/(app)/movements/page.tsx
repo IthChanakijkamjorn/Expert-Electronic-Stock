@@ -19,7 +19,7 @@ export default async function MovementsPage({
   let filter: string | null = null;
   if (q) {
     const [{ data: ps }, { data: us }] = await Promise.all([
-      supabase.from("products").select("id").or(`name.ilike.%${q}%,sku.ilike.%${q}%,brand.ilike.%${q}%`).limit(500),
+      supabase.from("products").select("id").or(`name.ilike.%${q}%,model.ilike.%${q}%,brand.ilike.%${q}%`).limit(500),
       supabase.from("profiles").select("id").ilike("full_name", `%${q}%`).limit(100),
     ]);
     const parts = [`comment.ilike.%${q}%`];
@@ -37,7 +37,7 @@ export default async function MovementsPage({
   const [{ data: products }, { data: movements, count }, { data: projects }] = await Promise.all([
     supabase
       .from("product_stock")
-      .select("id, name, sku, brand, stock, unit")
+      .select("id, name, model, brand, stock, unit")
       .eq("active", true)
       .order("name")
       .limit(1000),

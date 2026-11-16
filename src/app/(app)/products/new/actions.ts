@@ -17,7 +17,7 @@ export async function createProduct(
   const supabase = await createClient();
   const { error } = await supabase.from("products").insert({
     name,
-    sku: text(formData, "sku"),
+    model: text(formData, "model"),
     brand: text(formData, "brand"),
     category: text(formData, "category"),
     unit: text(formData, "unit") ?? "pcs",

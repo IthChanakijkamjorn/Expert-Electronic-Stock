@@ -11,7 +11,7 @@ export async function resolveLines(
   raw: RawLine[],
   draft: boolean,
 ): Promise<{ lines: ResolvedLine[] } | { error: "invalid" | "failed" }> {
-  const made = new Map<string, { id: string; name: string; sku: string | null; brand: string | null; unit: string }>();
+  const made = new Map<string, { id: string; name: string; model: string | null; brand: string | null; unit: string }>();
   const out = new Map<string, ResolvedLine>();
 
   for (const l of raw) {
@@ -23,27 +23,27 @@ export async function resolveLines(
     if (!l.product_id && !name && !model && !brand) continue;
     if (!name || !(qty > 0) || !(price >= 0)) return { error: "invalid" };
 
-    let p: { id: string; name: string; sku: string | null; brand: string | null; unit: string } | null = null;
+    let p: { id: string; name: string; model: string | null; brand: string | null; unit: string } | null = null;
     if (l.product_id) {
-      const { data } = await supabase.from("products").select("id, name, sku, brand, unit").eq("id", l.product_id).maybeSingle();
+      const { data } = await supabase.from("products").select("id, name, model, brand, unit").eq("id", l.product_id).maybeSingle();
       p = data;
       if (!p) return { error: "invalid" };
     } else {
       const cacheKey = `${brand}|${model}|${name}`.toLowerCase();
       p = made.get(cacheKey) ?? null;
       if (!p && model) {
-        const { data } = await supabase.from("products").select("id, name, sku, brand, unit").ilike("sku", esc(model)).limit(1);
+        const { data } = await supabase.from("products").select("id, name, model, brand, unit").ilike("model", esc(model)).limit(1);
         p = data?.[0] ?? null;
       }
       if (!p) {
-        const { data } = await supabase.from("products").select("id, name, sku, brand, unit").ilike("name", esc(name)).limit(20);
+        const { data } = await supabase.from("products").select("id, name, model, brand, unit").ilike("name", esc(name)).limit(20);
         p = data?.find((x) => (x.brand ?? "").trim().toLowerCase() === brand.toLowerCase()) ?? null;
       }
       if (!p) {
         const { data, error } = await supabase
           .from("products")
-          .insert({ name, sku: model || null, brand: brand || null, unit: (l.unit ?? "").trim() || "pcs" })
-          .select("id, name, sku, brand, unit")
+          .insert({ name, model: model || null, brand: brand || null, unit: (l.unit ?? "").trim() || "pcs" })
+          .select("id, name, model, brand, unit")
           .single();
         if (error || !data) return { error: "failed" };
         p = data;
@@ -54,7 +54,7 @@ export async function resolveLines(
     out.set(p.id, {
       product_id: p.id,
       brand: p.brand ?? "",
-      model: p.sku ?? "",
+      model: p.model ?? "",
       name: p.name,
       unit: p.unit,
       qty: (cur?.qty ?? 0) + qty,

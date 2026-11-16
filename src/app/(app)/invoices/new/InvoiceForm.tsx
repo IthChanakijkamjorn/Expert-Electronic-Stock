@@ -10,7 +10,7 @@ import { saveCompanyDefault, type Salesperson } from "../../documents/actions";
 import { SalesPicker } from "@/components/SalesPicker";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
-type Product = { id: string; name: string; sku: string | null; brand: string | null; unit: string };
+type Product = { id: string; name: string; model: string | null; brand: string | null; unit: string };
 
 export function InvoiceForm({
   t,
@@ -74,7 +74,7 @@ export function InvoiceForm({
       setLines((ls) =>
         ls.map((l) =>
           l.key === key
-            ? { ...l, productId: p.id, brand: p.brand ?? "", model: p.sku ?? "", name: p.name, unit: p.unit, qty: l.qty || "1", price: priceOf(p.id) }
+            ? { ...l, productId: p.id, brand: p.brand ?? "", model: p.model ?? "", name: p.name, unit: p.unit, qty: l.qty || "1", price: priceOf(p.id) }
             : l,
         ),
       ),

@@ -7,7 +7,7 @@ export default async function StockListPage({ searchParams }: { searchParams: Pr
   const { t } = await getDictionary();
   const supabase = await createClient();
   const { data } = await supabase
-    .from("product_stock").select("id, name, sku, brand, unit, stock")
+    .from("product_stock").select("id, name, model, brand, unit, stock")
     .eq("active", true).order("name").limit(5000);
   const low = (data ?? []).filter((p) => !onlyLow || p.stock < 5);
   const groups = new Map<string, typeof low>();
@@ -33,7 +33,7 @@ export default async function StockListPage({ searchParams }: { searchParams: Pr
             <tbody>
               {items.map((p) => (
                 <tr key={p.id} className="border-t border-zinc-100">
-                  <td className="py-2 pr-3">{p.sku}</td>
+                  <td className="py-2 pr-3">{p.model}</td>
                   <td className="pr-3"><Link href={`/products/${p.id}`} className="font-semibold text-navy underline">{p.name}</Link></td>
                   <td className={`pr-3 text-right font-semibold ${p.stock <= 0 ? "text-red-700" : p.stock < 5 ? "text-yellow-700" : ""}`}>{p.stock} {p.unit}</td>
                 </tr>

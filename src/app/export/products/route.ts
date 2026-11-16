@@ -5,12 +5,12 @@ export async function GET(req: Request) {
   const low = new URL(req.url).searchParams.has("low");
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("product_stock").select("sku, name, brand, unit, stock")
+    .from("product_stock").select("model, name, brand, unit, stock")
     .eq("active", true).order("brand").order("name").limit(10000);
   if (error) return new Response("forbidden", { status: 403 });
   const rows = (data ?? []).filter((p) => !low || p.stock < 5);
   return csvResponse(
     low ? "low-stock.csv" : "products.csv",
-    toCsv([["Model", "Name", "Brand", "Unit", "Stock"], ...rows.map((p) => [p.sku, p.name, p.brand, p.unit, p.stock])]),
+    toCsv([["Model", "Name", "Brand", "Unit", "Stock"], ...rows.map((p) => [p.model, p.name, p.brand, p.unit, p.stock])]),
   );
 }

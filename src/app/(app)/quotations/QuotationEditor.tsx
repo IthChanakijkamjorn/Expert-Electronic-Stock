@@ -16,7 +16,7 @@ export async function QuotationEditor({ id, project }: { id?: string; project?: 
   const supabase = await createClient();
 
   const [products, prices, { data: projects }, { data: sigs }, { data: salespeople }] = await Promise.all([
-    fetchAll((a, b) => supabase.from("products").select("id, name, sku, brand, unit").eq("active", true).order("id").range(a, b)),
+    fetchAll((a, b) => supabase.from("products").select("id, name, model, brand, unit").eq("active", true).order("id").range(a, b)),
     fetchAll((a, b) => supabase.from("product_prices").select("product_id, sell_price").order("product_id").range(a, b)),
     supabase.from("projects").select("id, name, year, towers(name, organizations(name))").order("year", { ascending: false }).limit(500),
     supabase.from("signatures").select("id, name, path, is_default").order("created_at"),
@@ -53,10 +53,10 @@ export async function QuotationEditor({ id, project }: { id?: string; project?: 
     let dropped = 0;
     const lines: QuotePaperData["lines"] = [];
     for (const l of q.lines as { product_id?: string; brand: string; model: string; name: string; unit: string; qty: number; price: number }[]) {
-      // Older quotations did not store the product id, so match by SKU + name, then by name.
+      // Older quotations did not store the product id, so match by model + name, then by name.
       const p =
         products.find((x) => x.id === l.product_id) ??
-        products.find((x) => (x.sku ?? "") === l.model && x.name === l.name) ??
+        products.find((x) => (x.model ?? "") === l.model && x.name === l.name) ??
         products.find((x) => x.name === l.name);
       if (!p) {
         dropped++;

@@ -3,10 +3,10 @@
 import { useMemo, useState } from "react";
 import { quickCreateProduct } from "../products/new/quick";
 
-type Item = { id: string; name: string; sku: string | null; brand?: string | null; stock: number; unit: string };
+type Item = { id: string; name: string; model: string | null; brand?: string | null; stock: number; unit: string };
 
 const label = (p: Item) =>
-  `${p.brand ? `${p.brand} · ` : ""}${p.sku ? `${p.sku} · ` : ""}${p.name} (${p.stock} ${p.unit})`;
+  `${p.brand ? `${p.brand} · ` : ""}${p.model ? `${p.model} · ` : ""}${p.name} (${p.stock} ${p.unit})`;
 
 export function ProductPicker({
   products,
@@ -43,7 +43,7 @@ export function ProductPicker({
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
     const list = q
-      ? all.filter((p) => `${p.brand ?? ""} ${p.sku ?? ""} ${p.name}`.toLowerCase().includes(q))
+      ? all.filter((p) => `${p.brand ?? ""} ${p.model ?? ""} ${p.name}`.toLowerCase().includes(q))
       : all;
     return list.slice(0, 50);
   }, [all, query]);
