@@ -21,6 +21,8 @@ export function ImportRunner({ labels }: { labels: Labels }) {
         setProgress(s);
         const r = await importSheet(s);
         add(`${s.split("/").pop()}: +${r.created} new, ${r.updated} updated`);
+        if (r.error) add(`${labels.failed}: ${r.error}`);
+        r.warnings.forEach((w) => add(`⚠ ${w}`));
         all.push(...r.items);
       }
       let done = 0;
@@ -43,8 +45,8 @@ export function ImportRunner({ labels }: { labels: Labels }) {
         }),
       );
       add(`${labels.done}: ${images} images, ${sheetsAdded} datasheets`);
-    } catch {
-      add(labels.failed);
+    } catch (e) {
+      add(`${labels.failed}: ${e instanceof Error ? e.message : ""}`);
     }
     setProgress("");
     setBusy(false);
