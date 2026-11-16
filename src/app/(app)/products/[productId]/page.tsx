@@ -33,7 +33,7 @@ export default async function ProductFilesPage({
 
   const { data: product } = await supabase
     .from("product_stock")
-    .select("id, name, sku, brand, unit, location, min_stock, stock, image_path")
+    .select("id, name, sku, brand, unit, min_stock, stock, image_path")
     .eq("id", productId)
     .maybeSingle();
   if (!product) notFound();
@@ -120,10 +120,6 @@ export default async function ProductFilesPage({
             <span className={`pill mt-2 ${product.stock <= 0 ? "bg-red-100 text-red-700" : product.stock <= product.min_stock ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
               {product.stock <= 0 ? t.outOfStock : product.stock <= product.min_stock ? t.lowStock : t.inStock}
             </span>
-          </div>
-          <div className="rounded-2xl bg-[#f5f5ff] p-4">
-            <p className="eyebrow">{t.location}</p>
-            <p className="mt-1 text-lg font-semibold text-navy">{product.location || "—"}</p>
           </div>
           <div className="rounded-2xl bg-[#f5f5ff] p-4">
             <p className="eyebrow">{t.minStock}</p>
