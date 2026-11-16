@@ -10,12 +10,16 @@ export function FileUploader({
   label,
   uploadingText,
   failedText,
+  accept,
+  ghost,
 }: {
   prefix: string;
   record: (path: string, name: string, size: number) => Promise<void>;
   label: string;
   uploadingText: string;
   failedText: string;
+  accept?: string;
+  ghost?: boolean;
 }) {
   const router = useRouter();
   const [status, setStatus] = useState<"idle" | "busy" | "failed">("idle");
@@ -37,11 +41,12 @@ export function FileUploader({
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="btn w-fit cursor-pointer">
+      <label className={`${ghost ? "btn-ghost" : "btn"} w-fit cursor-pointer`}>
         {status === "busy" ? uploadingText : label}
         <input
           type="file"
           multiple
+          accept={accept}
           disabled={status === "busy"}
           onChange={(e) => {
             onChange(e.target.files);

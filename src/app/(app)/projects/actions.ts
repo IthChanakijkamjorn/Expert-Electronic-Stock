@@ -36,7 +36,7 @@ export async function createProject(orgId: string, towerId: string, formData: Fo
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("projects")
-    .insert({ tower_id: towerId, name, year, notes: text(formData, "notes") })
+    .insert({ tower_id: towerId, name, year, notes: text(formData, "notes"), image_path: text(formData, "image_path") })
     .select("id")
     .single();
   if (error) throw new Error(error.message);
@@ -71,6 +71,30 @@ export async function deleteProjectFile(fileId: string) {
   revalidatePath("/projects", "layout");
 }
 
+export async function addProjectPhoto(projectId: string, path: string) {
+  if (!path.startsWith(`projects/${projectId}/`)) throw new Error("bad path");
+  const supabase = await createClient();
+  const { error } = await supabase.from("project_photos").insert({ project_id: projectId, storage_path: path });
+  if (error) throw new Error(error.message);
+  revalidatePath("/projects", "layout");
+}
+
+export async function deleteProjectPhoto(photoId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase.from("project_photos").select("storage_path").eq("id", photoId).single();
+  if (!data) return;
+  await supabase.storage.from("files").remove([data.storage_path]);
+  await supabase.from("project_photos").delete().eq("id", photoId);
+  revalidatePath("/projects", "layout");
+}
+
+export async function setProjectCover(projectId: string, path: string | null) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("projects").update({ image_path: path }).eq("id", projectId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/projects", "layout");
+}
+
 async function requireAdmin() {
   const supabase = await createClient();
   const {
@@ -89,7 +113,9 @@ export async function deleteProject(orgId: string, towerId: string, projectId: s
     .from("project_files")
     .select("storage_path")
     .eq("project_id", projectId);
-  const paths = (files ?? []).map((f) => f.storage_path);
+  const { data: photos } = await supabase.from("project_photos").select("storage_path").eq("project_id", projectId);
+  const { data: proj } = await supabase.from("projects").select("image_path").eq("id", projectId).single();
+  const paths = [...(files ?? []).map((f) => f.storage_path), ...(photos ?? []).map((f) => f.storage_path), ...(proj?.image_path ? [proj.image_path] : [])];
   if (paths.length) {
     await supabase.storage.from("files").remove(paths);
     await supabase
@@ -120,17 +146,17 @@ async function purge(supabase: Awaited<ReturnType<typeof createClient>>, paths: 
     .in("storage_path", list);
 }
 
-type TowerTree = { image_path: string | null; projects: { project_files: { storage_path: string }[] }[] };
+type TowerTree = { image_path: string | null; projects: { image_path: string | null; project_files: { storage_path: string }[]; project_photos: { storage_path: string }[] }[] };
 const towerPaths = (t: TowerTree) => [
   t.image_path,
-  ...t.projects.flatMap((p) => p.project_files.map((f) => f.storage_path)),
+  ...t.projects.flatMap((p) => [p.image_path, ...p.project_files.map((f) => f.storage_path), ...p.project_photos.map((f) => f.storage_path)]),
 ];
 
 export async function deleteTower(orgId: string, towerId: string, stay = false) {
   const supabase = await requireAdmin();
   const { data } = await supabase
     .from("towers")
-    .select("image_path, projects(project_files(storage_path))")
+    .select("image_path, projects(image_path, project_files(storage_path), project_photos(storage_path))")
     .eq("id", towerId)
     .single();
   if (data) await purge(supabase, towerPaths(data as unknown as TowerTree));
@@ -146,7 +172,7 @@ export async function deleteOrganization(orgId: string, stay = false) {
   const supabase = await requireAdmin();
   const { data } = await supabase
     .from("organizations")
-    .select("image_path, towers(image_path, projects(project_files(storage_path)))")
+    .select("image_path, towers(image_path, projects(image_path, project_files(storage_path), project_photos(storage_path)))")
     .eq("id", orgId)
     .single();
   if (data) {

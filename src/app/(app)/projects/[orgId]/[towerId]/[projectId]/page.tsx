@@ -9,7 +9,7 @@ import { ShareButton } from "@/components/ShareButton";
 import { FileUploader } from "@/components/FileUploader";
 import { DeleteButton } from "@/components/DeleteButton";
 import { RenameForm } from "@/components/RenameForm";
-import { addProjectFile, deleteProject, deleteProjectFile, renameProject } from "../../../actions";
+import { addProjectFile, addProjectPhoto, deleteProject, deleteProjectFile, deleteProjectPhoto, renameProject, setProjectCover } from "../../../actions";
 
 const formatSize = (n: number | null) =>
   n == null ? "" : n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.ceil(n / 1024)} KB`;
@@ -27,7 +27,7 @@ export default async function ProjectPage({
 
   const { data: project } = await supabase
     .from("projects")
-    .select("id, name, year, notes, towers(id, name, organization_id, organizations(name))")
+    .select("id, name, year, notes, image_path, towers(id, name, organization_id, organizations(name))")
     .eq("id", projectId)
     .eq("tower_id", towerId)
     .maybeSingle();
@@ -39,6 +39,11 @@ export default async function ProjectPage({
   };
   if (tower.organization_id !== orgId) notFound();
 
+  const { data: photos } = await supabase
+    .from("project_photos")
+    .select("id, storage_path")
+    .eq("project_id", projectId)
+    .order("created_at");
   const [{ data: files }, { data: moves }, { data: planItems }, { data: prices }] = await Promise.all([
     supabase
       .from("project_files")
@@ -75,7 +80,7 @@ export default async function ProjectPage({
         .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: false })
     : { data: [] };
-  const urls = await signedUrls((files ?? []).map((f) => f.storage_path));
+  const urls = await signedUrls([...(files ?? []).map((f) => f.storage_path), ...(photos ?? []).map((f) => f.storage_path), project.image_path]);
 
   type Row = { name: string; unit: string; net: number; planned: number | null; itemId?: string; cost: number };
   const usage = new Map<string, Row>();
@@ -120,6 +125,48 @@ export default async function ProjectPage({
           </div>
         )}
         {project.notes && <p className="mt-2 text-muted">{project.notes}</p>}
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <h2 className="text-xl font-semibold text-navy">{t.photos}</h2>
+        {canManage && (
+          <div className="flex flex-wrap items-center gap-2">
+            <FileUploader
+              prefix={`projects/${projectId}/photos`}
+              record={addProjectPhoto.bind(null, projectId)}
+              label={t.addPhotos}
+              uploadingText={t.uploading}
+              failedText={t.uploadFailed}
+              accept="image/*"
+            />
+          </div>
+        )}
+        {photos?.length ? (
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {photos.map((p) => (
+              <div key={p.id} className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-[#f5f5ff]">
+                {urls.get(p.storage_path) && (
+                  <a href={urls.get(p.storage_path)} target="_blank" rel="noreferrer">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={urls.get(p.storage_path)} alt="" loading="lazy" className="h-full w-full object-cover" />
+                  </a>
+                )}
+                {canManage && (
+                  <div className="absolute inset-x-0 bottom-0 flex justify-between gap-2 bg-black/50 p-2 text-xs text-white opacity-0 transition group-hover:opacity-100">
+                    <form action={setProjectCover.bind(null, projectId, p.storage_path)}>
+                      <button className="underline">{project.image_path === p.storage_path ? "★" : "☆"} {t.setCover}</button>
+                    </form>
+                    <form action={deleteProjectPhoto.bind(null, p.id)}>
+                      <button className="underline">{t.remove}</button>
+                    </form>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-muted">{t.noPhotos}</p>
+        )}
       </div>
 
       <div className="flex flex-col gap-3">

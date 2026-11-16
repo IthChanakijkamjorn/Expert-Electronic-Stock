@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n";
 import { getRole } from "@/lib/role";
+import { signedUrls } from "@/lib/storage";
+import { ImageField } from "@/components/ImageField";
 import { createProject } from "../../actions";
 
 export default async function TowerPage({
@@ -24,11 +26,13 @@ export default async function TowerPage({
   if (!tower) notFound();
   const { data: projects } = await supabase
     .from("projects")
-    .select("id, name, year, notes")
+    .select("id, name, year, notes, image_path, project_photos(storage_path)")
     .eq("tower_id", towerId)
     .order("year", { ascending: false })
     .order("name");
 
+  const cover = (p: NonNullable<typeof projects>[number]) => p.image_path ?? p.project_photos?.[0]?.storage_path ?? null;
+  const urls = await signedUrls((projects ?? []).map(cover));
   const byYear = new Map<number, NonNullable<typeof projects>>();
   (projects ?? []).forEach((p) => byYear.set(p.year, [...(byYear.get(p.year) ?? []), p]));
   const orgName = (tower.organizations as unknown as { name: string } | null)?.name;
@@ -50,10 +54,22 @@ export default async function TowerPage({
                 <Link
                   key={p.id}
                   href={`/projects/${orgId}/${towerId}/${p.id}`}
-                  className="card card-link"
+                  className="group card card-link flex h-full flex-col !p-0"
                 >
-                  <h3 className="font-semibold text-navy">{p.name}</h3>
-                  {p.notes && <p className="mt-1 line-clamp-2 text-sm text-muted">{p.notes}</p>}
+                  <div className="aspect-[16/9] shrink-0 overflow-hidden rounded-t-3xl bg-[#f5f5ff]">
+                    {cover(p) && urls.get(cover(p)!) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={urls.get(cover(p)!)} alt="" loading="lazy" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center bg-navy font-serif text-5xl text-white/70">
+                        {p.name.trim().charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-semibold text-navy">{p.name}</h3>
+                    {p.notes && <p className="mt-1 line-clamp-2 text-sm text-muted">{p.notes}</p>}
+                  </div>
                 </Link>
               ))}
             </div>
@@ -79,6 +95,7 @@ export default async function TowerPage({
               {t.notes}
               <textarea name="notes" rows={2} className="input" />
             </label>
+            <ImageField label={t.image} uploadingText={t.uploading} failedText={t.uploadFailed} />
             <button className="btn w-fit">{t.save}</button>
           </form>
         </aside>
