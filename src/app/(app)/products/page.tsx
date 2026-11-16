@@ -19,7 +19,7 @@ export default async function ProductsPage({
   const role = await getRole();
   const term = q.replace(/[%,()*\\]/g, " ").trim();
 
-  const columns = "id, sku, name, brand, unit, min_stock, stock";
+  const columns = "id, sku, name, brand, unit, stock";
   let query = supabase.from("product_stock").select(columns).eq("active", true).order("name").limit(1000);
   if (term) {
     query = query.or(`name.ilike.%${term}%,sku.ilike.%${term}%,brand.ilike.%${term}%`);
@@ -70,7 +70,7 @@ export default async function ProductsPage({
             <table className="data-table w-full text-left text-sm">
               <thead>
                 <tr>
-                  <th className="py-2 pr-3">{t.sku}</th>
+                  <th className="py-2 pr-3">{t.modelLabel}</th>
                   <th className="pr-3">{t.name}</th>
                   <th className="pr-3">{t.brand}</th>
                   <th className="pr-3 text-right">{t.stock}</th>

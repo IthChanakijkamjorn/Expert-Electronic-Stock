@@ -22,7 +22,6 @@ export async function createProduct(
     category: text(formData, "category"),
     unit: text(formData, "unit") ?? "pcs",
     supplier: text(formData, "supplier"),
-    min_stock: Math.max(0, Math.floor(Number(formData.get("min_stock")) || 0)),
   });
   if (error) return { error: true };
   redirect("/products");

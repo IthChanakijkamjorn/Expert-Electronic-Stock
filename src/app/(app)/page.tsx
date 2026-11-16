@@ -15,9 +15,9 @@ export default async function Dashboard() {
     .eq("id", user!.id)
     .single();
 
-  const { data: stock } = await supabase.from("product_stock").select("stock, min_stock").eq("active", true).limit(5000);
+  const { data: stock } = await supabase.from("product_stock").select("stock").eq("active", true).limit(5000);
   const negCount = (stock ?? []).filter((p) => p.stock < 0).length;
-  const lowCount = (stock ?? []).filter((p) => p.stock <= p.min_stock).length;
+  const lowCount = (stock ?? []).filter((p) => p.stock < 5).length;
 
   const needs2fa = profile?.role === "admin" && !(await verifiedTotpFactor());
 

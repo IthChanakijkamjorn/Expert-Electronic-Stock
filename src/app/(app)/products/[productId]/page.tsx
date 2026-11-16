@@ -11,9 +11,7 @@ import { DeleteButton } from "@/components/DeleteButton";
 import { ImageUploader } from "@/components/ImageUploader";
 import { BrandLogo } from "@/components/BrandLogo";
 import { setProductImage } from "../image-actions";
-import { addSerials, deleteSerial, issueSerial, returnSerial } from "../serial-actions";
 import { setPrices } from "../price-actions";
-import { AddForm } from "@/components/AddForm";
 import { addProductFile, deleteProduct, deleteProductFile, updateProductDetails } from "../file-actions";
 
 const formatSize = (n: number | null) =>
@@ -32,7 +30,7 @@ export default async function ProductFilesPage({
 
   const { data: product } = await supabase
     .from("product_stock")
-    .select("id, name, sku, brand, unit, min_stock, stock, image_path")
+    .select("id, name, sku, brand, unit, stock, image_path")
     .eq("id", productId)
     .maybeSingle();
   if (!product) notFound();
@@ -51,12 +49,6 @@ export default async function ProductFilesPage({
         .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: false })
     : { data: [] };
-  const { data: serials } = await supabase
-    .from("product_serials")
-    .select("id, serial, status, issued_to")
-    .eq("product_id", productId)
-    .order("serial")
-    .limit(1000);
   const { data: price } = canManage
     ? await supabase.from("product_prices").select("cost, sell_price").eq("product_id", productId).maybeSingle()
     : { data: null };
@@ -115,13 +107,9 @@ export default async function ProductFilesPage({
           <div className="rounded-2xl bg-[#f5f5ff] p-4">
             <p className="eyebrow">{t.stock}</p>
             <p className="mt-1 text-3xl font-bold text-navy">{product.stock}<span className="ml-1 text-sm font-medium text-muted">{product.unit}</span></p>
-            <span className={`pill mt-2 ${product.stock <= 0 ? "bg-red-100 text-red-700" : product.stock <= product.min_stock ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
-              {product.stock <= 0 ? t.outOfStock : product.stock <= product.min_stock ? t.lowStock : t.inStock}
+            <span className={`pill mt-2 ${product.stock <= 0 ? "bg-red-100 text-red-700" : product.stock < 5 ? "bg-yellow-200 text-yellow-800" : "bg-emerald-100 text-emerald-700"}`}>
+              {product.stock <= 0 ? t.outOfStock : product.stock < 5 ? t.lowStock : t.inStock}
             </span>
-          </div>
-          <div className="rounded-2xl bg-[#f5f5ff] p-4">
-            <p className="eyebrow">{t.minStock}</p>
-            <p className="mt-1 text-lg font-semibold text-navy">{product.min_stock} {product.unit}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3 border-t border-[#ece8f2] pt-4">
@@ -157,54 +145,6 @@ export default async function ProductFilesPage({
           </form>
         </>
       )}
-      <h2 className="text-xl font-semibold text-navy">{t.serials}</h2>
-      <div className="card flex flex-col gap-3 p-4">
-        {serials?.length ? (
-          <div className="overflow-x-auto">
-            <table className="data-table w-full text-left text-sm">
-              <tbody>
-                {serials.map((s) => (
-                  <tr key={s.id} className="border-t border-zinc-100">
-                    <td className="py-2 pr-3 font-mono">{s.serial}</td>
-                    <td className="pr-3">
-                      <span className={`pill ${s.status === "issued" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
-                        {s.status === "issued" ? t.issuedTo : t.inStock}
-                      </span>
-                      {s.issued_to && <span className="ml-2 text-muted">{s.issued_to}</span>}
-                    </td>
-                    <td className="text-right">
-                      {canManage && (
-                        <span className="flex flex-wrap items-center justify-end gap-3">
-                          {s.status === "issued" ? (
-                            <form action={returnSerial.bind(null, productId, s.id)}>
-                              <button className="font-semibold text-navy underline">{t.returnSerial}</button>
-                            </form>
-                          ) : (
-                            <form action={issueSerial.bind(null, productId, s.id)} className="flex gap-2">
-                              <input name="issued_to" className="input w-44" placeholder={t.issueTo} />
-                              <button className="font-semibold text-navy underline">{t.issue}</button>
-                            </form>
-                          )}
-                          <form action={deleteSerial.bind(null, productId, s.id)}>
-                            <button className="text-red-600 underline">{t.remove}</button>
-                          </form>
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-muted">{t.noSerials}</p>
-        )}
-        {canManage && (
-          <AddForm action={addSerials.bind(null, productId)} submitLabel={t.addSerials}>
-            <textarea name="serials" rows={3} required className="input" placeholder={t.serialsHelp} />
-          </AddForm>
-        )}
-      </div>
       <h2 className="text-xl font-semibold text-navy">{t.files}</h2>
       <FileUploader
         prefix={`products/${productId}`}

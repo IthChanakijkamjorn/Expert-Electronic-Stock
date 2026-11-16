@@ -23,7 +23,7 @@ export default async function BrandPage({
 
   let query = supabase
     .from("product_stock")
-    .select("id, sku, name, unit, min_stock, stock, image_path")
+    .select("id, sku, name, unit, stock, image_path")
     .eq("active", true)
     .order("name")
     .limit(1000);
@@ -71,7 +71,7 @@ export default async function BrandPage({
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {products.map((p) => {
             const out = p.stock <= 0;
-            const low = !out && p.stock <= p.min_stock;
+            const low = !out && p.stock < 5;
             const files = counts.get(p.id) ?? 0;
             return (
               <Link key={p.id} href={`/products/${p.id}`} className="card card-link flex flex-col gap-4">
@@ -85,7 +85,7 @@ export default async function BrandPage({
                 </div>
                 <div className="flex items-start justify-between gap-3">
                   <h3 className="font-semibold leading-snug text-navy">{p.name}</h3>
-                  <span className={`pill shrink-0 ${out ? "bg-red-100 text-red-700" : low ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
+                  <span className={`pill shrink-0 ${out ? "bg-red-100 text-red-700" : low ? "bg-yellow-200 text-yellow-800" : "bg-emerald-100 text-emerald-700"}`}>
                     {out ? t.outOfStock : low ? t.lowStock : t.inStock}
                   </span>
                 </div>
