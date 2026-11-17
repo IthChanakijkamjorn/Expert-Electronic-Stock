@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { simplifyLoop, toDxf, traceMask, type Pt } from "@/lib/trace";
+import { dp, toDxf, traceEdges, type Pt } from "@/lib/trace";
 
 const MAXPX = 500;
 
@@ -10,8 +10,8 @@ export default function CadTracer({ th }: { th: boolean }) {
   const [name, setName] = useState("product");
   const [threshold, setThreshold] = useState(40);
   const [detail, setDetail] = useState(1.5);
-  const [levels, setLevels] = useState(6);
-  const [minLen, setMinLen] = useState(30);
+  const [edgeT, setEdgeT] = useState(12);
+  const [minLen, setMinLen] = useState(15);
   const [width, setWidth] = useState(300);
   const [loops, setLoops] = useState<Pt[][]>([]);
   const [size, setSize] = useState({ w: 1, h: 1 });
@@ -54,21 +54,22 @@ export default function CadTracer({ th }: { th: boolean }) {
       }
       gray = nb;
     }
-    const sets: Uint8Array[] = [mask];
-    for (let k = 1; k <= levels; k++) {
-      const lv = 15 + ((235 - 15) * k) / (levels + 1);
-      const m = new Uint8Array(w * h);
-      for (let i = 0; i < w * h; i++) m[i] = mask[i] && gray[i] < lv ? 1 : 0;
-      sets.push(m);
+    // Only look near the product, so the background and soft shadow are ignored.
+    const region = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      if (!mask[y * w + x]) continue;
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+        const xx = x + dx, yy = y + dy;
+        if (xx >= 0 && yy >= 0 && xx < w && yy < h) region[yy * w + xx] = 1;
+      }
     }
-    const found = sets
-      .flatMap((m) => traceMask(m, w, h))
+    const found = traceEdges(gray, w, h, edgeT, region)
       .filter((l) => l.length > minLen)
-      .map((l) => simplifyLoop(l, detail))
-      .filter((l) => l.length >= 3);
+      .map((l) => dp(l, detail))
+      .filter((l) => l.length >= 2);
     setLoops(found);
     setSize({ w, h });
-  }, [img, threshold, detail, levels, minLen]);
+  }, [img, threshold, detail, edgeT, minLen]);
 
   function load(f: File | undefined) {
     if (!f) return;
@@ -103,11 +104,11 @@ export default function CadTracer({ th }: { th: boolean }) {
         <label className="text-sm">{th ? "ความเรียบของเส้น" : "Line smoothing"}: {detail}
           <input type="range" min={0.5} max={8} step={0.5} value={detail} onChange={(e) => setDetail(Number(e.target.value))} className="w-full" />
         </label>
-        <label className="text-sm">{th ? "จำนวนระดับรายละเอียด" : "Detail levels"}: {levels}
-          <input type="range" min={0} max={12} value={levels} onChange={(e) => setLevels(Number(e.target.value))} className="w-full" />
+        <label className="text-sm">{th ? "ความไวของเส้นขอบ (ต่ำ = เส้นมากขึ้น)" : "Edge sensitivity (lower = more lines)"}: {edgeT}
+          <input type="range" min={3} max={60} value={edgeT} onChange={(e) => setEdgeT(Number(e.target.value))} className="w-full" />
         </label>
         <label className="text-sm">{th ? "ตัดเส้นสั้นๆ ทิ้ง" : "Ignore small lines"}: {minLen}
-          <input type="range" min={10} max={150} step={5} value={minLen} onChange={(e) => setMinLen(Number(e.target.value))} className="w-full" />
+          <input type="range" min={5} max={100} step={5} value={minLen} onChange={(e) => setMinLen(Number(e.target.value))} className="w-full" />
         </label>
         {loops.length > 0 && (
           <p className="text-sm text-muted">
@@ -128,7 +129,7 @@ export default function CadTracer({ th }: { th: boolean }) {
           <p className="mb-2 text-sm font-semibold">{th ? "เส้นที่ได้" : "Traced lines"}</p>
           <svg viewBox={`0 0 ${size.w} ${size.h}`} className="w-full rounded bg-zinc-900">
             {loops.map((l, i) => (
-              <polygon key={i} points={l.map((p) => p.join(",")).join(" ")} fill="none" stroke="#4ade80" strokeWidth={Math.max(size.w, size.h) / 400} />
+              <polyline key={i} points={l.map((p) => p.join(",")).join(" ")} fill="none" stroke="#4ade80" strokeWidth={Math.max(size.w, size.h) / 400} />
             ))}
           </svg>
         </div>

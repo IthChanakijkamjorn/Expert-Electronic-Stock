@@ -39,7 +39,7 @@ export function traceMask(mask: Uint8Array, w: number, h: number): Pt[][] {
   return loops;
 }
 
-function dp(pts: Pt[], eps: number): Pt[] {
+export function dp(pts: Pt[], eps: number): Pt[] {
   if (pts.length < 3) return pts;
   const [ax, ay] = pts[0], [bx, by] = pts[pts.length - 1];
   const dx = bx - ax, dy = by - ay, len = Math.hypot(dx, dy) || 1;
@@ -60,14 +60,77 @@ export function simplifyLoop(loop: Pt[], eps: number): Pt[] {
   return [...a.slice(0, -1), ...b.slice(0, -1)];
 }
 
+// Canny-style edges: Sobel gradient, thinning to 1px ridges, hysteresis, then chains of pixels as polylines.
+export function traceEdges(gray: Float32Array, w: number, h: number, high: number, region: Uint8Array): Pt[][] {
+  const low = high * 0.4;
+  const mag = new Float32Array(w * h), dir = new Uint8Array(w * h);
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+    const i = y * w + x;
+    const gx = gray[i - w + 1] + 2 * gray[i + 1] + gray[i + w + 1] - gray[i - w - 1] - 2 * gray[i - 1] - gray[i + w - 1];
+    const gy = gray[i + w - 1] + 2 * gray[i + w] + gray[i + w + 1] - gray[i - w - 1] - 2 * gray[i - w] - gray[i - w + 1];
+    mag[i] = Math.hypot(gx, gy) / 4;
+    const a = (Math.atan2(gy, gx) * 180) / Math.PI;
+    const aa = ((a % 180) + 180) % 180;
+    dir[i] = aa < 22.5 || aa >= 157.5 ? 0 : aa < 67.5 ? 1 : aa < 112.5 ? 2 : 3;
+  }
+  const offs: [number, number][] = [[1, 0], [1, 1], [0, 1], [-1, 1]];
+  const thin = new Uint8Array(w * h);
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+    const i = y * w + x;
+    if (mag[i] < low || !region[i]) continue;
+    const [dx, dy] = offs[dir[i]];
+    if (mag[i] >= mag[i + dy * w + dx] && mag[i] > mag[i - dy * w - dx]) thin[i] = mag[i] >= high ? 2 : 1;
+  }
+  // Hysteresis: keep weak ridge pixels only when connected to a strong one.
+  const keep = new Uint8Array(w * h);
+  const stack: number[] = [];
+  for (let i = 0; i < w * h; i++) if (thin[i] === 2) { keep[i] = 1; stack.push(i); }
+  while (stack.length) {
+    const i = stack.pop()!, x = i % w, y = (i / w) | 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const xx = x + dx, yy = y + dy;
+      if (xx < 0 || yy < 0 || xx >= w || yy >= h) continue;
+      const j = yy * w + xx;
+      if (thin[j] && !keep[j]) { keep[j] = 1; stack.push(j); }
+    }
+  }
+  const nbrs = (i: number) => {
+    const x = i % w, y = (i / w) | 0, r: number[] = [];
+    for (const [dx, dy] of [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+      const xx = x + dx, yy = y + dy;
+      if (xx >= 0 && yy >= 0 && xx < w && yy < h && keep[yy * w + xx]) r.push(yy * w + xx);
+    }
+    return r;
+  };
+  const used = new Uint8Array(w * h);
+  const chains: Pt[][] = [];
+  const walk = (start: number) => {
+    const chain: Pt[] = [];
+    let cur = start;
+    while (cur >= 0 && !used[cur]) {
+      used[cur] = 1;
+      chain.push([cur % w, (cur / w) | 0]);
+      cur = nbrs(cur).find((n) => !used[n]) ?? -1;
+    }
+    if (chain.length > 1) chains.push(chain);
+  };
+  const all: number[] = [];
+  for (let i = 0; i < w * h; i++) if (keep[i]) all.push(i);
+  for (const i of all) if (!used[i] && nbrs(i).length === 1) walk(i);
+  for (const i of all) if (!used[i]) walk(i);
+  return chains;
+}
+
 // Fits loops to the real width (mm), flips Y for CAD and writes an R12 DXF that AutoCAD opens directly.
+const closed = (l: Pt[]) => l.length > 2 && Math.hypot(l[0][0] - l[l.length - 1][0], l[0][1] - l[l.length - 1][1]) < 1.5;
+
 export function toDxf(loops: Pt[][], widthMm: number): { dxf: string; heightMm: number } {
   const xs = loops.flat().map((p) => p[0]), ys = loops.flat().map((p) => p[1]);
   const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
   const k = widthMm / (maxX - minX || 1);
   const out = ["0", "SECTION", "2", "HEADER", "9", "$ACADVER", "1", "AC1009", "0", "ENDSEC", "0", "SECTION", "2", "ENTITIES"];
   for (const l of loops) {
-    out.push("0", "POLYLINE", "8", "TRACE", "66", "1", "70", "1");
+    out.push("0", "POLYLINE", "8", "TRACE", "66", "1", "70", String(closed(l) ? 1 : 0));
     for (const [x, y] of l) out.push("0", "VERTEX", "8", "TRACE", "10", ((x - minX) * k).toFixed(3), "20", ((maxY - y) * k).toFixed(3), "30", "0");
     out.push("0", "SEQEND", "8", "TRACE");
   }
