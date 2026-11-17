@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n";
 import { LangSwitch } from "@/lib/i18n/LangSwitch";
 import { getRole } from "@/lib/role";
+import IdleLogout from "@/components/IdleLogout";
 import { signOut } from "../login/actions";
 
 export default async function AppLayout({
@@ -100,6 +101,7 @@ export default async function AppLayout({
           </div>
         </div>
       </header>
+      <IdleLogout />
       <main className="mx-auto w-full max-w-6xl flex-1 p-4 py-8">{children}</main>
     </div>
   );
