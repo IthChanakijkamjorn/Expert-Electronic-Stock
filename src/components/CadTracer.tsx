@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { dp, toDxf, traceEdges, type Pt } from "@/lib/trace";
+import { cleanChain, dp, toDxf, traceEdges, type Pt } from "@/lib/trace";
 
 const MAXPX = 500;
 
@@ -12,6 +12,7 @@ export default function CadTracer({ th }: { th: boolean }) {
   const [detail, setDetail] = useState(0.5);
   const [edgeT, setEdgeT] = useState(11);
   const [minLen, setMinLen] = useState(100);
+  const [snap, setSnap] = useState(true);
   const [width, setWidth] = useState(300);
   const [loops, setLoops] = useState<Pt[][]>([]);
   const [size, setSize] = useState({ w: 1, h: 1 });
@@ -65,11 +66,11 @@ export default function CadTracer({ th }: { th: boolean }) {
     }
     const found = traceEdges(gray, w, h, edgeT, region)
       .filter((l) => l.length > minLen)
-      .map((l) => dp(l, detail))
+      .map((l) => (snap ? cleanChain(l, detail) : dp(l, detail)))
       .filter((l) => l.length >= 2);
     setLoops(found);
     setSize({ w, h });
-  }, [img, threshold, detail, edgeT, minLen]);
+  }, [img, threshold, detail, edgeT, minLen, snap]);
 
   function load(f: File | undefined) {
     if (!f) return;
@@ -109,6 +110,10 @@ export default function CadTracer({ th }: { th: boolean }) {
         </label>
         <label className="text-sm">{th ? "ตัดเส้นสั้นๆ ทิ้ง" : "Ignore small lines"}: {minLen}
           <input type="range" min={5} max={100} step={5} value={minLen} onChange={(e) => setMinLen(Number(e.target.value))} className="w-full" />
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={snap} onChange={(e) => setSnap(e.target.checked)} />
+          {th ? "จัดเส้นให้เป็นวงกลม/เส้นตรงอัตโนมัติ" : "Snap to circles and straight lines"}
         </label>
         {loops.length > 0 && (
           <p className="text-sm text-muted">
