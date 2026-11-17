@@ -8,10 +8,10 @@ const MAXPX = 500;
 export default function CadTracer({ th }: { th: boolean }) {
   const [img, setImg] = useState<HTMLImageElement | null>(null);
   const [name, setName] = useState("product");
-  const [threshold, setThreshold] = useState(40);
-  const [detail, setDetail] = useState(1.5);
-  const [edgeT, setEdgeT] = useState(12);
-  const [minLen, setMinLen] = useState(15);
+  const [threshold, setThreshold] = useState(120);
+  const [detail, setDetail] = useState(0.5);
+  const [edgeT, setEdgeT] = useState(11);
+  const [minLen, setMinLen] = useState(100);
   const [width, setWidth] = useState(300);
   const [loops, setLoops] = useState<Pt[][]>([]);
   const [size, setSize] = useState({ w: 1, h: 1 });
