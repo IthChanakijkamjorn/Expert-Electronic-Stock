@@ -48,6 +48,7 @@ export default async function AppLayout({
       children: [
         { href: "/projects", label: t.projects },
         { href: "/floorplans", label: t.floorPlans },
+        { href: "/cad", label: lang === "th" ? "รูปเป็น CAD" : "Photo to CAD" },
       ],
     },
     ...(role === "admin"

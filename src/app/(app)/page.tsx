@@ -4,7 +4,7 @@ import { getDictionary } from "@/lib/i18n";
 import { verifiedTotpFactor } from "@/lib/mfa";
 
 export default async function Dashboard() {
-  const { t } = await getDictionary();
+  const { lang, t } = await getDictionary();
   const supabase = await createClient();
   const {
     data: { user },
@@ -49,6 +49,7 @@ export default async function Dashboard() {
       items: [
         { href: "/projects", label: t.projects },
         { href: "/floorplans", label: t.floorPlans },
+        { href: "/cad", label: lang === "th" ? "รูปเป็น CAD" : "Photo to CAD" },
       ],
     },
     ...(profile?.role === "admin"
