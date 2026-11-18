@@ -36,7 +36,7 @@ export const defaultDocCompany = (kind: DocKind = "invoice"): DocCompany =>
     ? {
         name: COMPANY.nameEn,
         address: COMPANY.address,
-        tel: COMPANY.tel,
+        tel: COMPANY.tel.replace(/^TEL\.?\s*/, "Tel No. "),
         email: COMPANY.email,
         web: COMPANY.web,
         taxId: "010 5538 039 535",
@@ -59,4 +59,5 @@ export const defaultDocCompany = (kind: DocKind = "invoice"): DocCompany =>
 export const mergeDocCompany = (c: Partial<DocCompany> | null | undefined, kind: DocKind = "invoice"): DocCompany => ({
   ...defaultDocCompany(kind),
   ...(c ?? {}),
+  ...(kind === "quote" && c?.tel ? { tel: c.tel.replace(/^TEL\.?\s*/i, "Tel No. ") } : {}),
 });

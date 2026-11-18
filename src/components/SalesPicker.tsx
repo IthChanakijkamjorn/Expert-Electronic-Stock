@@ -3,13 +3,22 @@
 import { useState } from "react";
 import { addSalesperson, deleteSalesperson, renameSalesperson, type Salesperson } from "@/app/(app)/documents/actions";
 
+type Api = {
+  add: (name: string) => Promise<Salesperson | null>;
+  rename: (id: string, name: string) => Promise<boolean>;
+  remove: (id: string) => Promise<unknown>;
+};
+const salesApi: Api = { add: addSalesperson, rename: renameSalesperson, remove: deleteSalesperson };
+
 // Dropdown of saved sales names with a small manager to add, rename and remove them.
 export function SalesPicker({
   initial,
   value,
   onChange,
   labels,
+  api = salesApi,
 }: {
+  api?: Api;
   initial: Salesperson[];
   value: string;
   onChange: (v: string) => void;
@@ -46,7 +55,7 @@ export function SalesPicker({
                   className="text-navy underline"
                   onClick={async () => {
                     const next = edits[n.id].trim();
-                    if (!(await renameSalesperson(n.id, next))) return;
+                    if (!(await api.rename(n.id, next))) return;
                     setNames(names.map((x) => (x.id === n.id ? { ...x, name: next } : x)));
                     if (value === n.name) onChange(next);
                     setEdits((e) => Object.fromEntries(Object.entries(e).filter(([k]) => k !== n.id)));
@@ -60,7 +69,7 @@ export function SalesPicker({
                 className="text-red-600 underline"
                 onClick={async () => {
                   if (!confirm(labels.confirm)) return;
-                  await deleteSalesperson(n.id);
+                  await api.remove(n.id);
                   setNames(names.filter((x) => x.id !== n.id));
                 }}
               >
@@ -74,7 +83,7 @@ export function SalesPicker({
               type="button"
               className="text-navy underline"
               onClick={async () => {
-                const row = await addSalesperson(draft);
+                const row = await api.add(draft);
                 if (!row) return;
                 setNames([...names, row].sort((a, b) => a.name.localeCompare(b.name)));
                 onChange(row.name);

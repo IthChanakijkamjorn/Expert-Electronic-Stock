@@ -41,11 +41,15 @@ export function QuotationPaper({
   data,
   h,
   salesSlot,
+  customerSlot,
+  paymentOptions = [],
   editCompany = false,
   pickProducts = [],
 }: {
   data: QuotePaperData;
   salesSlot?: ReactNode;
+  customerSlot?: ReactNode;
+  paymentOptions?: string[];
   h?: QuoteHandlers;
   editCompany?: boolean;
   pickProducts?: PickerProduct[];
@@ -97,6 +101,8 @@ export function QuotationPaper({
             <span>E-mail:</span>
             {coField("email")}
             {coField("web")}
+            <span className="ml-3">Tax ID:</span>
+            {coField("taxId")}
           </div>
         </div>
       </div>
@@ -110,14 +116,13 @@ export function QuotationPaper({
 
       <div className="mt-2 grid grid-cols-[1fr_330px] gap-x-4">
         <div className="flex flex-col gap-y-1">
-          {row("บริษัท/องค์กร / Company:", field("customer"))}
+          {row("บริษัท/องค์กร / Company:", h && customerSlot ? customerSlot : field("customer"))}
           {row("เรียน / Attn:", field("attention"))}
           {row("โครงการ / Project:", field("project"))}
           <div className="flex gap-x-4">
-            {row("โทร / Tel:", field("phone"))}
+            {row("โทรศัพท์ / Tel No:", field("phone"))}
             {row("อีเมล / Email:", field("email"))}
           </div>
-          {row("เลขประจำตัวผู้เสียภาษี / Tax ID:", coField("taxId"))}
         </div>
         <div className="flex flex-col gap-y-1">
           {row(
@@ -223,8 +228,20 @@ export function QuotationPaper({
 
       <div className="grid grid-cols-[1fr_1fr] border-x border-b border-black">
         <div className="border-r border-black">
-          <div className="border-b border-black py-1 text-center font-bold">เงื่อนไขชำระเงิน / PAYMENT</div>
-          <div className="p-2 text-center">{field("paymentTerms")}</div>
+          <div className="flex items-center gap-2 border-b border-black px-2 py-1">
+            <b className="whitespace-nowrap">เงื่อนไขชำระเงิน / PAYMENT:</b>
+            {h ? (
+              <select className={`${blank} flex-1`} value={data.paymentTerms} onChange={(e) => h.onField({ paymentTerms: e.target.value })}>
+                {data.paymentTerms && !paymentOptions.includes(data.paymentTerms) && <option value={data.paymentTerms}>{data.paymentTerms}</option>}
+                {paymentOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+              </select>
+            ) : (
+              <span>{data.paymentTerms}</span>
+            )}
+          </div>
+          <div className="px-2 pt-1 text-center font-bold">ยืนยันการสั่งซื้อ / ORDER CONFIRMATION</div>
+          <div className="flex h-14 items-end justify-center pb-1 text-[11px] text-zinc-500">ลงชื่อ / Signature</div>
+          <div className="pb-2 text-center">วันที่ / Date ____ / ________ / ________</div>
         </div>
         <div className="text-center">
           <div className="border-b border-black py-1 font-bold">ผู้อนุมัติ / APPROVED BY</div>

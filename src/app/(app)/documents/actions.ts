@@ -42,6 +42,27 @@ export async function deleteSalesperson(id: string) {
   await supabase.from("salespeople").delete().eq("id", id);
 }
 
+export async function addCustomer(name: string): Promise<Salesperson | null> {
+  const clean = name.trim();
+  if (!clean) return null;
+  const supabase = await createClient();
+  const { data } = await supabase.from("customers").insert({ name: clean }).select("id, name").single();
+  return data;
+}
+
+export async function renameCustomer(id: string, name: string): Promise<boolean> {
+  const clean = name.trim();
+  if (!clean) return false;
+  const supabase = await createClient();
+  const { error } = await supabase.from("customers").update({ name: clean }).eq("id", id);
+  return !error;
+}
+
+export async function deleteCustomer(id: string) {
+  const supabase = await createClient();
+  await supabase.from("customers").delete().eq("id", id);
+}
+
 type DocKindName = "invoice" | "quotation" | "receipt";
 
 export async function addDocumentFile(docKind: DocKindName, path: string, name: string, size: number) {

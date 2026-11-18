@@ -5,7 +5,7 @@ import { saveQuotation } from "../actions";
 import { QuotationPaper, type QuotePaperData, type QuoteHandlers } from "@/components/QuotationPaper";
 import { withBlank, isBlankLine } from "@/components/LineCells";
 import type { DocCompany } from "@/lib/company";
-import { saveCompanyDefault, type Salesperson } from "../../documents/actions";
+import { saveCompanyDefault, addCustomer, renameCustomer, deleteCustomer, type Salesperson } from "../../documents/actions";
 import { SalesPicker } from "@/components/SalesPicker";
 import type { PaperLine } from "@/components/InvoicePaper";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
@@ -24,6 +24,7 @@ export function QuotationForm({
   customer,
   quotedBy,
   salespeople,
+  customers,
   existing,
 }: {
   t: Dictionary;
@@ -37,6 +38,7 @@ export function QuotationForm({
   customer: string;
   quotedBy: string;
   salespeople: Salesperson[];
+  customers: Salesperson[];
   existing?: { id: string; data: QuotePaperData; projectId: string; sigId: string; dropped: number };
 }) {
   const [state, action, pending] = useActionState(saveQuotation.bind(null, existing?.id ?? null), null);
@@ -56,8 +58,8 @@ export function QuotationForm({
     email: "",
     date: new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Bangkok" }),
     validDays: "30",
-    leadDays: "",
-    warrantyYears: "",
+    leadDays: "90",
+    warrantyYears: "1",
     quotedBy,
     paymentTerms: "เงินสด",
     discountPct: "0",
@@ -176,6 +178,8 @@ export function QuotationForm({
           data={preview ? { ...data, lines: filled } : data}
           h={preview ? undefined : h}
           salesSlot={<SalesPicker initial={salespeople} value={data.quotedBy} onChange={(v) => setData((d) => ({ ...d, quotedBy: v }))} labels={{ add: t.salesAdd, remove: t.remove, save: t.save, confirm: t.salesRemoveConfirm }} />}
+          customerSlot={<SalesPicker api={{ add: addCustomer, rename: renameCustomer, remove: deleteCustomer }} initial={customers} value={data.customer} onChange={(v) => setData((d) => ({ ...d, customer: v }))} labels={{ add: t.salesAdd, remove: t.remove, save: t.save, confirm: t.salesRemoveConfirm }} />}
+          paymentOptions={["เงินสด", "ตามเงื่อนไขราชการ"]}
           editCompany={editCompany && !preview}
           pickProducts={products}
         />
