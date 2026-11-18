@@ -116,7 +116,7 @@ export function QuotationPaper({
 
       <div className="mt-2 grid grid-cols-[1fr_330px] gap-x-4">
         <div className="flex flex-col gap-y-1">
-          {row("บริษัท/องค์กร / Company:", h && customerSlot ? customerSlot : field("customer"))}
+          {row("บริษัท / Company:", h && customerSlot ? customerSlot : field("customer"))}
           {row("เรียน / Attn:", field("attention"))}
           {row("โครงการ / Project:", field("project"))}
           <div className="flex gap-x-2">
@@ -229,7 +229,7 @@ export function QuotationPaper({
       <div className="grid grid-cols-[1fr_1fr] border-x border-b border-black">
         <div className="border-r border-black">
           <div className="flex items-center gap-2 border-b border-black px-2 py-1">
-            <b className="whitespace-nowrap">เงื่อนไขชำระเงิน / PAYMENT:</b>
+            <b className="whitespace-nowrap">เงื่อนไขการชำระเงิน / PAYMENT OPTIONS:</b>
             {h ? (
               <select className={`${blank} flex-1`} value={data.paymentTerms} onChange={(e) => h.onField({ paymentTerms: e.target.value })}>
                 {data.paymentTerms && !paymentOptions.includes(data.paymentTerms) && <option value={data.paymentTerms}>{data.paymentTerms}</option>}

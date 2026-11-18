@@ -118,7 +118,7 @@ export async function buildQuotation(q: QuoteData) {
       y -= 17;
 
       const left = [
-        `บริษัท/องค์กร / Company: ${q.customer}`,
+        `บริษัท / Company: ${q.customer}`,
         `เรียน / Attn: ${q.attention ?? ""}`,
         `โครงการ / Project: ${q.project}`,
         `โทรศัพท์ / Tel No: ${q.phone ?? ""}  อีเมล / Email: ${q.email ?? ""}`,
@@ -232,11 +232,11 @@ export async function buildQuotation(q: QuoteData) {
   const split = 300;
   box(M, y2, split - M, row2H);
   box(split, y2, W - M - split, row2H);
-  text("เงื่อนไขชำระเงิน / PAYMENT:", M + 6, y2 + row2H - 13, sizeText, bold);
-  text(q.paymentTerms ?? "", M + 6 + bold.widthOfTextAtSize("เงื่อนไขชำระเงิน / PAYMENT:", sizeText) + 6, y2 + row2H - 13);
+  text("เงื่อนไขการชำระเงิน / PAYMENT OPTIONS:", M + 6, y2 + row2H - 13, sizeText, bold);
+  text(q.paymentTerms ?? "", M + 6 + bold.widthOfTextAtSize("เงื่อนไขการชำระเงิน / PAYMENT OPTIONS:", sizeText) + 6, y2 + row2H - 13);
   hline(y2 + row2H - 18, M, split);
   centered("ยืนยันการสั่งซื้อ / ORDER CONFIRMATION", M, split - M, y2 + row2H - 32, sizeText, bold);
-  page.drawLine({ start: { x: M + 30, y: y2 + 26 }, end: { x: split - 30, y: y2 + 26 }, thickness: 0.4, color: BLACK });
+  page.drawLine({ start: { x: M + 60, y: y2 + 26 }, end: { x: split - 60, y: y2 + 26 }, thickness: 0.4, color: BLACK });
   centered("ลงชื่อ / Signature", M, split - M, y2 + 16, 8);
   centered("วันที่ / Date ____ / ________ / ________", M, split - M, y2 + 4, 7.5);
   centered("ผู้อนุมัติ / APPROVED BY", split, W - M - split, y2 + row2H - 13, sizeText, bold);
