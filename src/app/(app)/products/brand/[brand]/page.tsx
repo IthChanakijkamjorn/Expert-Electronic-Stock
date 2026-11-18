@@ -10,6 +10,11 @@ import { ShareButton } from "@/components/ShareButton";
 import { setBrandLogo } from "../../image-actions";
 import { addBrandFile, deleteBrandFile } from "../../catalog-actions";
 
+const icon = (n: string) => {
+  const e = n.split(".").pop()?.toLowerCase() ?? "";
+  return e === "pdf" ? "📕" : ["xls", "xlsx", "csv"].includes(e) ? "📗" : ["doc", "docx"].includes(e) ? "📘" : ["ppt", "pptx"].includes(e) ? "📙" : ["zip", "rar", "7z"].includes(e) ? "🗜" : ["png", "jpg", "jpeg", "webp"].includes(e) ? "🖼" : "📄";
+};
+
 const formatSize = (n: number | null) =>
   n == null ? "" : n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.ceil(n / 1024)} KB`;
 
@@ -87,7 +92,6 @@ export default async function BrandPage({
               label={t.uploadCatalog}
               uploadingText={t.uploading}
               failedText={t.uploadFailed}
-              accept="application/pdf,.pdf"
               ghost
             />
           )}
@@ -96,7 +100,7 @@ export default async function BrandPage({
               <ul className="divide-y divide-[#ece8f2] text-sm">
                 {catalogs.map((c) => (
                   <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
-                    <span>📄 {c.file_name} <span className="text-muted">{formatSize(c.size_bytes)}</span></span>
+                    <span>{icon(c.file_name)} {c.file_name} <span className="text-muted">{formatSize(c.size_bytes)}</span></span>
                     <span className="flex flex-wrap items-center gap-4">
                       {urls.get(c.storage_path) && (
                         <a href={urls.get(c.storage_path)} target="_blank" rel="noreferrer" className="font-semibold text-navy underline">{t.download}</a>
