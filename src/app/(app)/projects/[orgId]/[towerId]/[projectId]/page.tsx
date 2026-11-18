@@ -45,10 +45,10 @@ export default async function ProjectPage({
     .select("id, storage_path")
     .eq("project_id", projectId)
     .order("created_at");
-  const [{ data: files }, { data: moves }, { data: planItems }, { data: prices }] = await Promise.all([
+  const [{ data: allFiles }, { data: moves }, { data: planItems }, { data: prices }] = await Promise.all([
     supabase
       .from("project_files")
-      .select("id, storage_path, file_name, size_bytes, created_at")
+      .select("id, storage_path, file_name, size_bytes, created_at, kind")
       .eq("project_id", projectId)
       .order("created_at", { ascending: false }),
     supabase
@@ -72,16 +72,16 @@ export default async function ProjectPage({
         .limit(20)
     : { data: null };
   const costOf = new Map((prices ?? []).map((p) => [p.product_id, Number(p.cost ?? 0)]));
-  const { data: shares } = files?.length
+  const { data: shares } = allFiles?.length
     ? await supabase
         .from("file_shares")
         .select("id, token, file_name, expires_at")
-        .in("storage_path", files.map((f) => f.storage_path))
+        .in("storage_path", allFiles.map((f) => f.storage_path))
         .is("revoked_at", null)
         .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: false })
     : { data: [] };
-  const urls = await signedUrls([...(files ?? []).map((f) => f.storage_path), ...(photos ?? []).map((f) => f.storage_path), project.image_path]);
+  const urls = await signedUrls([...(allFiles ?? []).map((f) => f.storage_path), ...(photos ?? []).map((f) => f.storage_path), project.image_path]);
 
   type Row = { name: string; unit: string; net: number; planned: number | null; itemId?: string; cost: number };
   const usage = new Map<string, Row>();
@@ -107,7 +107,39 @@ export default async function ProjectPage({
     copied: t.copied,
     failed: t.shareFailed,
   };
+  const files = allFiles?.filter((f) => f.kind !== "comparison");
+  const comparisons = allFiles?.filter((f) => f.kind === "comparison");
   const bound = addProjectFile.bind(null, projectId);
+  const boundCmp = (path: string, name: string, size: number) => addProjectFile(projectId, path, name, size, "comparison");
+  const fileList = (list: NonNullable<typeof allFiles>) => (
+    <div className="card p-4">
+      <ul className="divide-y divide-[#ece8f2] text-sm">
+        {list.map((f) => (
+          <li key={f.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+            <span>
+              {f.file_name} <span className="text-muted">{formatSize(f.size_bytes)}</span>
+            </span>
+            <span className="flex items-center gap-4">
+              <span className="text-muted">
+                {new Date(f.created_at).toLocaleDateString(lang === "th" ? "th-TH" : "en-GB", { timeZone: "Asia/Bangkok" })}
+              </span>
+              {urls.get(f.storage_path) && (
+                <a href={urls.get(f.storage_path)} download={f.file_name} className="font-semibold text-navy underline">
+                  {t.download}
+                </a>
+              )}
+              <ShareButton path={f.storage_path} fileName={f.file_name} labels={shareLabels} />
+              {canManage && (
+                <form action={deleteProjectFile.bind(null, f.id)}>
+                  <button className="text-red-600 underline">{t.remove}</button>
+                </form>
+              )}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 
   return (
     <section className="flex flex-col gap-8">
@@ -187,36 +219,21 @@ export default async function ProjectPage({
           failedText={t.uploadFailed}
         />
         {files?.length ? (
-          <div className="card p-4">
-            <ul className="divide-y divide-[#ece8f2] text-sm">
-              {files.map((f) => (
-                <li key={f.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
-                  <span>
-                    {f.file_name} <span className="text-muted">{formatSize(f.size_bytes)}</span>
-                  </span>
-                  <span className="flex items-center gap-4">
-                    <span className="text-muted">
-                      {new Date(f.created_at).toLocaleDateString(lang === "th" ? "th-TH" : "en-GB", { timeZone: "Asia/Bangkok" })}
-                    </span>
-                    {urls.get(f.storage_path) && (
-                      <a href={urls.get(f.storage_path)} download={f.file_name} className="font-semibold text-navy underline">
-                        {t.download}
-                      </a>
-                    )}
-                    <ShareButton path={f.storage_path} fileName={f.file_name} labels={shareLabels} />
-                    {canManage && (
-                      <form action={deleteProjectFile.bind(null, f.id)}>
-                        <button className="text-red-600 underline">{t.remove}</button>
-                      </form>
-                    )}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          fileList(files)
         ) : (
           <p className="text-muted">{t.noFiles}</p>
         )}
+        <h2 className="mt-4 text-xl font-semibold text-navy">{t.comparisonDocs}</h2>
+        <p className="text-sm text-muted">{t.comparisonHelp}</p>
+        <FileUploader
+          prefix={`projects/${projectId}`}
+          record={boundCmp}
+          label={t.uploadFiles}
+          uploadingText={t.uploading}
+          failedText={t.uploadFailed}
+          ghost
+        />
+        {comparisons?.length ? fileList(comparisons) : <p className="text-muted">{t.noFiles}</p>}
         {!!shares?.length && (
           <div className="card p-4">
             <h3 className="mb-2 font-medium">{t.activeLinks}</h3>

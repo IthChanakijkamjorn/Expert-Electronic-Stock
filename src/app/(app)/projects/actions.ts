@@ -48,13 +48,14 @@ export async function addProjectFile(
   path: string,
   name: string,
   size: number,
+  kind: "original" | "comparison" = "original",
 ) {
   // Only accept objects that live under this project's folder.
   if (!path.startsWith(`projects/${projectId}/`)) throw new Error("bad path");
   const supabase = await createClient();
   const { error } = await supabase
     .from("project_files")
-    .insert({ project_id: projectId, storage_path: path, file_name: name, size_bytes: size });
+    .insert({ project_id: projectId, storage_path: path, file_name: name, size_bytes: size, kind: kind === "comparison" ? "comparison" : "original" });
   if (error) throw new Error(error.message);
 }
 
