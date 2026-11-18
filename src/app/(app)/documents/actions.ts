@@ -41,3 +41,21 @@ export async function deleteSalesperson(id: string) {
   const supabase = await createClient();
   await supabase.from("salespeople").delete().eq("id", id);
 }
+
+type DocKindName = "invoice" | "quotation" | "receipt";
+
+export async function addDocumentFile(docKind: DocKindName, path: string, name: string, size: number) {
+  if (!path.startsWith(`documents/${docKind}/`)) throw new Error("bad path");
+  const supabase = await createClient();
+  const { error } = await supabase.from("document_files").insert({ doc_kind: docKind, storage_path: path, file_name: name, size_bytes: size });
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteDocumentFile(fileId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase.from("document_files").select("storage_path").eq("id", fileId).single();
+  if (!data) return;
+  await supabase.storage.from("files").remove([data.storage_path]);
+  await supabase.from("document_files").delete().eq("id", fileId);
+  revalidatePath("/documents");
+}
