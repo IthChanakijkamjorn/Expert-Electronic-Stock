@@ -81,7 +81,6 @@ export async function QuotationEditor({ id, project }: { id?: string; project?: 
       paymentTerms: q.payment_terms ?? "",
       discountPct: String(Number(q.discount_pct)),
       vat: q.vat,
-      variant: "original",
       signatureUrl: sigPath ? (urls.get(sigPath) ?? null) : null,
       lines,
     };

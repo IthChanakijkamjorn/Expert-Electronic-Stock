@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { docHead, type DocVariant } from "@/lib/docType";
 import type { DocCompany } from "@/lib/company";
 import { bahtText } from "@/lib/bahttext";
 import { blank, money, type PaperLine } from "@/components/InvoicePaper";
@@ -21,7 +20,6 @@ export type QuotePaperData = {
   paymentTerms: string;
   discountPct: string;
   vat: boolean;
-  variant?: DocVariant;
   signatureUrl: string | null;
   lines: PaperLine[];
 };
@@ -97,44 +95,52 @@ export function QuotationPaper({
       </div>
 
       <div className="mt-4 flex items-baseline justify-between">
-        <span className="text-[16px] font-bold">{docHead("ใบเสนอราคา", "QUOTATION", data.variant).th} / {docHead("ใบเสนอราคา", "QUOTATION", data.variant).en}</span>
+        <span className="text-[16px] font-bold">ใบเสนอราคา / QUOTATION</span>
         <span>
           <b>เลขที่ / No.:</b> {data.number}
         </span>
       </div>
 
-      <div className="mt-2 grid grid-cols-[1fr_270px] gap-x-6">
+      <div className="mt-2 grid grid-cols-[1fr_330px] gap-x-4">
         <div className="grid grid-cols-[190px_1fr] items-start gap-y-1">
-          <span>บริษัท/หน่วยงาน / Company:</span>
+          <span>บริษัท/องค์กร / Company:</span>
           {field("customer")}
           <span>เรียน / Attn:</span>
           {field("attention")}
           <span>โครงการ / Project:</span>
           {field("project")}
-          <span>โทร / Tel:</span>
-          {field("phone")}
-          <span>อีเมล / Email:</span>
-          {field("email")}
+          <div className="col-span-2 grid grid-cols-[190px_1fr_auto_1fr] items-start gap-x-2">
+            <span>โทร / Tel:</span>
+            {field("phone")}
+            <span>อีเมล / Email:</span>
+            {field("email")}
+          </div>
           <span>เลขประจำตัวผู้เสียภาษี / Tax ID:</span>
           {coField("taxId")}
         </div>
-        <div className="grid grid-cols-[130px_1fr] items-start gap-y-1">
+        <div className="grid grid-cols-[190px_1fr] items-start gap-y-1 [&>span]:whitespace-nowrap">
           <span>วันที่ / Date:</span>
-          {h ? <input type="date" className={blank} value={data.date} onChange={(e) => h.onField({ date: e.target.value })} /> : <span>{dateText}</span>}
-          <span>กำหนดยื่นราคา (วัน):</span>
+          {h ? (
+            <label className="relative block">
+              <span className={`${blank} block min-h-[1.4em]`}>{dateText}</span>
+              <input type="date" className="absolute inset-0 h-full w-full cursor-pointer opacity-0" value={data.date} onChange={(e) => h.onField({ date: e.target.value })} />
+            </label>
+          ) : (
+            <span>{dateText}</span>
+          )}
+          <span>กำหนดยืนราคา (วัน):</span>
           {field("validDays", "number")}
-          <span>ระยะเวลาดำเนินการ (วัน):</span>
+          <span>ระยะเวลากำหนดส่งสินค้า (วัน):</span>
           {field("leadDays", "number")}
           <span>การรับประกัน (ปี):</span>
           {field("warrantyYears", "number")}
           <span>ผู้เสนอราคา / Quoted by:</span>
           {h && salesSlot ? salesSlot : field("quotedBy")}
-          <span>ส่วนลด / Discount %:</span>
-          {field("discountPct", "number")}
         </div>
       </div>
 
-      <table className="mt-4 w-full border-collapse border border-black">
+      <p className="mt-4">บริษัทฯยินดีที่จะเสนอราคาสินค้า เพื่อประกอบการพิจารณาดังนี้:</p>
+      <table className="mt-1 w-full border-collapse border border-black">
         <colgroup>
           <col style={{ width: 48 }} />
           <col style={{ width: 70 }} />
@@ -239,7 +245,6 @@ export function QuotationPaper({
           </div>
         </div>
       </div>
-      <div className="border-x border-b border-black p-2 text-[11.5px]">{coField("bank", "block")}</div>
     </div>
   );
 }

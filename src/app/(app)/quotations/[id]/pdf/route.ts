@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getRole } from "@/lib/role";
 import { buildQuotation, type QuoteLine } from "@/lib/quotation";
-import { parseVariant } from "@/lib/docType";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -20,7 +19,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
   const pdf = await buildQuotation({
     signature,
-    variant: parseVariant(new URL(req.url).searchParams.get("doc")),
     number: q.number ?? "DRAFT",
     date: new Date(q.quote_date),
     customer: q.customer,

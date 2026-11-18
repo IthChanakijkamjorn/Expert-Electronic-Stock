@@ -3,7 +3,6 @@
 import { useActionState, useState } from "react";
 import { saveQuotation } from "../actions";
 import { QuotationPaper, type QuotePaperData, type QuoteHandlers } from "@/components/QuotationPaper";
-import { DocVariantSelect } from "@/components/DocVariantSelect";
 import { withBlank, isBlankLine } from "@/components/LineCells";
 import type { DocCompany } from "@/lib/company";
 import { saveCompanyDefault, type Salesperson } from "../../documents/actions";
@@ -63,7 +62,6 @@ export function QuotationForm({
     paymentTerms: "เงินสด",
     discountPct: "0",
     vat: true,
-    variant: "original",
     signatureUrl: signatures.find((s) => s.is_default)?.url ?? null,
     lines: withBlank(initialLines.flatMap((l) => (byId.get(l.id) ? [toLine(byId.get(l.id)!, l.qty)] : []))),
   });
@@ -145,7 +143,6 @@ export function QuotationForm({
                 {signatures.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </label>
-            <DocVariantSelect value={data.variant ?? "original"} label={t.docVariant} onChange={(v) => setData((d) => ({ ...d, variant: v }))} />
             <button type="button" className="btn-ghost" onClick={() => {
               if (editCompany) saveCompanyDefault("quote", data.company);
               setEditCompany((v) => !v);

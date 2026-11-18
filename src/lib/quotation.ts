@@ -1,4 +1,3 @@
-import { docHead, type DocVariant } from "@/lib/docType";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
@@ -9,7 +8,6 @@ import { bahtText } from "@/lib/bahttext";
 export type QuoteLine = { brand: string; model: string; name: string; unit: string; qty: number; price: number };
 
 export type QuoteData = {
-  variant?: DocVariant;
   number: string;
   date: Date;
   customer: string;
@@ -112,7 +110,7 @@ export async function buildQuotation(q: QuoteData) {
       text(`E-mail: ${co.email}  ${co.web}`, tx, H - M - 54, 8.5);
       y = H - M - 84;
 
-      text(`${docHead("ใบเสนอราคา", "QUOTATION", q.variant).th} / ${docHead("ใบเสนอราคา", "QUOTATION", q.variant).en}`, M, y, 14, bold);
+      text("ใบเสนอราคา / QUOTATION", M, y, 14, bold);
       const rx = 340;
       const rw = W - M - rx;
       text("เลขที่ / No.:", rx, y, sizeText, bold);
@@ -120,16 +118,16 @@ export async function buildQuotation(q: QuoteData) {
       y -= 17;
 
       const left = [
-        `บริษัท/หน่วยงาน / Company: ${q.customer}`,
+        `บริษัท/องค์กร / Company: ${q.customer}`,
         `เรียน / Attn: ${q.attention ?? ""}`,
         `โครงการ / Project: ${q.project}`,
-        `โทร / Tel: ${q.phone ?? ""}${q.email ? `   Email: ${q.email}` : ""}`,
+        `โทร / Tel: ${q.phone ?? ""}      อีเมล / Email: ${q.email ?? ""}`,
         `เลขประจำตัวผู้เสียภาษี / Tax ID: ${co.taxId}`,
       ];
       const right = [
-        `วันที่ / Date: ${q.date.toISOString().slice(0, 10)}`,
-        `กำหนดยื่นราคา / Validity: ${q.validDays ?? "-"} วัน`,
-        `ระยะเวลาดำเนินการ / Lead time: ${q.leadDays ?? "-"} วัน`,
+        `วันที่ / Date: ${q.date.toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Bangkok" })}`,
+        `กำหนดยืนราคา / Validity: ${q.validDays ?? "-"} วัน`,
+        `ระยะเวลากำหนดส่งสินค้า / Lead time: ${q.leadDays ?? "-"} วัน`,
         `การรับประกัน / Warranty: ${q.warrantyYears ?? "-"} ปี`,
         `ผู้เสนอราคา / Quoted by: ${q.quotedBy ?? ""}`,
       ];
@@ -138,6 +136,8 @@ export async function buildQuotation(q: QuoteData) {
         text(fit(right[i], font, sizeText, rw), rx, y - i * 14);
       });
       y -= 5 * 14 + 4;
+      text("บริษัทฯยินดีที่จะเสนอราคาสินค้า เพื่อประกอบการพิจารณาดังนี้:", M, y, sizeText);
+      y -= 14;
     }
 
     tableTop = y;
@@ -250,10 +250,6 @@ export async function buildQuotation(q: QuoteData) {
   }
   centered(co.approverName, split, W - M - split, y2 + 16);
   centered(`( ${co.approverTitle} )`, split, W - M - split, y2 + 4);
-
-  const row3H = y2 - M;
-  box(M, M, tableW, row3H);
-  wrap(co.bank, font, 8.5, tableW - 10).forEach((r, k) => text(r, M + 5, M + row3H - 12 - k * 11, 8.5));
 
   return doc.save();
 }

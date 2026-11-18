@@ -5,9 +5,7 @@ import { getDictionary } from "@/lib/i18n";
 import { getRole } from "@/lib/role";
 import { signedUrls } from "@/lib/storage";
 import { mergeDocCompany } from "@/lib/company";
-import { parseVariant } from "@/lib/docType";
 import { QuotationPaper } from "@/components/QuotationPaper";
-import { DocVariantSelect } from "@/components/DocVariantSelect";
 import { PrintButton } from "@/components/PrintButton";
 import type { QuoteLine } from "@/lib/quotation";
 
@@ -16,13 +14,12 @@ export default async function QuotationPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ created?: string; doc?: string }>;
+  searchParams: Promise<{ created?: string }>;
 }) {
   const role = await getRole();
   if (role !== "admin" && role !== "manager") redirect("/documents");
   const { id } = await params;
-  const { created, doc } = await searchParams;
-  const variant = parseVariant(doc);
+  const { created } = await searchParams;
   const { t } = await getDictionary();
   const supabase = await createClient();
   const { data: q } = await supabase.from("quotations").select("*, projects(name)").eq("id", id).maybeSingle();
@@ -40,9 +37,8 @@ export default async function QuotationPage({
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <Link href="/quotations" className="btn-ghost">← {t.quotation}</Link>
           <Link href={`/quotations/${id}/edit`} className="btn-ghost">✎ {t.docEdit}</Link>
-          <DocVariantSelect value={variant} label={t.docVariant} />
           <PrintButton label={`🖨 ${t.docPrint}`} />
-          <a href={`/quotations/${id}/pdf?doc=${variant}`} target="_blank" className="btn">{t.invOpenPdf}</a>
+          <a href={`/quotations/${id}/pdf`} target="_blank" className="btn">{t.invOpenPdf}</a>
         </div>
         {created && <p className="w-full rounded-lg bg-emerald-50 px-3 py-2 text-emerald-700">{q.status === "draft" ? t.draftSaved : t.docSaved}</p>}
       </div>
@@ -64,7 +60,6 @@ export default async function QuotationPage({
             paymentTerms: q.payment_terms ?? "",
             discountPct: String(Number(q.discount_pct)),
             vat: q.vat,
-            variant,
             signatureUrl: sig?.path ? (urls.get(sig.path) ?? null) : null,
             lines: (q.lines as QuoteLine[]).map((l, i) => ({
               key: String(i), brand: l.brand, model: l.model, name: l.name, unit: l.unit, qty: String(l.qty), price: String(l.price),
