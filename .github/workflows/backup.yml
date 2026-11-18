@@ -2,7 +2,7 @@ name: Backup
 
 on:
   schedule:
-    - cron: "0 20 * * *" # 03:00 Thailand time
+    - cron: "0 20 * * 0" # Monday 03:00 Thailand time
   workflow_dispatch:
 
 permissions:
