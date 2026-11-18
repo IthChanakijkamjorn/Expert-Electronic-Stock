@@ -5,7 +5,13 @@ import { getRole } from "@/lib/role";
 import { signedUrls } from "@/lib/storage";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ImageUploader } from "@/components/ImageUploader";
+import { FileUploader } from "@/components/FileUploader";
+import { ShareButton } from "@/components/ShareButton";
 import { setBrandLogo } from "../../image-actions";
+import { addBrandFile, deleteBrandFile } from "../../catalog-actions";
+
+const formatSize = (n: number | null) =>
+  n == null ? "" : n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.ceil(n / 1024)} KB`;
 
 export default async function BrandPage({
   params,
@@ -34,12 +40,13 @@ export default async function BrandPage({
   if (term) query = query.or(`name.ilike.%${term}%,model.ilike.%${term}%`);
   const role = await getRole();
   const canManage = role === "admin" || role === "manager";
-  const [{ data: products }, { data: fileRows }, { data: brandRow }] = await Promise.all([
+  const [{ data: products }, { data: fileRows }, { data: brandRow }, { data: catalogs }] = await Promise.all([
     query,
     supabase.from("product_files").select("product_id").limit(10000),
     title ? supabase.from("brands").select("logo_path").eq("name", title).maybeSingle() : Promise.resolve({ data: null }),
+    title ? supabase.from("brand_files").select("id, storage_path, file_name, size_bytes").eq("brand", title).order("created_at", { ascending: false }) : Promise.resolve({ data: null }),
   ]);
-  const urls = await signedUrls([brandRow?.logo_path, ...(products ?? []).map((p) => p.image_path)]);
+  const urls = await signedUrls([brandRow?.logo_path, ...(catalogs ?? []).map((c) => c.storage_path), ...(products ?? []).map((p) => p.image_path)]);
   const logoUrl = brandRow?.logo_path ? urls.get(brandRow.logo_path) : undefined;
   const counts = new Map<string, number>();
   fileRows?.forEach((r) => counts.set(r.product_id, (counts.get(r.product_id) ?? 0) + 1));
@@ -70,6 +77,50 @@ export default async function BrandPage({
           <span className="pill ml-auto bg-white text-navy shadow-sm">{products?.length ?? 0} {t.items}</span>
         </div>
       </div>
+      {title && (catalogs?.length || canManage) ? (
+        <div className="flex flex-col gap-3">
+          <h2 className="eyebrow">{t.catalogs}</h2>
+          {canManage && (
+            <FileUploader
+              prefix="catalogs"
+              record={addBrandFile.bind(null, title)}
+              label={t.uploadCatalog}
+              uploadingText={t.uploading}
+              failedText={t.uploadFailed}
+              accept="application/pdf,.pdf"
+              ghost
+            />
+          )}
+          {catalogs?.length ? (
+            <div className="card p-4">
+              <ul className="divide-y divide-[#ece8f2] text-sm">
+                {catalogs.map((c) => (
+                  <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                    <span>📄 {c.file_name} <span className="text-muted">{formatSize(c.size_bytes)}</span></span>
+                    <span className="flex flex-wrap items-center gap-4">
+                      {urls.get(c.storage_path) && (
+                        <a href={urls.get(c.storage_path)} target="_blank" rel="noreferrer" className="font-semibold text-navy underline">{t.download}</a>
+                      )}
+                      <ShareButton
+                        path={c.storage_path}
+                        fileName={c.file_name}
+                        labels={{ share: t.share, days: t.shareDays, hours: t.shareHours, create: t.createLink, copy: t.copy, copied: t.copied, failed: t.shareFailed }}
+                      />
+                      {canManage && (
+                        <form action={deleteBrandFile.bind(null, c.id)}>
+                          <button className="text-red-600 underline">{t.remove}</button>
+                        </form>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p className="text-sm text-muted">{t.noCatalogs}</p>
+          )}
+        </div>
+      ) : null}
       <form className="flex gap-2">
         <input name="q" defaultValue={q} placeholder={t.filterProducts} className="input max-w-sm" />
         <button className="btn-ghost">{t.search}</button>
