@@ -72,6 +72,13 @@ export function QuotationPaper({
       <span>{data[k]}</span>
     );
 
+  const row = (label: string, content: ReactNode) => (
+    <div className="flex min-w-0 flex-1 items-start gap-x-2">
+      <span className="whitespace-nowrap">{label}</span>
+      <div className="min-w-0 flex-1">{content}</div>
+    </div>
+  );
+
   const th = "border border-black px-1 py-1 text-center text-[11px] font-bold leading-tight";
   const td = "border-x border-black px-1 py-1 align-top";
   const rows = Math.max(0, MIN_ROWS - data.lines.length);
@@ -102,40 +109,32 @@ export function QuotationPaper({
       </div>
 
       <div className="mt-2 grid grid-cols-[1fr_330px] gap-x-4">
-        <div className="grid grid-cols-[190px_1fr] items-start gap-y-1">
-          <span>บริษัท/องค์กร / Company:</span>
-          {field("customer")}
-          <span>เรียน / Attn:</span>
-          {field("attention")}
-          <span>โครงการ / Project:</span>
-          {field("project")}
-          <div className="col-span-2 grid grid-cols-[190px_1fr_auto_1fr] items-start gap-x-2">
-            <span>โทร / Tel:</span>
-            {field("phone")}
-            <span>อีเมล / Email:</span>
-            {field("email")}
+        <div className="flex flex-col gap-y-1">
+          {row("บริษัท/องค์กร / Company:", field("customer"))}
+          {row("เรียน / Attn:", field("attention"))}
+          {row("โครงการ / Project:", field("project"))}
+          <div className="flex gap-x-4">
+            {row("โทร / Tel:", field("phone"))}
+            {row("อีเมล / Email:", field("email"))}
           </div>
-          <span>เลขประจำตัวผู้เสียภาษี / Tax ID:</span>
-          {coField("taxId")}
+          {row("เลขประจำตัวผู้เสียภาษี / Tax ID:", coField("taxId"))}
         </div>
-        <div className="grid grid-cols-[190px_1fr] items-start gap-y-1 [&>span]:whitespace-nowrap">
-          <span>วันที่ / Date:</span>
-          {h ? (
-            <label className="relative block">
-              <span className={`${blank} block min-h-[1.4em]`}>{dateText}</span>
-              <input type="date" className="absolute inset-0 h-full w-full cursor-pointer opacity-0" value={data.date} onChange={(e) => h.onField({ date: e.target.value })} />
-            </label>
-          ) : (
-            <span>{dateText}</span>
+        <div className="flex flex-col gap-y-1">
+          {row(
+            "วันที่ / Date:",
+            h ? (
+              <label className="relative block">
+                <span className={`${blank} block min-h-[1.4em]`}>{dateText}</span>
+                <input type="date" className="absolute inset-0 h-full w-full cursor-pointer opacity-0" value={data.date} onChange={(e) => h.onField({ date: e.target.value })} />
+              </label>
+            ) : (
+              <span>{dateText}</span>
+            ),
           )}
-          <span>กำหนดยืนราคา (วัน):</span>
-          {field("validDays", "number")}
-          <span>ระยะเวลากำหนดส่งสินค้า (วัน):</span>
-          {field("leadDays", "number")}
-          <span>การรับประกัน (ปี):</span>
-          {field("warrantyYears", "number")}
-          <span>ผู้เสนอราคา / Quoted by:</span>
-          {h && salesSlot ? salesSlot : field("quotedBy")}
+          {row("กำหนดยืนราคา (วัน):", field("validDays", "number"))}
+          {row("ระยะเวลากำหนดส่งสินค้า (วัน):", field("leadDays", "number"))}
+          {row("การรับประกัน (ปี):", field("warrantyYears", "number"))}
+          {row("ผู้เสนอราคา / Quoted by:", h && salesSlot ? salesSlot : field("quotedBy"))}
         </div>
       </div>
 
