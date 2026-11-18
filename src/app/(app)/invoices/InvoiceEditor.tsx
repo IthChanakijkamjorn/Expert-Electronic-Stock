@@ -34,9 +34,9 @@ export async function InvoiceEditor({ id }: { id?: string }) {
   if (id) {
     const { data: inv } = await supabase.from("tax_invoices").select("*").eq("id", id).maybeSingle();
     if (!inv) notFound();
-    const lines = (inv.lines as { product_id: string; brand: string | null; model: string | null; name: string; unit: string; qty: number; price: number }[]).map((l) => ({
-      key: l.product_id,
-      productId: l.product_id,
+    const lines = (inv.lines as { product_id: string | null; brand: string | null; model: string | null; name: string; unit: string; qty: number; price: number }[]).map((l, i) => ({
+      key: l.product_id ?? `free${i}`,
+      productId: l.product_id ?? undefined,
       brand: l.brand,
       model: l.model,
       name: l.name,

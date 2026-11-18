@@ -50,7 +50,7 @@ export async function QuotationEditor({ id, project }: { id?: string; project?: 
   if (id) {
     const { data: q } = await supabase.from("quotations").select("*").eq("id", id).maybeSingle();
     if (!q) notFound();
-    let dropped = 0;
+    const dropped = 0;
     const lines: QuotePaperData["lines"] = [];
     for (const l of q.lines as { product_id?: string; brand: string; model: string; name: string; unit: string; qty: number; price: number }[]) {
       // Older quotations did not store the product id, so match by model + name, then by name.
@@ -59,7 +59,7 @@ export async function QuotationEditor({ id, project }: { id?: string; project?: 
         products.find((x) => (x.model ?? "") === l.model && x.name === l.name) ??
         products.find((x) => x.name === l.name);
       if (!p) {
-        dropped++;
+        lines.push({ key: `free${lines.length}`, brand: l.brand, model: l.model, name: l.name, unit: l.unit, qty: String(l.qty), price: String(l.price) });
         continue;
       }
       lines.push({ key: p.id, productId: p.id, brand: l.brand, model: l.model, name: l.name, unit: l.unit, qty: String(l.qty), price: String(l.price) });
