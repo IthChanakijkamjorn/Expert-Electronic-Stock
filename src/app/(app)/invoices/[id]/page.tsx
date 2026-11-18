@@ -6,7 +6,6 @@ import { mergeDocCompany } from "@/lib/company";
 import { InvoicePaper } from "@/components/InvoicePaper";
 import { parseVariant } from "@/lib/docType";
 import { DocVariantSelect } from "@/components/DocVariantSelect";
-import { PrintButton } from "@/components/PrintButton";
 import type { QuoteLine } from "@/lib/quotation";
 
 export default async function InvoicePage({
@@ -33,7 +32,6 @@ export default async function InvoicePage({
           <Link href="/invoices" className="btn-ghost">← {t.taxInvoices}</Link>
           <Link href={`/invoices/${id}/edit`} className="btn-ghost">✎ {t.docEdit}</Link>
           <DocVariantSelect value={variant} label={t.docVariant} />
-          <PrintButton label={`🖨 ${t.docPrint}`} />
           <a href={`/invoices/${id}/pdf?doc=${variant}`} target="_blank" className="btn">{t.invOpenPdf}</a>
         </div>
         {created && <p className="w-full rounded-lg bg-emerald-50 px-3 py-2 text-emerald-700">{inv.status === "draft" ? t.draftSaved : t.invCreated}</p>}

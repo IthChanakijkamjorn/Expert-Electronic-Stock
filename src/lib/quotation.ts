@@ -107,21 +107,21 @@ export async function buildQuotation(q: QuoteData) {
       text(co.name, tx, H - M - 14, 15, bold);
       text(co.address, tx, H - M - 30, 8.5);
       text(co.tel, tx, H - M - 42, 8.5);
-      text(`E-mail: ${co.email}  ${co.web}    Tax ID: ${co.taxId}`, tx, H - M - 54, 8.5);
+      text(`E-mail: ${co.email}  ${co.web}    Tax ID No.: ${co.taxId}`, tx, H - M - 54, 8.5);
       y = H - M - 84;
 
       text("ใบเสนอราคา / QUOTATION", M, y, 14, bold);
       const rx = 340;
       const rw = W - M - rx;
       text("เลขที่ / No.:", rx, y, sizeText, bold);
-      text(q.number, rx + 62, y);
+      text(q.number, rx + bold.widthOfTextAtSize("เลขที่ / No.:", sizeText) + 6, y);
       y -= 17;
 
       const left = [
         `บริษัท/องค์กร / Company: ${q.customer}`,
         `เรียน / Attn: ${q.attention ?? ""}`,
         `โครงการ / Project: ${q.project}`,
-        `โทรศัพท์ / Tel No: ${q.phone ?? ""}      อีเมล / Email: ${q.email ?? ""}`,
+        `โทรศัพท์ / Tel No: ${q.phone ?? ""}  อีเมล / Email: ${q.email ?? ""}`,
       ];
       const right = [
         `วันที่ / Date: ${q.date.toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Bangkok" })}`,
@@ -238,17 +238,17 @@ export async function buildQuotation(q: QuoteData) {
   centered("ยืนยันการสั่งซื้อ / ORDER CONFIRMATION", M, split - M, y2 + row2H - 32, sizeText, bold);
   page.drawLine({ start: { x: M + 30, y: y2 + 26 }, end: { x: split - 30, y: y2 + 26 }, thickness: 0.4, color: BLACK });
   centered("ลงชื่อ / Signature", M, split - M, y2 + 16, 8);
-  centered("วันที่ / Date ____ / ________ / ________", M, split - M, y2 + 4, 8.5);
+  centered("วันที่ / Date ____ / ________ / ________", M, split - M, y2 + 4, 7.5);
   centered("ผู้อนุมัติ / APPROVED BY", split, W - M - split, y2 + row2H - 13, sizeText, bold);
   if (q.signature) {
     const img = await embedSignature(doc, q.signature);
     if (img) {
       const maxW = W - M - split - 40;
-      const maxH = 40;
+      const maxH = 26;
       const scale = Math.min(maxW / img.width, maxH / img.height);
       const w = img.width * scale;
       const h = img.height * scale;
-      page.drawImage(img, { x: split + (W - M - split - w) / 2, y: y2 + 30 + (maxH - h) / 2, width: w, height: h });
+      page.drawImage(img, { x: split + (W - M - split - w) / 2, y: y2 + 32 + (maxH - h) / 2, width: w, height: h });
     }
   }
   centered(co.approverName, split, W - M - split, y2 + 16);

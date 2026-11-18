@@ -6,7 +6,6 @@ import { getRole } from "@/lib/role";
 import { signedUrls } from "@/lib/storage";
 import { mergeDocCompany } from "@/lib/company";
 import { QuotationPaper } from "@/components/QuotationPaper";
-import { PrintButton } from "@/components/PrintButton";
 import type { QuoteLine } from "@/lib/quotation";
 
 export default async function QuotationPage({
@@ -37,7 +36,6 @@ export default async function QuotationPage({
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <Link href="/quotations" className="btn-ghost">← {t.quotation}</Link>
           <Link href={`/quotations/${id}/edit`} className="btn-ghost">✎ {t.docEdit}</Link>
-          <PrintButton label={`🖨 ${t.docPrint}`} />
           <a href={`/quotations/${id}/pdf`} target="_blank" className="btn">{t.invOpenPdf}</a>
         </div>
         {created && <p className="w-full rounded-lg bg-emerald-50 px-3 py-2 text-emerald-700">{q.status === "draft" ? t.draftSaved : t.docSaved}</p>}

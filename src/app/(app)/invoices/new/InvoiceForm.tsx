@@ -140,7 +140,6 @@ export function InvoiceForm({
         {preview && (
           <>
             <button type="button" className="btn-ghost" onClick={() => setPreview(false)}>← {t.docBackToEdit}</button>
-            <button type="button" className="btn-ghost" onClick={() => window.print()}>🖨 {t.docPrint}</button>
             <button name="intent" value="draft" disabled={pending} className="btn-ghost ml-auto">💾 {t.saveDraft}</button>
             <button name="intent" value="final" disabled={pending} className="btn">{t.invCreate}</button>
           </>

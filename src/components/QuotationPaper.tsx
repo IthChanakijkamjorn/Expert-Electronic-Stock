@@ -76,8 +76,8 @@ export function QuotationPaper({
       <span>{data[k]}</span>
     );
 
-  const row = (label: string, content: ReactNode) => (
-    <div className="flex min-w-0 flex-1 items-start gap-x-2">
+  const row = (label: string, content: ReactNode, cls = "flex-1") => (
+    <div className={`flex min-w-0 ${cls} items-start gap-x-2`}>
       <span className="whitespace-nowrap">{label}</span>
       <div className="min-w-0 flex-1">{content}</div>
     </div>
@@ -101,7 +101,7 @@ export function QuotationPaper({
             <span>E-mail:</span>
             {coField("email")}
             {coField("web")}
-            <span className="ml-3">Tax ID:</span>
+            <span className="ml-3">Tax ID No.:</span>
             {coField("taxId")}
           </div>
         </div>
@@ -119,8 +119,8 @@ export function QuotationPaper({
           {row("บริษัท/องค์กร / Company:", h && customerSlot ? customerSlot : field("customer"))}
           {row("เรียน / Attn:", field("attention"))}
           {row("โครงการ / Project:", field("project"))}
-          <div className="flex gap-x-4">
-            {row("โทรศัพท์ / Tel No:", field("phone"))}
+          <div className="flex gap-x-2">
+            {row("โทรศัพท์ / Tel No:", field("phone"), "w-[44%] flex-none")}
             {row("อีเมล / Email:", field("email"))}
           </div>
         </div>
@@ -247,7 +247,7 @@ export function QuotationPaper({
           <div className="border-b border-black py-1 font-bold">ผู้อนุมัติ / APPROVED BY</div>
           <div className="flex h-14 items-center justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            {data.signatureUrl && <img src={data.signatureUrl} alt="" className="max-h-12 max-w-[200px] object-contain" />}
+            {data.signatureUrl && <img src={data.signatureUrl} alt="" className="max-h-9 max-w-[160px] object-contain" />}
           </div>
           <div className="pb-2">
             <div>{editCompany && h ? <input className={`${blank} text-center`} value={co.approverName} onChange={(e) => h.onCompany({ approverName: e.target.value })} /> : co.approverName}</div>
