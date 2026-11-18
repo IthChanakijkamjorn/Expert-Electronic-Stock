@@ -59,5 +59,5 @@ export const defaultDocCompany = (kind: DocKind = "invoice"): DocCompany =>
 export const mergeDocCompany = (c: Partial<DocCompany> | null | undefined, kind: DocKind = "invoice"): DocCompany => ({
   ...defaultDocCompany(kind),
   ...(c ?? {}),
-  ...(kind === "quote" && c?.tel ? { tel: c.tel.replace(/^TEL\.?\s*/i, "Tel No. ") } : {}),
+  ...(kind === "quote" && c?.tel ? { tel: c.tel.replace(/^tel(\s*no)?\.?\s*/i, "Tel No. ") } : {}),
 });
