@@ -10,7 +10,7 @@ import { PublishPanel } from "@/components/PublishPanel";
 import { FileUploader } from "@/components/FileUploader";
 import { DeleteButton } from "@/components/DeleteButton";
 import { RenameForm } from "@/components/RenameForm";
-import { addProjectFile, addProjectPhoto, deleteProject, deleteProjectFile, deleteProjectPhoto, renameProject, setProjectCover } from "../../../actions";
+import { addProjectComparisonFile, addProjectFile, addProjectPhoto, deleteProject, deleteProjectFile, deleteProjectPhoto, renameProject, setProjectCover } from "../../../actions";
 
 const formatSize = (n: number | null) =>
   n == null ? "" : n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.ceil(n / 1024)} KB`;
@@ -110,7 +110,7 @@ export default async function ProjectPage({
   const files = allFiles?.filter((f) => f.kind !== "comparison");
   const comparisons = allFiles?.filter((f) => f.kind === "comparison");
   const bound = addProjectFile.bind(null, projectId);
-  const boundCmp = (path: string, name: string, size: number) => addProjectFile(projectId, path, name, size, "comparison");
+  const boundCmp = addProjectComparisonFile.bind(null, projectId);
   const fileList = (list: NonNullable<typeof allFiles>) => (
     <div className="card p-4">
       <ul className="divide-y divide-[#ece8f2] text-sm">

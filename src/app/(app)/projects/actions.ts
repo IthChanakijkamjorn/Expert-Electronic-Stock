@@ -59,6 +59,10 @@ export async function addProjectFile(
   if (error) throw new Error(error.message);
 }
 
+export async function addProjectComparisonFile(projectId: string, path: string, name: string, size: number) {
+  return addProjectFile(projectId, path, name, size, "comparison");
+}
+
 export async function deleteProjectFile(fileId: string) {
   const supabase = await createClient();
   const { data } = await supabase
