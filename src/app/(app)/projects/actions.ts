@@ -49,18 +49,27 @@ export async function addProjectFile(
   name: string,
   size: number,
   kind: "original" | "comparison" = "original",
+  slot: number | null = null,
 ) {
   // Only accept objects that live under this project's folder.
   if (!path.startsWith(`projects/${projectId}/`)) throw new Error("bad path");
   const supabase = await createClient();
   const { error } = await supabase
     .from("project_files")
-    .insert({ project_id: projectId, storage_path: path, file_name: name, size_bytes: size, kind: kind === "comparison" ? "comparison" : "original" });
+    .insert({ project_id: projectId, storage_path: path, file_name: name, size_bytes: size, kind: kind === "comparison" ? "comparison" : "original", slot: kind === "comparison" && slot && slot >= 1 && slot <= 3 ? slot : null });
   if (error) throw new Error(error.message);
 }
 
-export async function addProjectComparisonFile(projectId: string, path: string, name: string, size: number) {
-  return addProjectFile(projectId, path, name, size, "comparison");
+export async function addProjectComparisonFile(projectId: string, slot: number, path: string, name: string, size: number) {
+  return addProjectFile(projectId, path, name, size, "comparison", slot);
+}
+
+export async function saveComparisonSlotName(projectId: string, slot: number, name: string) {
+  if (!(slot >= 1 && slot <= 3)) throw new Error("bad slot");
+  const supabase = await createClient();
+  const { error } = await supabase.from("project_comparison_slots").upsert({ project_id: projectId, slot, name: name.trim() });
+  if (error) throw new Error(error.message);
+  revalidatePath("/projects", "layout");
 }
 
 export async function deleteProjectFile(fileId: string) {

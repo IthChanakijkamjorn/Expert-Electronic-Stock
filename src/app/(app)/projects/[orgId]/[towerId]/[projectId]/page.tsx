@@ -10,7 +10,8 @@ import { PublishPanel } from "@/components/PublishPanel";
 import { FileUploader } from "@/components/FileUploader";
 import { DeleteButton } from "@/components/DeleteButton";
 import { RenameForm } from "@/components/RenameForm";
-import { addProjectComparisonFile, addProjectFile, addProjectPhoto, deleteProject, deleteProjectFile, deleteProjectPhoto, renameProject, setProjectCover } from "../../../actions";
+import { SlotName } from "@/components/SlotName";
+import { addProjectComparisonFile, saveComparisonSlotName, addProjectFile, addProjectPhoto, deleteProject, deleteProjectFile, deleteProjectPhoto, renameProject, setProjectCover } from "../../../actions";
 
 const formatSize = (n: number | null) =>
   n == null ? "" : n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.ceil(n / 1024)} KB`;
@@ -48,7 +49,7 @@ export default async function ProjectPage({
   const [{ data: allFiles }, { data: moves }, { data: planItems }, { data: prices }] = await Promise.all([
     supabase
       .from("project_files")
-      .select("id, storage_path, file_name, size_bytes, created_at, kind")
+      .select("id, storage_path, file_name, size_bytes, created_at, kind, slot")
       .eq("project_id", projectId)
       .order("created_at", { ascending: false }),
     supabase
@@ -110,7 +111,8 @@ export default async function ProjectPage({
   const files = allFiles?.filter((f) => f.kind !== "comparison");
   const comparisons = allFiles?.filter((f) => f.kind === "comparison");
   const bound = addProjectFile.bind(null, projectId);
-  const boundCmp = addProjectComparisonFile.bind(null, projectId);
+  const { data: slotRows } = await supabase.from("project_comparison_slots").select("slot, name").eq("project_id", projectId);
+  const slotName = (n: number) => slotRows?.find((r) => r.slot === n)?.name ?? "";
   const fileList = (list: NonNullable<typeof allFiles>) => (
     <div className="card p-4">
       <ul className="divide-y divide-[#ece8f2] text-sm">
@@ -225,15 +227,35 @@ export default async function ProjectPage({
         )}
         <h2 className="mt-4 text-xl font-semibold text-navy">{t.comparisonDocs}</h2>
         <p className="text-sm text-muted">{t.comparisonHelp}</p>
-        <FileUploader
-          prefix={`projects/${projectId}`}
-          record={boundCmp}
-          label={t.uploadFiles}
-          uploadingText={t.uploading}
-          failedText={t.uploadFailed}
-          ghost
-        />
-        {comparisons?.length ? fileList(comparisons) : <p className="text-muted">{t.noFiles}</p>}
+        <div className="grid items-start gap-4 lg:grid-cols-3">
+          {[1, 2, 3].map((n) => {
+            const list = comparisons?.filter((f) => (f.slot ?? 1) === n) ?? [];
+            return (
+              <div key={n} className="flex flex-col gap-3 rounded-2xl border border-[#ece8f2] bg-white/60 p-3">
+                <h3 className="font-semibold text-navy">{t.comparisonSlot} {n}</h3>
+                {canManage ? (
+                  <SlotName
+                    initial={slotName(n)}
+                    placeholder={t.comparisonSlotName}
+                    saveLabel={t.save}
+                    save={saveComparisonSlotName.bind(null, projectId, n)}
+                  />
+                ) : (
+                  slotName(n) && <p className="text-sm">{slotName(n)}</p>
+                )}
+                <FileUploader
+                  prefix={`projects/${projectId}`}
+                  record={addProjectComparisonFile.bind(null, projectId, n)}
+                  label={t.uploadFiles}
+                  uploadingText={t.uploading}
+                  failedText={t.uploadFailed}
+                  ghost
+                />
+                {list.length ? fileList(list) : <p className="text-sm text-muted">{t.noFiles}</p>}
+              </div>
+            );
+          })}
+        </div>
         {!!shares?.length && (
           <div className="card p-4">
             <h3 className="mb-2 font-medium">{t.activeLinks}</h3>
