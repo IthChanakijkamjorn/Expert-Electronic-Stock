@@ -76,7 +76,7 @@ export async function InvoiceEditor({ id }: { id?: string }) {
 
   return (
     <section className="flex flex-col gap-6">
-      <h1 className="text-3xl font-semibold">{id ? t.docEdit : t.newTaxInvoice}</h1>
+      <h1 className="text-3xl font-semibold print:hidden">{id ? t.docEdit : t.newTaxInvoice}</h1>
       <InvoiceForm
         t={t}
         defaultCompany={await loadCompanyDefault("invoice")}

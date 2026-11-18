@@ -89,7 +89,7 @@ export async function QuotationEditor({ id, project }: { id?: string; project?: 
   }
   return (
     <section className="flex flex-col gap-6">
-      <h1 className="text-3xl font-semibold">{id ? t.docEdit : t.newQuotation}</h1>
+      <h1 className="text-3xl font-semibold print:hidden">{id ? t.docEdit : t.newQuotation}</h1>
       <QuotationForm
         t={t}
         defaultCompany={await loadCompanyDefault("quote")}

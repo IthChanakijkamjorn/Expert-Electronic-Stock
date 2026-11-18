@@ -85,7 +85,7 @@ export function InvoicePaper({
   const td = "border-x border-black px-1 py-1 align-top";
 
   return (
-    <div className="mx-auto w-[794px] max-w-none bg-white p-7 text-[12.5px] leading-snug text-black shadow-lg print:w-full print:p-0 print:shadow-none">
+    <div className="mx-auto w-[794px] max-w-none bg-white p-7 text-[12.5px] leading-snug text-black shadow-lg print:w-full print:p-[12mm] print:shadow-none">
       <div className="flex items-start gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logo.png" alt="" className="h-16 w-16" />

@@ -80,3 +80,8 @@ h1 {
     @apply border-b border-[#ece8f2] hover:bg-[#f5f5ff];
   }
 }
+
+@page {
+  size: A4;
+  margin: 0;
+}
