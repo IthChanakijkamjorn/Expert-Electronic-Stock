@@ -85,3 +85,9 @@ h1 {
   size: A4;
   margin: 0;
 }
+
+.paper input,
+.paper select,
+.paper textarea {
+  font-family: inherit;
+}
