@@ -79,7 +79,7 @@ export async function buildQuotation(q: QuoteData) {
   const FOOT = 200;
   const LINE = 0.6;
   const tableW = W - 2 * M;
-  const widths = [26, 54, 80, 139, 44, 84, 28, 84];
+  const widths = [26, 54, 80, 183, 44, 62, 28, 62];
   const xs = widths.reduce<number[]>((acc, w, i) => [...acc, acc[i] + w], [M]);
   const sizeText = 9.5;
   const sizeRow = 8;

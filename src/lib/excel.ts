@@ -93,7 +93,7 @@ export async function quotationXlsx(q: {
     pageSetup: { paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.4, right: 0.4, top: 0.4, bottom: 0.4, header: 0, footer: 0 } },
   });
   // Column widths mirror the PDF table (30/58/100/156/52/56/32/55 pt).
-  ws.columns = [6, 11, 19, 30, 10, 17, 7, 17].map((width) => ({ width }));
+  ws.columns = [6, 11, 19, 36, 10, 15, 7, 15].map((width) => ({ width }));
   const F = (size = 10, bold = false) => ({ name: "TH Sarabun New", size, bold });
   const BLACK = { argb: "FF000000" };
   const thinB = { style: "thin" as const, color: BLACK };
@@ -180,7 +180,7 @@ export async function quotationXlsx(q: {
       if (k === 5 || k === 7) c.numFmt = MONEY;
     });
     // Row height follows the longest wrapped cell (same widths as the PDF wrap).
-    const lines = Math.max(Math.ceil(l.name.length / 36), Math.ceil(l.model.length / 22), Math.ceil(l.brand.length / 12), 1);
+    const lines = Math.max(Math.ceil(l.name.length / 43), Math.ceil(l.model.length / 22), Math.ceil(l.brand.length / 12), 1);
     ws.getRow(r).height = Math.max(18, lines * 14 + 8);
   });
   // Always print at least 28 product rows (blank rows are numbered nothing) so the sheet fills an A4 page.

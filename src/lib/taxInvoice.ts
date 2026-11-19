@@ -47,7 +47,7 @@ export async function buildTaxInvoice(inv: TaxInvoiceData) {
   const M = 28;
   const LINE = 0.6;
   const tableW = W - 2 * M;
-  const widths = [28, 54, 80, 161, 48, 84, 84];
+  const widths = [28, 54, 80, 205, 48, 62, 62];
   const xs = widths.reduce<number[]>((acc, w, i) => [...acc, acc[i] + w], [M]);
   const size = 9.5;
   const HEAD_H = 28;
