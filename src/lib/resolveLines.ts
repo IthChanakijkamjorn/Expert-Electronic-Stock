@@ -29,7 +29,7 @@ export async function resolveLines(
       if (!p) {
         const { data } = await supabase
           .from("products")
-          .insert({ name, model, brand, unit: (l.unit ?? "").trim() || "pc" })
+          .insert({ name, model, brand, unit: (l.unit ?? "").trim() || "ชิ้น" })
           .select("id, name, model, brand, unit")
           .single();
         if (!data) return { error: "failed" };
@@ -40,7 +40,7 @@ export async function resolveLines(
       continue;
     }
     if (!l.product_id) {
-      out.set(`free${free++}`, { product_id: null, brand, model, name, unit: (l.unit ?? "").trim() || "pc", qty, price });
+      out.set(`free${free++}`, { product_id: null, brand, model, name, unit: (l.unit ?? "").trim() || "ชิ้น", qty, price });
       continue;
     }
     const { data: p } = await supabase.from("products").select("id, name, model, brand, unit").eq("id", l.product_id).maybeSingle();

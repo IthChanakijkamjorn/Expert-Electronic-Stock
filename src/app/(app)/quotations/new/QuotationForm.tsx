@@ -6,6 +6,7 @@ import { QuotationPaper, type QuotePaperData, type QuoteHandlers } from "@/compo
 import { withBlank, isBlankLine } from "@/components/LineCells";
 import type { DocCompany } from "@/lib/company";
 import { saveCompanyDefault, addCustomer, renameCustomer, deleteCustomer, type Salesperson } from "../../documents/actions";
+import { UnitManager } from "@/components/UnitManager";
 import { SalesPicker } from "@/components/SalesPicker";
 import type { PaperLine } from "@/components/InvoicePaper";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
@@ -25,6 +26,7 @@ export function QuotationForm({
   quotedBy,
   salespeople,
   customers,
+  units: initialUnits,
   existing,
 }: {
   t: Dictionary;
@@ -39,6 +41,7 @@ export function QuotationForm({
   quotedBy: string;
   salespeople: Salesperson[];
   customers: Salesperson[];
+  units: Salesperson[];
   existing?: { id: string; data: QuotePaperData; projectId: string; sigId: string; dropped: number };
 }) {
   const [state, action, pending] = useActionState(saveQuotation.bind(null, existing?.id ?? null), null);
@@ -67,6 +70,7 @@ export function QuotationForm({
     signatureUrl: signatures.find((s) => s.is_default)?.url ?? null,
     lines: withBlank(initialLines.flatMap((l) => (byId.get(l.id) ? [toLine(byId.get(l.id)!, l.qty)] : []))),
   });
+  const [units, setUnits] = useState(initialUnits);
   const [preview, setPreview] = useState(false);
   const [editCompany, setEditCompany] = useState(false);
 
@@ -94,7 +98,7 @@ export function QuotationForm({
       setLines((ls) =>
         ls.map((l) =>
           l.key === key
-            ? { ...l, productId: p.id, brand: p.brand ?? "", model: p.model ?? "", name: p.name, unit: p.unit, qty: l.qty || "1", price: String(sellPrice[p.id] ?? 0) }
+            ? { ...l, productId: p.id, brand: p.brand ?? "", model: p.model ?? "", name: p.name, unit: /^pcs?$/i.test(p.unit) ? "ชิ้น" : p.unit, qty: l.qty || "1", price: String(sellPrice[p.id] ?? 0) }
             : l,
         ),
       ),
@@ -155,6 +159,7 @@ export function QuotationForm({
                 {signatures.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </label>
+            <UnitManager units={units} setUnits={setUnits} label={t.unitManage} onRenamed={(from, to) => setData((d) => ({ ...d, lines: d.lines.map((l) => (l.unit === from ? { ...l, unit: to } : l)) }))} />
             <button type="button" className="btn-ghost" onClick={() => {
               if (editCompany) saveCompanyDefault("quote", data.company);
               setEditCompany((v) => !v);
@@ -188,6 +193,7 @@ export function QuotationForm({
           h={preview ? undefined : h}
           salesSlot={<SalesPicker initial={salespeople} value={data.quotedBy} onChange={(v) => setData((d) => ({ ...d, quotedBy: v }))} labels={{ add: t.salesAdd, remove: t.remove, save: t.save, confirm: t.salesRemoveConfirm }} />}
           customerSlot={<SalesPicker api={{ add: addCustomer, rename: renameCustomer, remove: deleteCustomer }} initial={customers} value={data.customer} onChange={(v) => setData((d) => ({ ...d, customer: v }))} labels={{ add: t.salesAdd, remove: t.remove, save: t.save, confirm: t.salesRemoveConfirm }} />}
+          units={units.map((u) => u.name)}
           paymentOptions={["เงินสด", "ตามเงื่อนไขราชการ"]}
           editCompany={editCompany && !preview}
           pickProducts={products}

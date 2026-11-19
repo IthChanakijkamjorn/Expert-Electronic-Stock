@@ -45,6 +45,7 @@ export function QuotationPaper({
   h,
   salesSlot,
   customerSlot,
+  units = [],
   paymentOptions = [],
   editCompany = false,
   pickProducts = [],
@@ -52,6 +53,7 @@ export function QuotationPaper({
   data: QuotePaperData;
   salesSlot?: ReactNode;
   customerSlot?: ReactNode;
+  units?: string[];
   paymentOptions?: string[];
   h?: QuoteHandlers;
   editCompany?: boolean;
@@ -157,7 +159,7 @@ export function QuotationPaper({
       <table className="mt-1 w-full border-collapse border border-black">
         <colgroup>
           <col style={{ width: 48 }} />
-          <col style={{ width: 64 }} />
+          <col style={{ width: 84 }} />
           <col style={{ width: 120 }} />
           <col />
           <col style={{ width: 62 }} />
@@ -213,7 +215,13 @@ export function QuotationPaper({
               )}
               <td className={`${td} text-center`}>
                 {h ? (
-                  <input type="number" min={1} step={1} className={`${blank} text-center`} value={l.qty} onChange={(e) => h.onLine(l.key, { qty: e.target.value })} />
+                  <>
+                    <input type="number" min={1} step={1} className={`${blank} text-center`} value={l.qty} onChange={(e) => h.onLine(l.key, { qty: e.target.value })} />
+                    <select className={`${blank} mt-1 text-center`} value={l.unit} onChange={(e) => h.onLine(l.key, { unit: e.target.value })}>
+                      {!units.includes(l.unit) && <option value={l.unit}>{l.unit}</option>}
+                      {units.map((u) => <option key={u} value={u}>{u}</option>)}
+                    </select>
+                  </>
                 ) : (
                   `${l.qty} ${unitLabel(l.unit, l.qty)}`
                 )}
