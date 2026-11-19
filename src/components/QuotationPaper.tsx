@@ -1,4 +1,5 @@
 import { unitLabel } from "@/lib/unit";
+import { ThaiDateInput } from "@/components/ThaiDateInput";
 import type { ReactNode } from "react";
 import type { DocCompany } from "@/lib/company";
 import { bahtText } from "@/lib/bahttext";
@@ -139,10 +140,7 @@ export function QuotationPaper({
           {row(
             "วันที่ / Date:",
             h ? (
-              <label className="relative block">
-                <span className={`${blank} block min-h-[1.4em]`}>{dateText}</span>
-                <input type="date" className="absolute inset-0 h-full w-full cursor-pointer opacity-0" value={data.date} onChange={(e) => h.onField({ date: e.target.value })} />
-              </label>
+              <ThaiDateInput className={blank} value={data.date} onChange={(date) => h.onField({ date })} />
             ) : (
               <span>{dateText}</span>
             ),
