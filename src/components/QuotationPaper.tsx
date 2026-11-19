@@ -101,12 +101,12 @@ export function QuotationPaper({
         <div className="flex-1">
           <div className="text-[16px] font-bold">{coField("name")}</div>
           <div>{coField("address")}</div>
-          <div>{coField("tel")}</div>
-          <div className="flex gap-2">
-            <span>อีเมล:</span>
-            {coField("email")}
-            {coField("web")}
-            <span className="ml-3">เลขประจำตัวผู้เสียภาษี:</span>
+          <div className="flex gap-3">
+            {coField("tel")}
+            <span className="flex gap-2 whitespace-nowrap"><span>อีเมล:</span>{coField("email")}</span>
+          </div>
+          <div className="flex gap-2 whitespace-nowrap">
+            <span>เลขประจำตัวผู้เสียภาษี:</span>
             {coField("taxId")}
           </div>
         </div>

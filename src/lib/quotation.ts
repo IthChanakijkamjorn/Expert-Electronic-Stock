@@ -108,8 +108,8 @@ export async function buildQuotation(q: QuoteData) {
       const tx = M + 74;
       text(co.name, tx, H - M - 14, 15, bold);
       text(co.address, tx, H - M - 30, 8.5);
-      text(co.tel, tx, H - M - 42, 8.5);
-      text(`อีเมล: ${co.email}  ${co.web}    เลขประจำตัวผู้เสียภาษี: ${co.taxId}`, tx, H - M - 54, 8.5);
+      text(`${co.tel}    อีเมล: ${co.email}`, tx, H - M - 42, 8.5);
+      text(`เลขประจำตัวผู้เสียภาษี: ${co.taxId}`, tx, H - M - 54, 8.5);
       y = H - M - 84;
 
       text("ใบเสนอราคา / QUOTATION", M, y, 14, bold);
