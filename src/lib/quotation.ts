@@ -82,7 +82,8 @@ export async function buildQuotation(q: QuoteData) {
   const widths = [30, 58, 100, 156, 52, 56, 32, 55];
   const xs = widths.reduce<number[]>((acc, w, i) => [...acc, acc[i] + w], [M]);
   const sizeText = 9.5;
-  const sizeRow = 10.5;
+  const sizeRow = 14;
+  const LH = 15;
 
   let page!: PDFPage;
   let y = 0;
@@ -190,16 +191,16 @@ export async function buildQuotation(q: QuoteData) {
     const modelRows = wrap(l.model, font, sizeRow, widths[2] - 8);
     const brandRows = wrap(l.brand, font, sizeRow, widths[1] - 8);
     const rows = Math.max(nameRows.length, modelRows.length, brandRows.length);
-    const rowH = rows * 13 + 6;
+    const rowH = rows * LH + 10;
     if (y - rowH < M + 8) {
       closeTable(y);
       newPage(false);
     }
-    const top = y - 11;
+    const top = y - 14;
     centered(String(i + 1), xs[0], widths[0], top, sizeRow);
-    brandRows.forEach((r, k) => text(r, xs[1] + 4, top - k * 13, sizeRow));
-    modelRows.forEach((r, k) => text(r, xs[2] + 4, top - k * 13, sizeRow));
-    nameRows.forEach((r, k) => text(r, xs[3] + 4, top - k * 13, sizeRow));
+    brandRows.forEach((r, k) => text(r, xs[1] + 4, top - k * LH, sizeRow));
+    modelRows.forEach((r, k) => text(r, xs[2] + 4, top - k * LH, sizeRow));
+    nameRows.forEach((r, k) => text(r, xs[3] + 4, top - k * LH, sizeRow));
     centered(`${l.qty} ${unitLabel(l.unit)}`, xs[4], widths[4], top, sizeRow);
     rightAt(money(l.price), xs[6] - 4, top, sizeRow);
     centered(q.discountPct ? String(q.discountPct) : "-", xs[6], widths[6], top, sizeRow);

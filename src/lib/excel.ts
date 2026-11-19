@@ -59,7 +59,7 @@ function head(ws: ExcelJS.Worksheet, labels: string[]) {
 
 function styleRow(r: ExcelJS.Row, align: ("left" | "center" | "right")[], moneyCols: number[]) {
   r.eachCell({ includeEmpty: true }, (c, i) => {
-    c.font = FONT;
+    c.font = { ...FONT, size: 14 };
     c.border = box;
     c.alignment = { horizontal: align[i - 1] ?? "left", vertical: "top", wrapText: true };
     if (moneyCols.includes(i)) c.numFmt = MONEY;
@@ -172,14 +172,14 @@ export async function quotationXlsx(q: {
     cells.forEach(([v, h], k) => {
       const c = ws.getCell(r, k + 1);
       c.value = v;
-      c.font = F(10.5);
+      c.font = F(14);
       c.border = frame;
       c.alignment = { horizontal: h, vertical: "top", wrapText: true };
       if (k === 5 || k === 7) c.numFmt = MONEY;
     });
     // Row height follows the longest wrapped cell (same widths as the PDF wrap).
-    const lines = Math.max(Math.ceil(l.name.length / 30), Math.ceil(l.model.length / 17), Math.ceil(l.brand.length / 9), 1);
-    ws.getRow(r).height = lines * 15 + 4;
+    const lines = Math.max(Math.ceil(l.name.length / 24), Math.ceil(l.model.length / 15), Math.ceil(l.brand.length / 8), 1);
+    ws.getRow(r).height = lines * 19 + 8;
   });
   const last = first + Math.max(q.lines.length, 1) - 1;
 

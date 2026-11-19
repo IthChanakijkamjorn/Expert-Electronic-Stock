@@ -38,7 +38,7 @@ export default async function QuotationsPage({ searchParams }: { searchParams: P
                   <td className="pr-3">{q.customer}</td>
                   <td className="pr-3">{q.project || "—"}</td>
                   <td className="pr-3">{q.requester || "—"}</td>
-                  <td><Link href={`/quotations/${q.id}/edit`} className="btn-ghost" title={t.docEdit}>✎</Link> <a href={`/quotations/${q.id}/pdf`} target="_blank" className="btn-ghost">PDF</a> <a href={`/quotations/${q.id}/pdf?download=1`} className="btn-ghost" title="Download PDF">⬇</a> <a href={`/quotations/${q.id}/xlsx`} className="btn-ghost" title="Download Excel">XLS</a></td>
+                  <td><Link href={`/quotations/${q.id}/edit`} className="btn-ghost" title={t.docEdit}>✎</Link> <a href={`/quotations/${q.id}/pdf?download=1`} className="btn-ghost">PDF</a> <a href={`/quotations/${q.id}/xlsx`} className="btn-ghost" title="Download Excel">XLS</a></td>
                 </tr>
               ))}
             </tbody>

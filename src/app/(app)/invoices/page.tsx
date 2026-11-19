@@ -53,7 +53,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
                   <td className="pr-3">{i.requester || "—"}</td>
                   <td className="pr-3 text-right">{money(invoiceTotals(i.lines as QuoteLine[], i.vat).total)}</td>
                   <td>
-                    <a href={`/invoices/${i.id}/pdf`} target="_blank" className="btn-ghost">PDF</a> <a href={`/invoices/${i.id}/pdf?download=1`} className="btn-ghost" title="Download PDF">⬇</a> <a href={`/invoices/${i.id}/xlsx`} className="btn-ghost" title="Download Excel">XLS</a>
+                    <a href={`/invoices/${i.id}/pdf?download=1`} className="btn-ghost">PDF</a> <a href={`/invoices/${i.id}/xlsx`} className="btn-ghost" title="Download Excel">XLS</a>
                   </td>
                 </tr>
               ))}

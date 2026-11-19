@@ -89,7 +89,7 @@ export function QuotationPaper({
   );
 
   const th = "border border-black px-1 py-1 text-center text-[11px] font-bold leading-tight";
-  const td = "border-x border-black px-1 py-1 align-top text-[14px] [&_input]:text-[14px] [&_select]:text-[14px]";
+  const td = "border-x border-black px-1 py-2 align-top text-[14px] [&_input]:text-[14px] [&_select]:text-[14px]";
   const rows = Math.max(0, MIN_ROWS - data.lines.length);
   const discount = Number(data.discountPct) || 0;
 

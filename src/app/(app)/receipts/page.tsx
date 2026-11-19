@@ -38,7 +38,7 @@ export default async function ReceiptsPage({ searchParams }: { searchParams: Pro
                   <td className="pr-3">{r.customer}</td>
                   <td className="pr-3">{r.requester || "—"}</td>
                   <td className="pr-3 text-right">{money((r.lines as { amount: number }[]).reduce((s, l) => s + Number(l.amount), 0))}</td>
-                  <td><a href={`/receipts/${r.id}/pdf`} target="_blank" className="btn-ghost">PDF</a> <a href={`/receipts/${r.id}/pdf?download=1`} className="btn-ghost" title="Download PDF">⬇</a> <a href={`/receipts/${r.id}/xlsx`} className="btn-ghost" title="Download Excel">XLS</a></td>
+                  <td><a href={`/receipts/${r.id}/pdf?download=1`} className="btn-ghost">PDF</a> <a href={`/receipts/${r.id}/xlsx`} className="btn-ghost" title="Download Excel">XLS</a></td>
                 </tr>
               ))}
             </tbody>

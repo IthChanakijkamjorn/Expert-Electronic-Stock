@@ -146,23 +146,23 @@ export async function buildTaxInvoice(inv: TaxInvoiceData) {
   newPage(true);
 
   inv.lines.forEach((l, i) => {
-    const nameRows = wrap(l.name, font, size, widths[3] - 8);
-    const modelRows = wrap(l.model, font, size, widths[2] - 8);
-    const brandRows = wrap(l.brand, font, size, widths[1] - 8);
+    const nameRows = wrap(l.name, font, 14, widths[3] - 8);
+    const modelRows = wrap(l.model, font, 14, widths[2] - 8);
+    const brandRows = wrap(l.brand, font, 14, widths[1] - 8);
     const rows = Math.max(nameRows.length, modelRows.length, brandRows.length);
-    const rowH = rows * 12 + 6;
+    const rowH = rows * 15 + 10;
     if (y - rowH < M + 8) {
       closeTable(y);
       newPage(false);
     }
-    const top = y - 11;
-    centered(String(i + 1), xs[0], widths[0], top);
-    brandRows.forEach((r, k) => text(r, xs[1] + 4, top - k * 12));
-    modelRows.forEach((r, k) => text(r, xs[2] + 4, top - k * 12));
-    nameRows.forEach((r, k) => text(r, xs[3] + 4, top - k * 12));
-    centered(`${l.qty} ${unitLabel(l.unit)}`, xs[4], widths[4], top);
-    rightAt(money(l.price), xs[5] + widths[5] - 4, top);
-    rightAt(money(l.qty * l.price), xs[7] - 4, top);
+    const top = y - 14;
+    centered(String(i + 1), xs[0], widths[0], top, 14);
+    brandRows.forEach((r, k) => text(r, xs[1] + 4, top - k * 15, 14));
+    modelRows.forEach((r, k) => text(r, xs[2] + 4, top - k * 15, 14));
+    nameRows.forEach((r, k) => text(r, xs[3] + 4, top - k * 15, 14));
+    centered(`${l.qty} ${unitLabel(l.unit)}`, xs[4], widths[4], top, 14);
+    rightAt(money(l.price), xs[5] + widths[5] - 4, top, 14);
+    rightAt(money(l.qty * l.price), xs[7] - 4, top, 14);
     y -= rowH;
   });
 
