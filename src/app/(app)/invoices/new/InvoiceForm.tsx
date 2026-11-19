@@ -7,6 +7,7 @@ import { DocVariantSelect } from "@/components/DocVariantSelect";
 import { withBlank, isBlankLine } from "@/components/LineCells";
 import type { DocCompany } from "@/lib/company";
 import { saveCompanyDefault, type Salesperson } from "../../documents/actions";
+import { RequesterField } from "@/components/RequesterField";
 import { SalesPicker } from "@/components/SalesPicker";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
@@ -21,6 +22,7 @@ export function InvoiceForm({
   projects,
   salesperson,
   salespeople,
+  requesters,
   existing,
 }: {
   t: Dictionary;
@@ -31,7 +33,8 @@ export function InvoiceForm({
   projects: { id: string; label: string }[];
   salesperson: string;
   salespeople: Salesperson[];
-  existing?: { id: string; status: "draft" | "final"; data: PaperData; projectId: string };
+  requesters: Salesperson[];
+  existing?: { id: string; status: "draft" | "final"; data: PaperData; projectId: string; requester?: string };
 }) {
   const [state, action, pending] = useActionState(saveInvoice.bind(null, existing?.id ?? null), null);
   const [data, setData] = useState<PaperData>(existing?.data ?? {
@@ -48,6 +51,7 @@ export function InvoiceForm({
     variant: "original",
     lines: [],
   });
+  const [requesterTag, setRequesterTag] = useState(existing?.requester ?? "");
   const [preview, setPreview] = useState(false);
   const [editCompany, setEditCompany] = useState(false);
   const [projectId, setProjectId] = useState(existing?.projectId ?? "");
@@ -93,6 +97,7 @@ export function InvoiceForm({
   return (
     <form action={action} className="flex flex-col gap-4">
       <input type="hidden" name="customer_code" value={data.customerCode} />
+      <input type="hidden" name="requester" value={requesterTag} />
       <input type="hidden" name="customer" value={data.customer} />
       <input type="hidden" name="address" value={data.address} />
       <input type="hidden" name="tax_id" value={data.taxId} />
@@ -120,6 +125,7 @@ export function InvoiceForm({
                 </select>
               </label>
             )}
+            <RequesterField t={t} list={requesters} value={requesterTag} onChange={setRequesterTag} />
             <DocVariantSelect value={data.variant ?? "original"} label={t.docVariant} onChange={(v) => setData((d) => ({ ...d, variant: v }))} />
             <button type="button" className="btn-ghost" onClick={() => {
               if (editCompany) saveCompanyDefault("invoice", data.company);

@@ -51,6 +51,7 @@ export async function saveQuotation(id: string | null, _prev: QuotationState, fo
       vat: formData.get("vat") === "1",
       quoted_by: text(formData, "quoted_by"),
       signature_id: text(formData, "signature_id"),
+      requester: text(formData, "requester"),
       company,
       lines,
       status: draft ? "draft" : "final",

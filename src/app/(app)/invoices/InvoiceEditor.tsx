@@ -11,7 +11,7 @@ export async function InvoiceEditor({ id }: { id?: string }) {
   const { t } = await getDictionary();
   const supabase = await createClient();
 
-  const [products, stockRows, prices, { data: projects }, { data: salespeople }] = await Promise.all([
+  const [products, stockRows, prices, { data: projects }, { data: salespeople }, { data: requesters }] = await Promise.all([
     fetchAll((a, b) =>
       supabase.from("product_stock").select("id, name, model, brand, unit").eq("active", true).order("id").range(a, b),
     ),
@@ -26,6 +26,7 @@ export async function InvoiceEditor({ id }: { id?: string }) {
       .order("year", { ascending: false })
       .limit(500),
     supabase.from("salespeople").select("id, name").order("name"),
+    supabase.from("requesters").select("id, name").order("name"),
   ]);
 
   const stock: Record<string, number> = {};
@@ -58,7 +59,7 @@ export async function InvoiceEditor({ id }: { id?: string }) {
       variant: "original",
       lines,
     } as PaperData;
-    existing = { id, status: inv.status, data, projectId: inv.project_id ?? "" };
+    existing = { id, status: inv.status, data, projectId: inv.project_id ?? "", requester: inv.requester ?? "" };
     if (inv.status === "final") {
       // This invoice's own quantities are already deducted, so they count as available while editing.
       lines.forEach((l) => (stock[l.key] = (stock[l.key] ?? 0) + Number(l.qty)));
@@ -86,6 +87,7 @@ export async function InvoiceEditor({ id }: { id?: string }) {
         projects={projectOptions}
         salesperson=""
         salespeople={salespeople ?? []}
+        requesters={requesters ?? []}
         existing={existing}
       />
     </section>

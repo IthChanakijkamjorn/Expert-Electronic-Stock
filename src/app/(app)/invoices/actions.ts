@@ -49,6 +49,7 @@ export async function saveInvoice(id: string | null, _prev: InvoiceState, formDa
   if (error || !savedId) {
     return { error: error?.message.includes("insufficient_stock") ? "insufficient" : "failed" };
   }
+  await supabase.from("tax_invoices").update({ requester: text(formData, "requester") }).eq("id", savedId);
   revalidatePath("/invoices");
   revalidatePath("/documents");
   revalidatePath("/movements");

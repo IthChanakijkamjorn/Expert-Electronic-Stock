@@ -15,7 +15,7 @@ export async function QuotationEditor({ id, project }: { id?: string; project?: 
   const { t } = await getDictionary();
   const supabase = await createClient();
 
-  const [products, prices, { data: projects }, { data: sigs }, { data: salespeople }, { data: customers }, { data: units }] = await Promise.all([
+  const [products, prices, { data: projects }, { data: sigs }, { data: salespeople }, { data: customers }, { data: units }, { data: requesters }] = await Promise.all([
     fetchAll((a, b) => supabase.from("products").select("id, name, model, brand, unit").eq("active", true).order("id").range(a, b)),
     fetchAll((a, b) => supabase.from("product_prices").select("product_id, sell_price").order("product_id").range(a, b)),
     supabase.from("projects").select("id, name, year, towers(name, organizations(name))").order("year", { ascending: false }).limit(500),
@@ -23,6 +23,7 @@ export async function QuotationEditor({ id, project }: { id?: string; project?: 
     supabase.from("salespeople").select("id, name").order("name"),
     supabase.from("customers").select("id, name").order("name"),
     supabase.from("units").select("id, name"),
+    supabase.from("requesters").select("id, name").order("name"),
   ]);
 
   const sellPrice: Record<string, number> = {};
@@ -86,7 +87,7 @@ export async function QuotationEditor({ id, project }: { id?: string; project?: 
       signatureUrl: sigPath ? (urls.get(sigPath) ?? null) : null,
       lines,
     };
-    existing = { id, data, projectId: q.project_id ?? "", sigId: q.signature_id ?? "", dropped, final: q.status === "final" };
+    existing = { id, data, projectId: q.project_id ?? "", sigId: q.signature_id ?? "", dropped, final: q.status === "final", requester: q.requester ?? "" };
   }
   return (
     <section className="flex flex-col gap-6">
@@ -104,6 +105,7 @@ export async function QuotationEditor({ id, project }: { id?: string; project?: 
         quotedBy=""
         salespeople={salespeople ?? []}
         customers={customers ?? []}
+        requesters={requesters ?? []}
         units={[...(units ?? [])].sort((a, b) => a.name.localeCompare(b.name, "th"))}
         existing={existing}
       />

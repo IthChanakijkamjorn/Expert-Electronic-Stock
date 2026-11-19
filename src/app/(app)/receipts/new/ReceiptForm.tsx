@@ -6,6 +6,7 @@ import { ReceiptPaper, type ReceiptHandlers, type ReceiptPaperData } from "@/com
 import { DocVariantSelect } from "@/components/DocVariantSelect";
 import type { DocCompany } from "@/lib/company";
 import { saveCompanyDefault, type Salesperson } from "../../documents/actions";
+import { RequesterField } from "@/components/RequesterField";
 import { SalesPicker } from "@/components/SalesPicker";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
@@ -17,6 +18,8 @@ export function ReceiptForm({
   invoices,
   salesperson,
   salespeople,
+  requesters,
+  requester,
   existingId,
   existing,
 }: {
@@ -25,6 +28,8 @@ export function ReceiptForm({
   invoices: InvoiceOption[];
   salesperson: string;
   salespeople: Salesperson[];
+  requesters: Salesperson[];
+  requester?: string;
   existingId?: string;
   existing?: ReceiptPaperData;
 }) {
@@ -46,6 +51,7 @@ export function ReceiptForm({
     chequeDate: "",
     chequeAmount: "",
   });
+  const [requesterTag, setRequesterTag] = useState(requester ?? "");
   const [preview, setPreview] = useState(false);
   const [editCompany, setEditCompany] = useState(false);
 
@@ -75,6 +81,7 @@ export function ReceiptForm({
   return (
     <form action={action} className="flex flex-col gap-4">
       <input type="hidden" name="customer_code" value={data.customerCode} />
+      <input type="hidden" name="requester" value={requesterTag} />
       <input type="hidden" name="customer" value={data.customer} />
       <input type="hidden" name="received_from" value={data.receivedFrom} />
       <input type="hidden" name="salesperson" value={data.salesperson} />
@@ -100,6 +107,7 @@ export function ReceiptForm({
                 </select>
               </label>
             )}
+            <RequesterField t={t} list={requesters} value={requesterTag} onChange={setRequesterTag} />
             <DocVariantSelect value={data.variant ?? "original"} label={t.docVariant} onChange={(v) => setData((d) => ({ ...d, variant: v }))} />
             <button type="button" className="btn-ghost" onClick={() => {
               if (editCompany) saveCompanyDefault("receipt", data.company);

@@ -101,3 +101,29 @@ export async function deleteDocumentFile(fileId: string) {
   await supabase.from("document_files").delete().eq("id", fileId);
   revalidatePath("/documents");
 }
+
+export async function addRequester(name: string): Promise<Salesperson | null> {
+  const clean = name.trim();
+  if (!clean) return null;
+  const supabase = await createClient();
+  const { data } = await supabase.from("requesters").insert({ name: clean }).select("id, name").single();
+  return data;
+}
+
+export async function renameRequester(id: string, name: string): Promise<boolean> {
+  const clean = name.trim();
+  if (!clean) return false;
+  const supabase = await createClient();
+  const { data: old } = await supabase.from("requesters").select("name").eq("id", id).maybeSingle();
+  const { error } = await supabase.from("requesters").update({ name: clean }).eq("id", id);
+  if (error) return false;
+  if (old?.name) {
+    await Promise.all(["quotations", "tax_invoices", "receipts"].map((t) => supabase.from(t).update({ requester: clean }).eq("requester", old.name)));
+  }
+  return true;
+}
+
+export async function deleteRequester(id: string) {
+  const supabase = await createClient();
+  await supabase.from("requesters").delete().eq("id", id);
+}

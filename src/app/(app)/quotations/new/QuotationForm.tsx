@@ -7,6 +7,7 @@ import { withBlank, isBlankLine } from "@/components/LineCells";
 import type { DocCompany } from "@/lib/company";
 import { saveCompanyDefault, addCustomer, renameCustomer, deleteCustomer, type Salesperson } from "../../documents/actions";
 import { UnitManager } from "@/components/UnitManager";
+import { RequesterField } from "@/components/RequesterField";
 import { SalesPicker } from "@/components/SalesPicker";
 import type { PaperLine } from "@/components/InvoicePaper";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
@@ -25,6 +26,7 @@ export function QuotationForm({
   customer,
   quotedBy,
   salespeople,
+  requesters,
   customers,
   units: initialUnits,
   existing,
@@ -40,9 +42,10 @@ export function QuotationForm({
   customer: string;
   quotedBy: string;
   salespeople: Salesperson[];
+  requesters: Salesperson[];
   customers: Salesperson[];
   units: Salesperson[];
-  existing?: { id: string; data: QuotePaperData; projectId: string; sigId: string; dropped: number; final?: boolean };
+  existing?: { id: string; data: QuotePaperData; projectId: string; sigId: string; dropped: number; final?: boolean; requester?: string };
 }) {
   const [state, action, pending] = useActionState(saveQuotation.bind(null, existing?.id ?? null), null);
   const byId = new Map(products.map((p) => [p.id, p]));
@@ -70,6 +73,7 @@ export function QuotationForm({
     signatureUrl: signatures.find((s) => s.is_default)?.url ?? null,
     lines: withBlank(initialLines.flatMap((l) => (byId.get(l.id) ? [toLine(byId.get(l.id)!, l.qty)] : []))),
   });
+  const [requesterTag, setRequesterTag] = useState(existing?.requester ?? "");
   const [units, setUnits] = useState(initialUnits);
   const [preview, setPreview] = useState(false);
   const [editCompany, setEditCompany] = useState(false);
@@ -109,6 +113,7 @@ export function QuotationForm({
 
   return (
     <form action={action} className="flex flex-col gap-4">
+      <input type="hidden" name="requester" value={requesterTag} />
       <input type="hidden" name="customer" value={data.customer} />
       <input type="hidden" name="attention" value={data.attention} />
       <input type="hidden" name="project_id" value={projectId} />
@@ -159,6 +164,7 @@ export function QuotationForm({
                 {signatures.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </label>
+            <RequesterField t={t} list={requesters} value={requesterTag} onChange={setRequesterTag} />
             <UnitManager units={units} setUnits={setUnits} label={t.unitManage} onRenamed={(from, to) => setData((d) => ({ ...d, lines: d.lines.map((l) => (l.unit === from ? { ...l, unit: to } : l)) }))} />
             <button type="button" className="btn-ghost" onClick={() => {
               if (editCompany) saveCompanyDefault("quote", data.company);

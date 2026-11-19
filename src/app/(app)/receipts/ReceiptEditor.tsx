@@ -14,13 +14,16 @@ export async function ReceiptEditor({ id }: { id?: string }) {
   if (role !== "admin" && role !== "manager") redirect("/documents");
   const { t } = await getDictionary();
   const supabase = await createClient();
-  const [{ data: invoices }, { data: salespeople }] = await Promise.all([
+  const [{ data: invoices }, { data: salespeople }, { data: requesters }] = await Promise.all([
     supabase.from("tax_invoices").select("id, number, customer_code, customer, vat, lines").eq("status", "final").order("created_at", { ascending: false }).limit(100),
     supabase.from("salespeople").select("id, name").order("name"),
+    supabase.from("requesters").select("id, name").order("name"),
   ]);
   let existing: ReceiptPaperData | undefined;
+  let requester = "";
   if (id) {
     const { data: r } = await supabase.from("receipts").select("*").eq("id", id).maybeSingle();
+    requester = r?.requester ?? "";
     if (!r) notFound();
     const n = (v: number) => (Number(v) ? String(Number(v)) : "");
     const lines = (r.lines as { desc: string; qty: string; amount: number }[]).map((l, i) => ({
@@ -52,6 +55,8 @@ export async function ReceiptEditor({ id }: { id?: string }) {
         defaultCompany={await loadCompanyDefault("receipt")}
         salesperson=""
         salespeople={salespeople ?? []}
+        requesters={requesters ?? []}
+        requester={requester}
         existingId={id}
         existing={existing}
         invoices={(invoices ?? []).map((i) => ({

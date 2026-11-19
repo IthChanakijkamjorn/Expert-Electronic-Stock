@@ -43,6 +43,7 @@ export async function saveReceipt(id: string | null, _prev: ReceiptState, formDa
       customer,
       received_from: text(formData, "received_from"),
       salesperson: text(formData, "salesperson"),
+      requester: text(formData, "requester"),
       lines,
       cash_amount: cash,
       cheque_bank: text(formData, "cheque_bank"),
