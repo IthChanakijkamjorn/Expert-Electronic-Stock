@@ -9,7 +9,7 @@ import type { ReceiptLine } from "@/lib/receipt";
 
 type Company = { name?: string; address?: string; tel?: string; email?: string; taxId?: string } | null;
 
-const FONT = { name: "Sarabun", size: 11 };
+const FONT = { name: "TH Sarabun New", size: 11 };
 const thin = { style: "thin" as const };
 const box = { top: thin, left: thin, bottom: thin, right: thin };
 const MONEY = "#,##0.00";
@@ -94,7 +94,7 @@ export async function quotationXlsx(q: {
   });
   // Column widths mirror the PDF table (30/58/100/156/52/56/32/55 pt).
   ws.columns = [6, 11, 19, 30, 10, 11, 6, 11].map((width) => ({ width }));
-  const F = (size = 10, bold = false) => ({ name: "Sarabun", size, bold });
+  const F = (size = 10, bold = false) => ({ name: "TH Sarabun New", size, bold });
   const BLACK = { argb: "FF000000" };
   const thinB = { style: "thin" as const, color: BLACK };
   const frame = { top: thinB, left: thinB, bottom: thinB, right: thinB };

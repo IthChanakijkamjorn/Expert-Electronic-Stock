@@ -62,8 +62,8 @@ async function embedSignature(doc: PDFDocument, bytes: Uint8Array) {
 
 export async function buildQuotation(q: QuoteData) {
   const [regularBytes, boldBytes, logoBytes] = await Promise.all([
-    readFile(path.join(process.cwd(), "fonts", "Sarabun-Regular.ttf")),
-    readFile(path.join(process.cwd(), "fonts", "Sarabun-Bold.ttf")),
+    readFile(path.join(process.cwd(), "fonts", "THSarabunNew-Regular.ttf")),
+    readFile(path.join(process.cwd(), "fonts", "THSarabunNew-Bold.ttf")),
     readFile(path.join(process.cwd(), "public", "logo.png")),
   ]);
   const co = mergeDocCompany(q.company, "quote");

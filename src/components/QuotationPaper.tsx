@@ -94,7 +94,7 @@ export function QuotationPaper({
   const discount = Number(data.discountPct) || 0;
 
   return (
-    <div style={{ fontFamily: "Sarabun, 'Noto Sans Thai', sans-serif" }} className="paper mx-auto w-[794px] max-w-none bg-white p-7 text-[14px] leading-snug text-black shadow-lg print:w-full print:p-[12mm] print:shadow-none">
+    <div style={{ fontFamily: "'TH Sarabun New', Sarabun, 'Noto Sans Thai', sans-serif" }} className="paper mx-auto w-[794px] max-w-none bg-white p-7 text-[14px] leading-snug text-black shadow-lg print:w-full print:p-[12mm] print:shadow-none">
       <div className="flex items-start gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logo.png" alt="" className="h-16 w-16" />

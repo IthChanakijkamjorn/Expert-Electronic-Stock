@@ -32,8 +32,8 @@ const BLACK = rgb(0, 0, 0);
 
 export async function buildTaxInvoice(inv: TaxInvoiceData) {
   const [regularBytes, boldBytes, logoBytes] = await Promise.all([
-    readFile(path.join(process.cwd(), "fonts", "Sarabun-Regular.ttf")),
-    readFile(path.join(process.cwd(), "fonts", "Sarabun-Bold.ttf")),
+    readFile(path.join(process.cwd(), "fonts", "THSarabunNew-Regular.ttf")),
+    readFile(path.join(process.cwd(), "fonts", "THSarabunNew-Bold.ttf")),
     readFile(path.join(process.cwd(), "public", "logo.png")),
   ]);
   const doc = await PDFDocument.create();
