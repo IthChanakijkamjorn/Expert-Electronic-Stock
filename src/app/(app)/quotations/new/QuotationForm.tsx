@@ -67,7 +67,7 @@ export function QuotationForm({
     leadDays: "90",
     warrantyYears: "1",
     quotedBy,
-    paymentTerms: "เงินสด",
+    paymentTerms: "เงินสด / CASH",
     discountPct: "0",
     vat: true,
     signatureUrl: signatures.find((s) => s.is_default)?.url ?? null,
@@ -204,7 +204,7 @@ export function QuotationForm({
           salesSlot={<SalesPicker initial={salespeople} value={data.quotedBy} onChange={(v) => setData((d) => ({ ...d, quotedBy: v }))} labels={{ add: t.salesAdd, remove: t.remove, save: t.save, confirm: t.salesRemoveConfirm }} />}
           customerSlot={<SalesPicker api={{ add: addCustomer, rename: renameCustomer, remove: deleteCustomer }} initial={customers} value={data.customer} onChange={(v) => setData((d) => ({ ...d, customer: v }))} labels={{ add: t.salesAdd, remove: t.remove, save: t.save, confirm: t.salesRemoveConfirm }} />}
           units={units.map((u) => u.name)}
-          paymentOptions={["เงินสด", "ตามเงื่อนไขราชการ"]}
+          paymentOptions={["เงินสด / CASH", "ตามเงื่อนไขราชการ"]}
           editCompany={editCompany && !preview}
           pickProducts={products}
         />

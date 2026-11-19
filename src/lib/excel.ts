@@ -166,7 +166,7 @@ export async function quotationXlsx(q: {
     const amount = l.qty * l.price * factor;
     gross += amount;
     const cells: [ExcelJS.CellValue, "left" | "center" | "right"][] = [
-      [i + 1, "center"], [l.brand, "left"], [l.model, "left"], [l.name, "left"],
+      [i + 1, "center"], [l.brand, "center"], [l.model, "left"], [l.name, "left"],
       [`${l.qty} ${unitLabel(l.unit)}`, "center"], [l.price, "right"],
       [q.discountPct ? q.discountPct : "-", "center"],
       [{ formula: `${l.qty}*F${r}*${factor}`, result: amount }, "right"],
@@ -176,7 +176,7 @@ export async function quotationXlsx(q: {
       c.value = v;
       c.font = F(10);
       c.border = frame;
-      c.alignment = { horizontal: h, vertical: "top", wrapText: true };
+      c.alignment = { horizontal: h, vertical: "middle", wrapText: true };
       if (k === 5 || k === 7) c.numFmt = MONEY;
     });
     // Row height follows the longest wrapped cell (same widths as the PDF wrap).
