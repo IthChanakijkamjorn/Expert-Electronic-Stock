@@ -20,7 +20,7 @@ export function CreateUserForm({ l }: { l: L }) {
           <option value="admin">{l.admin}</option>
         </select>
       </label>
-      {state?.error && <p className="text-red-600">{l.saveFailed}</p>}
+      {state?.error && <p className="text-red-600">{state.error === "pepper" ? "PIN_PEPPER is not set in Vercel (32+ characters)" : l.saveFailed}</p>}
       {state?.ok && <p className="text-green-700">✓</p>}
       <button disabled={pending} className="btn">{l.save}</button>
     </form>

@@ -24,10 +24,16 @@ export async function createUser(_prev: UserState, formData: FormData): Promise<
   if (!/^[a-z0-9._-]{2,30}$/.test(username) || !validPassword(password) || !ROLES.includes(role)) {
     return { error: "invalid" };
   }
+  let authPassword: string;
+  try {
+    authPassword = effectivePassword(password);
+  } catch {
+    return { error: "pepper" };
+  }
   const admin = adminClient();
   const { data, error } = await admin.auth.admin.createUser({
     email: `${username}@${DOMAIN}`,
-    password: effectivePassword(password),
+    password: authPassword,
     email_confirm: true,
     user_metadata: { full_name: fullName },
   });
