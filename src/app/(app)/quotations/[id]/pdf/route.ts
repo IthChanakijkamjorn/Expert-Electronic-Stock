@@ -37,6 +37,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     lines: q.lines as QuoteLine[],
   });
   return new Response(Buffer.from(pdf), {
-    headers: { "Content-Type": "application/pdf", "Content-Disposition": `inline; filename="${q.number ?? "DRAFT"}.pdf"` },
+    headers: { "Content-Type": "application/pdf", "Content-Disposition": `${new URL(req.url).searchParams.get("download") ? "attachment" : "inline"}; filename="${q.number ?? "DRAFT"}.pdf"` },
   });
 }

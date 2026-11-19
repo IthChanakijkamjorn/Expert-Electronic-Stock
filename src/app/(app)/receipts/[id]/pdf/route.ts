@@ -29,6 +29,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     company: r.company,
   });
   return new Response(Buffer.from(pdf), {
-    headers: { "Content-Type": "application/pdf", "Content-Disposition": `inline; filename="${r.number ?? "DRAFT"}.pdf"` },
+    headers: { "Content-Type": "application/pdf", "Content-Disposition": `${new URL(req.url).searchParams.get("download") ? "attachment" : "inline"}; filename="${r.number ?? "DRAFT"}.pdf"` },
   });
 }

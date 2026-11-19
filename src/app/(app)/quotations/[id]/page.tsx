@@ -37,6 +37,7 @@ export default async function QuotationPage({
           <Link href="/quotations" className="btn-ghost">← {t.quotation}</Link>
           <Link href={`/quotations/${id}/edit`} className="btn-ghost">✎ {t.docEdit}</Link>
           <a href={`/quotations/${id}/pdf`} target="_blank" className="btn">{t.invOpenPdf}</a>
+          <a href={`/quotations/${id}/pdf?download=1`} className="btn">⬇ {t.docDownloadPdf}</a>
         </div>
         {created && <p className="w-full rounded-lg bg-emerald-50 px-3 py-2 text-emerald-700">{q.status === "draft" ? t.draftSaved : t.docSaved}</p>}
       </div>
