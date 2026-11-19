@@ -82,6 +82,7 @@ export async function buildQuotation(q: QuoteData) {
   const widths = [30, 58, 100, 156, 52, 56, 32, 55];
   const xs = widths.reduce<number[]>((acc, w, i) => [...acc, acc[i] + w], [M]);
   const sizeText = 9.5;
+  const sizeRow = 10.5;
 
   let page!: PDFPage;
   let y = 0;
@@ -108,7 +109,7 @@ export async function buildQuotation(q: QuoteData) {
       text(co.name, tx, H - M - 14, 15, bold);
       text(co.address, tx, H - M - 30, 8.5);
       text(co.tel, tx, H - M - 42, 8.5);
-      text(`E-mail: ${co.email}  ${co.web}    Tax ID No.: ${co.taxId}`, tx, H - M - 54, 8.5);
+      text(`อีเมล: ${co.email}  ${co.web}    เลขประจำตัวผู้เสียภาษี: ${co.taxId}`, tx, H - M - 54, 8.5);
       y = H - M - 84;
 
       text("ใบเสนอราคา / QUOTATION", M, y, 14, bold);
@@ -185,24 +186,24 @@ export async function buildQuotation(q: QuoteData) {
   q.lines.forEach((l, i) => {
     const amount = l.qty * l.price * factor;
     gross += amount;
-    const nameRows = wrap(l.name, font, sizeText, widths[3] - 8);
-    const modelRows = wrap(l.model, font, sizeText, widths[2] - 8);
-    const brandRows = wrap(l.brand, font, sizeText, widths[1] - 8);
+    const nameRows = wrap(l.name, font, sizeRow, widths[3] - 8);
+    const modelRows = wrap(l.model, font, sizeRow, widths[2] - 8);
+    const brandRows = wrap(l.brand, font, sizeRow, widths[1] - 8);
     const rows = Math.max(nameRows.length, modelRows.length, brandRows.length);
-    const rowH = rows * 12 + 6;
+    const rowH = rows * 13 + 6;
     if (y - rowH < M + 8) {
       closeTable(y);
       newPage(false);
     }
     const top = y - 11;
-    centered(String(i + 1), xs[0], widths[0], top);
-    brandRows.forEach((r, k) => text(r, xs[1] + 4, top - k * 12));
-    modelRows.forEach((r, k) => text(r, xs[2] + 4, top - k * 12));
-    nameRows.forEach((r, k) => text(r, xs[3] + 4, top - k * 12));
-    centered(`${l.qty} ${unitLabel(l.unit)}`, xs[4], widths[4], top);
-    rightAt(money(l.price), xs[6] - 4, top);
-    centered(q.discountPct ? String(q.discountPct) : "-", xs[6], widths[6], top);
-    rightAt(money(amount), xs[8] - 4, top);
+    centered(String(i + 1), xs[0], widths[0], top, sizeRow);
+    brandRows.forEach((r, k) => text(r, xs[1] + 4, top - k * 13, sizeRow));
+    modelRows.forEach((r, k) => text(r, xs[2] + 4, top - k * 13, sizeRow));
+    nameRows.forEach((r, k) => text(r, xs[3] + 4, top - k * 13, sizeRow));
+    centered(`${l.qty} ${unitLabel(l.unit)}`, xs[4], widths[4], top, sizeRow);
+    rightAt(money(l.price), xs[6] - 4, top, sizeRow);
+    centered(q.discountPct ? String(q.discountPct) : "-", xs[6], widths[6], top, sizeRow);
+    rightAt(money(amount), xs[8] - 4, top, sizeRow);
     y -= rowH;
   });
 

@@ -34,9 +34,9 @@ export type DocKind = "invoice" | "quote" | "receipt";
 export const defaultDocCompany = (kind: DocKind = "invoice"): DocCompany =>
   kind === "quote"
     ? {
-        name: COMPANY.nameEn,
-        address: COMPANY.address,
-        tel: COMPANY.tel.replace(/^TEL\.?\s*/, "Tel No. "),
+        name: "บริษัท เอ็กซ์เพิร์ท อิเล็คโทรนิค แอนด์ คอมมูนิเคชั่น จำกัด",
+        address: "51/2 ซอย รามคำแหง 96, ถนนรามคำแหง, แขวงสะพานสูง, เขตสะพานสูง, กรุงเทพฯ 10240",
+        tel: "โทรศัพท์ 02-729-4225-6",
         email: COMPANY.email,
         web: COMPANY.web,
         taxId: "010 5538 039 535",

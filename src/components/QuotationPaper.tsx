@@ -89,12 +89,12 @@ export function QuotationPaper({
   );
 
   const th = "border border-black px-1 py-1 text-center text-[11px] font-bold leading-tight";
-  const td = "border-x border-black px-1 py-1 align-top";
+  const td = "border-x border-black px-1 py-1 align-top text-[14px] [&_input]:text-[14px] [&_select]:text-[14px]";
   const rows = Math.max(0, MIN_ROWS - data.lines.length);
   const discount = Number(data.discountPct) || 0;
 
   return (
-    <div className="mx-auto w-[794px] max-w-none bg-white p-7 text-[12.5px] leading-snug text-black shadow-lg print:w-full print:p-[12mm] print:shadow-none">
+    <div style={{ fontFamily: "Sarabun, 'Noto Sans Thai', sans-serif" }} className="mx-auto w-[794px] max-w-none bg-white p-7 text-[14px] leading-snug text-black shadow-lg print:w-full print:p-[12mm] print:shadow-none">
       <div className="flex items-start gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logo.png" alt="" className="h-16 w-16" />
@@ -103,10 +103,10 @@ export function QuotationPaper({
           <div>{coField("address")}</div>
           <div>{coField("tel")}</div>
           <div className="flex gap-2">
-            <span>E-mail:</span>
+            <span>อีเมล:</span>
             {coField("email")}
             {coField("web")}
-            <span className="ml-3">Tax ID No.:</span>
+            <span className="ml-3">เลขประจำตัวผู้เสียภาษี:</span>
             {coField("taxId")}
           </div>
         </div>
