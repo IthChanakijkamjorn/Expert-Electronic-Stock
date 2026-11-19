@@ -82,8 +82,8 @@ export async function buildQuotation(q: QuoteData) {
   const widths = [26, 54, 80, 139, 44, 84, 28, 84];
   const xs = widths.reduce<number[]>((acc, w, i) => [...acc, acc[i] + w], [M]);
   const sizeText = 9.5;
-  const sizeRow = 7;
-  const LH = 9;
+  const sizeRow = 8;
+  const LH = 10;
 
   let page!: PDFPage;
   let y = 0;

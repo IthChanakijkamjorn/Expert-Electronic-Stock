@@ -106,10 +106,10 @@ export async function buildReceipt(r: ReceiptData) {
   const bodyRows = RECEIPT_MAX_LINES;
   r.lines.slice(0, bodyRows).forEach((l, i) => {
     const ty = y - i * ROW_H - 11;
-    centered(String(i + 1), xs[0], widths[0], ty, 7);
-    text(fit(l.desc, font, 7, widths[1] - 8), xs[1] + 4, ty, 7);
-    centered(l.qty, xs[2], widths[2], ty, 7);
-    rightAt(money(l.amount), xs[4] - 4, ty, 7);
+    centered(String(i + 1), xs[0], widths[0], ty, 8);
+    text(fit(l.desc, font, 8, widths[1] - 8), xs[1] + 4, ty, 8);
+    centered(l.qty, xs[2], widths[2], ty, 8);
+    rightAt(money(l.amount), xs[4] - 4, ty, 8);
   });
   const bottom = y - bodyRows * ROW_H;
   hline(top);
