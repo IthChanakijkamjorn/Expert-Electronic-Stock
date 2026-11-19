@@ -79,11 +79,11 @@ export async function buildQuotation(q: QuoteData) {
   const FOOT = 200;
   const LINE = 0.6;
   const tableW = W - 2 * M;
-  const widths = [30, 58, 100, 156, 52, 56, 32, 55];
+  const widths = [26, 54, 80, 139, 44, 84, 28, 84];
   const xs = widths.reduce<number[]>((acc, w, i) => [...acc, acc[i] + w], [M]);
   const sizeText = 9.5;
-  const sizeRow = 14;
-  const LH = 15;
+  const sizeRow = 12;
+  const LH = 13;
 
   let page!: PDFPage;
   let y = 0;
@@ -196,7 +196,7 @@ export async function buildQuotation(q: QuoteData) {
       closeTable(y);
       newPage(false);
     }
-    const top = y - 14;
+    const top = y - 13;
     centered(String(i + 1), xs[0], widths[0], top, sizeRow);
     brandRows.forEach((r, k) => text(r, xs[1] + 4, top - k * LH, sizeRow));
     modelRows.forEach((r, k) => text(r, xs[2] + 4, top - k * LH, sizeRow));

@@ -93,7 +93,7 @@ export async function quotationXlsx(q: {
     pageSetup: { paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.4, right: 0.4, top: 0.4, bottom: 0.4, header: 0, footer: 0 } },
   });
   // Column widths mirror the PDF table (30/58/100/156/52/56/32/55 pt).
-  ws.columns = [6, 11, 19, 30, 10, 11, 6, 11].map((width) => ({ width }));
+  ws.columns = [6, 11, 19, 30, 10, 17, 7, 17].map((width) => ({ width }));
   const F = (size = 10, bold = false) => ({ name: "TH Sarabun New", size, bold });
   const BLACK = { argb: "FF000000" };
   const thinB = { style: "thin" as const, color: BLACK };

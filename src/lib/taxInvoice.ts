@@ -47,7 +47,7 @@ export async function buildTaxInvoice(inv: TaxInvoiceData) {
   const M = 28;
   const LINE = 0.6;
   const tableW = W - 2 * M;
-  const widths = [34, 72, 88, 183, 52, 58, 52];
+  const widths = [28, 54, 80, 161, 48, 84, 84];
   const xs = widths.reduce<number[]>((acc, w, i) => [...acc, acc[i] + w], [M]);
   const size = 9.5;
   const HEAD_H = 28;
@@ -146,23 +146,23 @@ export async function buildTaxInvoice(inv: TaxInvoiceData) {
   newPage(true);
 
   inv.lines.forEach((l, i) => {
-    const nameRows = wrap(l.name, font, 14, widths[3] - 8);
-    const modelRows = wrap(l.model, font, 14, widths[2] - 8);
-    const brandRows = wrap(l.brand, font, 14, widths[1] - 8);
+    const nameRows = wrap(l.name, font, 12, widths[3] - 8);
+    const modelRows = wrap(l.model, font, 12, widths[2] - 8);
+    const brandRows = wrap(l.brand, font, 12, widths[1] - 8);
     const rows = Math.max(nameRows.length, modelRows.length, brandRows.length);
-    const rowH = rows * 15 + 10;
+    const rowH = rows * 13 + 10;
     if (y - rowH < M + 8) {
       closeTable(y);
       newPage(false);
     }
-    const top = y - 14;
-    centered(String(i + 1), xs[0], widths[0], top, 14);
-    brandRows.forEach((r, k) => text(r, xs[1] + 4, top - k * 15, 14));
-    modelRows.forEach((r, k) => text(r, xs[2] + 4, top - k * 15, 14));
-    nameRows.forEach((r, k) => text(r, xs[3] + 4, top - k * 15, 14));
-    centered(`${l.qty} ${unitLabel(l.unit)}`, xs[4], widths[4], top, 14);
-    rightAt(money(l.price), xs[5] + widths[5] - 4, top, 14);
-    rightAt(money(l.qty * l.price), xs[7] - 4, top, 14);
+    const top = y - 13;
+    centered(String(i + 1), xs[0], widths[0], top, 12);
+    brandRows.forEach((r, k) => text(r, xs[1] + 4, top - k * 15, 12));
+    modelRows.forEach((r, k) => text(r, xs[2] + 4, top - k * 15, 12));
+    nameRows.forEach((r, k) => text(r, xs[3] + 4, top - k * 15, 12));
+    centered(`${l.qty} ${unitLabel(l.unit)}`, xs[4], widths[4], top, 12);
+    rightAt(money(l.price), xs[5] + widths[5] - 4, top, 12);
+    rightAt(money(l.qty * l.price), xs[7] - 4, top, 12);
     y -= rowH;
   });
 
