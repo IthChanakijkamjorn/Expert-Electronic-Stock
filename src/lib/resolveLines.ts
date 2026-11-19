@@ -37,7 +37,7 @@ export async function resolveLines(
       }
       if (p.name !== name) await supabase.from("products").update({ name }).eq("id", p.id);
       const cur = out.get(p.id);
-      out.set(p.id, { product_id: p.id, brand: p.brand ?? "", model: p.model ?? "", name, unit: p.unit, qty: (cur?.qty ?? 0) + qty, price });
+      out.set(p.id, { product_id: p.id, brand: p.brand ?? "", model: p.model ?? "", name, unit: (l.unit ?? "").trim() || p.unit, qty: (cur?.qty ?? 0) + qty, price });
       continue;
     }
     if (!l.product_id) {
@@ -54,7 +54,7 @@ export async function resolveLines(
       brand: p.brand ?? "",
       model: p.model ?? "",
       name,
-      unit: p.unit,
+      unit: (l.unit ?? "").trim() || p.unit,
       qty: (cur?.qty ?? 0) + qty,
       price,
     });
