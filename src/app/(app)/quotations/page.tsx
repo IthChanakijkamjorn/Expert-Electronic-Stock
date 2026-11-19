@@ -33,7 +33,7 @@ export default async function QuotationsPage() {
                   <td className="pr-3">{new Date(q.quote_date).toLocaleDateString(lang === "th" ? "th-TH" : "en-GB", { timeZone: "Asia/Bangkok" })}</td>
                   <td className="pr-3">{q.customer}</td>
                   <td className="pr-3">{q.project || "—"}</td>
-                  <td><a href={`/quotations/${q.id}/pdf`} target="_blank" className="btn-ghost">PDF</a> <a href={`/quotations/${q.id}/pdf?download=1`} className="btn-ghost" title="Download PDF">⬇</a></td>
+                  <td><Link href={`/quotations/${q.id}/edit`} className="btn-ghost" title={t.docEdit}>✎</Link> <a href={`/quotations/${q.id}/pdf`} target="_blank" className="btn-ghost">PDF</a> <a href={`/quotations/${q.id}/pdf?download=1`} className="btn-ghost" title="Download PDF">⬇</a></td>
                 </tr>
               ))}
             </tbody>

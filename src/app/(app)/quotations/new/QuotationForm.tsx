@@ -42,7 +42,7 @@ export function QuotationForm({
   salespeople: Salesperson[];
   customers: Salesperson[];
   units: Salesperson[];
-  existing?: { id: string; data: QuotePaperData; projectId: string; sigId: string; dropped: number };
+  existing?: { id: string; data: QuotePaperData; projectId: string; sigId: string; dropped: number; final?: boolean };
 }) {
   const [state, action, pending] = useActionState(saveQuotation.bind(null, existing?.id ?? null), null);
   const byId = new Map(products.map((p) => [p.id, p]));
@@ -170,7 +170,11 @@ export function QuotationForm({
               <input type="checkbox" checked={data.vat} onChange={(e) => setData((d) => ({ ...d, vat: e.target.checked }))} />
               {t.includeVat}
             </label>
-            <button name="intent" value="draft" formNoValidate disabled={pending} className="btn-ghost ml-auto">💾 {t.saveDraft}</button>
+            {existing?.final ? (
+              <button name="intent" value="final" disabled={pending || invalid} className="btn-ghost ml-auto">💾 {t.save}</button>
+            ) : (
+              <button name="intent" value="draft" formNoValidate disabled={pending} className="btn-ghost ml-auto">💾 {t.saveDraft}</button>
+            )}
             <button type="button" className="btn" disabled={invalid} onClick={() => { setPreview(true); window.scrollTo({ top: 0 }); }}>
               {t.docPreview} →
             </button>
@@ -178,8 +182,8 @@ export function QuotationForm({
         ) : (
           <>
             <button type="button" className="btn-ghost" onClick={() => setPreview(false)}>← {t.docBackToEdit}</button>
-            <button name="intent" value="draft" disabled={pending} className="btn-ghost ml-auto">💾 {t.saveDraft}</button>
-            <button name="intent" value="final" disabled={pending} className="btn">{t.createQuotation}</button>
+            {!existing?.final && <button name="intent" value="draft" disabled={pending} className="btn-ghost ml-auto">💾 {t.saveDraft}</button>}
+            <button name="intent" value="final" disabled={pending} className={existing?.final ? "btn ml-auto" : "btn"}>{existing?.final ? t.save : t.createQuotation}</button>
           </>
         )}
         <p className="w-full text-sm text-muted">{preview ? t.docPreviewNote : t.quotationHelp}</p>

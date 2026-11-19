@@ -86,7 +86,7 @@ export async function QuotationEditor({ id, project }: { id?: string; project?: 
       signatureUrl: sigPath ? (urls.get(sigPath) ?? null) : null,
       lines,
     };
-    existing = { id, data, projectId: q.project_id ?? "", sigId: q.signature_id ?? "", dropped };
+    existing = { id, data, projectId: q.project_id ?? "", sigId: q.signature_id ?? "", dropped, final: q.status === "final" };
   }
   return (
     <section className="flex flex-col gap-6">
