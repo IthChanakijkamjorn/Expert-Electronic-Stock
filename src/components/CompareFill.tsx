@@ -23,6 +23,8 @@ export default function CompareFill({ id }: { id: string }) {
       a.download = name;
       a.click();
       URL.revokeObjectURL(url);
+      const w = decodeURIComponent(res.headers.get("X-Warning") ?? "");
+      if (w) setError(w);
     } finally {
       setBusy(false);
     }

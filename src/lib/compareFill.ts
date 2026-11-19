@@ -75,12 +75,14 @@ export async function fillCompareFile(file: ArrayBuffer, lines: QuoteLine[], min
   }
 
   const items = lines.filter((l) => l.name?.trim() || l.model?.trim());
-  if (rows.length !== items.length) {
-    throw new FillError(`จำนวนรายการไม่ตรงกัน: ในไฟล์มี ${rows.length} แถวที่มีราคา แต่ใบเสนอราคามี ${items.length} รายการ`);
-  }
+  if (!rows.length) throw new FillError("ไม่พบแถวรายการที่มีราคาในไฟล์");
+  const warning =
+    rows.length === items.length
+      ? ""
+      : `จำนวนรายการไม่ตรงกัน: ในไฟล์มี ${rows.length} แถว แต่ใบเสนอราคามี ${items.length} รายการ — เติมราคาให้ ${Math.min(rows.length, items.length)} แถวแรก กรุณาตรวจสอบแถวที่เหลือด้วยตนเอง`;
 
   let sum = 0;
-  rows.forEach((r, i) => {
+  rows.slice(0, items.length).forEach((r, i) => {
     const qty = Number(items[i].qty) || 0;
     const price = randomPrice(Number(items[i].price) || 0, minPct, maxPct);
     ws.getCell(r, priceCol).master.value = price;
@@ -125,5 +127,5 @@ export async function fillCompareFile(file: ArrayBuffer, lines: QuoteLine[], min
     });
   }
 
-  return { buffer: Buffer.from(await wb.xlsx.writeBuffer()), rows: rows.length };
+  return { buffer: Buffer.from(await wb.xlsx.writeBuffer()), warning };
 }

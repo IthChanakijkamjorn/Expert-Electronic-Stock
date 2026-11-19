@@ -18,10 +18,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { data: q } = await supabase.from("quotations").select("lines").eq("id", id).maybeSingle();
   if (!q) return new Response("not found", { status: 404 });
   try {
-    const { buffer } = await fillCompareFile(await file.arrayBuffer(), q.lines as QuoteLine[], min, max);
+    const { buffer, warning } = await fillCompareFile(await file.arrayBuffer(), q.lines as QuoteLine[], min, max);
     const name = file.name.replace(/\.xlsx?$/i, "") + "-filled.xlsx";
     return new Response(new Uint8Array(buffer), {
       headers: {
+        "X-Warning": encodeURIComponent(warning),
+        "Access-Control-Expose-Headers": "X-Warning",
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "Content-Disposition": `attachment; filename="compare.xlsx"; filename*=UTF-8''${encodeURIComponent(name)}`,
       },
