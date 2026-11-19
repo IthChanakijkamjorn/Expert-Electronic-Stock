@@ -20,7 +20,7 @@ export async function createProduct(
     model: text(formData, "model"),
     brand: text(formData, "brand"),
     category: text(formData, "category"),
-    unit: text(formData, "unit") ?? "pcs",
+    unit: text(formData, "unit") ?? "ชิ้น",
     supplier: text(formData, "supplier"),
   });
   if (error) return { error: true };

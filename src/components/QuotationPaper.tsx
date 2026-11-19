@@ -217,13 +217,14 @@ export function QuotationPaper({
                 {h ? (
                   <>
                     <input type="number" min={1} step={1} className={`${blank} text-center`} value={l.qty} onChange={(e) => h.onLine(l.key, { qty: e.target.value })} />
-                    <select className={`${blank} mt-1 text-center`} value={l.unit} onChange={(e) => h.onLine(l.key, { unit: e.target.value })}>
-                      {!units.includes(l.unit) && <option value={l.unit}>{l.unit}</option>}
+                    <select className={`${blank} mt-1 text-center`} value={unitLabel(l.unit)} onChange={(e) => h.onLine(l.key, { unit: e.target.value })}>
+                      <option value="" />
+                      {unitLabel(l.unit) && !units.includes(unitLabel(l.unit)) && <option value={unitLabel(l.unit)}>{unitLabel(l.unit)}</option>}
                       {units.map((u) => <option key={u} value={u}>{u}</option>)}
                     </select>
                   </>
                 ) : (
-                  `${l.qty} ${unitLabel(l.unit, l.qty)}`
+                  `${l.qty} ${unitLabel(l.unit)}`
                 )}
               </td>
               <td className={`${td} text-right`}>

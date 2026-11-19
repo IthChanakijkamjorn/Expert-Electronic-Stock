@@ -15,7 +15,7 @@ export const newBlankLine = (): PaperLine => ({
   brand: "",
   model: "",
   name: "",
-  unit: "ชิ้น",
+  unit: "",
   qty: "",
   price: "",
 });

@@ -85,7 +85,7 @@ export async function importSheet(path: string): Promise<SheetResult> {
         }
         out.updated++;
       } else {
-        const row = { name: w.name, brand: w.brand, unit: "pcs", ...fields };
+        const row = { name: w.name, brand: w.brand, unit: "ชิ้น", ...fields };
         let { data, error } = await supabase.from("products").insert({ ...row, model: model || null }).select("id").single();
         if (error && model) {
           out.warnings.push(`${w.name}: model "${model}" already used`);
