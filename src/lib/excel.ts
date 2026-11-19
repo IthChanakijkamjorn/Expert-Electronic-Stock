@@ -59,7 +59,7 @@ function head(ws: ExcelJS.Worksheet, labels: string[]) {
 
 function styleRow(r: ExcelJS.Row, align: ("left" | "center" | "right")[], moneyCols: number[]) {
   r.eachCell({ includeEmpty: true }, (c, i) => {
-    c.font = { ...FONT, size: 8 };
+    c.font = { ...FONT, size: 10 };
     c.border = box;
     c.alignment = { horizontal: align[i - 1] ?? "left", vertical: "top", wrapText: true };
     if (moneyCols.includes(i)) c.numFmt = MONEY;
@@ -174,14 +174,14 @@ export async function quotationXlsx(q: {
     cells.forEach(([v, h], k) => {
       const c = ws.getCell(r, k + 1);
       c.value = v;
-      c.font = F(8);
+      c.font = F(10);
       c.border = frame;
       c.alignment = { horizontal: h, vertical: "top", wrapText: true };
       if (k === 5 || k === 7) c.numFmt = MONEY;
     });
     // Row height follows the longest wrapped cell (same widths as the PDF wrap).
-    const lines = Math.max(Math.ceil(l.name.length / 45), Math.ceil(l.model.length / 28), Math.ceil(l.brand.length / 15), 1);
-    ws.getRow(r).height = Math.max(18, lines * 12 + 8);
+    const lines = Math.max(Math.ceil(l.name.length / 36), Math.ceil(l.model.length / 22), Math.ceil(l.brand.length / 12), 1);
+    ws.getRow(r).height = Math.max(18, lines * 14 + 8);
   });
   // Always print at least 28 product rows (blank rows are numbered nothing) so the sheet fills an A4 page.
   const MIN_ROWS = 28;

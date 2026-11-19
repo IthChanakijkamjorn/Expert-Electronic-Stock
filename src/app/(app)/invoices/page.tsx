@@ -16,7 +16,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
     .order("updated_at", { ascending: false })
     .limit(200);
   const drafts = (all ?? []).filter((i) => i.status === "draft");
-  const finals = (all ?? []).filter((i) => i.status === "final");
+  const finals = (all ?? []).filter((i) => i.status === "final").sort((a, b) => (b.number ?? "").localeCompare(a.number ?? ""));
   const invoices = byRequester(finals, sel);
   const money = (n: number) =>
     n.toLocaleString(lang === "th" ? "th-TH" : "en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });

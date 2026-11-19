@@ -16,7 +16,7 @@ export default async function ReceiptsPage({ searchParams }: { searchParams: Pro
   const { data: all } = await supabase
     .from("receipts").select("id, number, receipt_date, customer, lines, status, updated_at, requester").order("updated_at", { ascending: false }).limit(200);
   const drafts = (all ?? []).filter((r) => r.status === "draft");
-  const finals = (all ?? []).filter((r) => r.status === "final");
+  const finals = (all ?? []).filter((r) => r.status === "final").sort((a, b) => (b.number ?? "").localeCompare(a.number ?? ""));
   const data = byRequester(finals, sel);
   return (
     <section className="flex flex-col gap-6">

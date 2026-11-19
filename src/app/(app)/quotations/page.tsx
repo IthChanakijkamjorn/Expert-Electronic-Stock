@@ -16,7 +16,7 @@ export default async function QuotationsPage({ searchParams }: { searchParams: P
     .from("quotations").select("id, number, quote_date, customer, project_label, status, updated_at, requester, projects(name)").order("updated_at", { ascending: false }).limit(200);
   const rows = (all ?? []).map((q) => ({ ...q, project: q.project_label ?? (q.projects as unknown as { name: string } | null)?.name ?? "" }));
   const drafts = rows.filter((q) => q.status === "draft");
-  const finals = rows.filter((q) => q.status === "final");
+  const finals = rows.filter((q) => q.status === "final").sort((a, b) => (b.number ?? "").localeCompare(a.number ?? ""));
   const data = byRequester(finals, sel);
   return (
     <section className="flex flex-col gap-6">
