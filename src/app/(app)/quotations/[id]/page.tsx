@@ -5,6 +5,7 @@ import { getDictionary } from "@/lib/i18n";
 import { getRole } from "@/lib/role";
 import { signedUrls } from "@/lib/storage";
 import { mergeDocCompany } from "@/lib/company";
+import CompareFill from "@/components/CompareFill";
 import { QuotationPaper } from "@/components/QuotationPaper";
 import type { QuoteLine } from "@/lib/quotation";
 
@@ -67,6 +68,7 @@ export default async function QuotationPage({
           }}
         />
       </div>
+      {q.status !== "draft" && <CompareFill id={id} />}
     </section>
   );
 }
