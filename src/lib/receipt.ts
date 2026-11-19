@@ -93,7 +93,7 @@ export async function buildReceipt(r: ReceiptData) {
   const widths = [44, 330, 70, tableW - 44 - 330 - 70];
   const xs = widths.reduce<number[]>((a, w, i) => [...a, a[i] + w], [M]);
   const HEAD_H = 28;
-  const ROW_H = 20;
+  const ROW_H = 16;
   const top = y;
   page.drawRectangle({ x: M, y: y - HEAD_H, width: tableW, height: HEAD_H, color: rgb(0.93, 0.94, 0.99) });
   (
@@ -105,11 +105,11 @@ export async function buildReceipt(r: ReceiptData) {
   y -= HEAD_H;
   const bodyRows = RECEIPT_MAX_LINES;
   r.lines.slice(0, bodyRows).forEach((l, i) => {
-    const ty = y - i * ROW_H - 14;
-    centered(String(i + 1), xs[0], widths[0], ty, 12);
-    text(fit(l.desc, font, 12, widths[1] - 8), xs[1] + 4, ty, 12);
-    centered(l.qty, xs[2], widths[2], ty, 12);
-    rightAt(money(l.amount), xs[4] - 4, ty, 12);
+    const ty = y - i * ROW_H - 11;
+    centered(String(i + 1), xs[0], widths[0], ty, 7);
+    text(fit(l.desc, font, 7, widths[1] - 8), xs[1] + 4, ty, 7);
+    centered(l.qty, xs[2], widths[2], ty, 7);
+    rightAt(money(l.amount), xs[4] - 4, ty, 7);
   });
   const bottom = y - bodyRows * ROW_H;
   hline(top);

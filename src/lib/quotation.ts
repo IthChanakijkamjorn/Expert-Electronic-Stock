@@ -82,8 +82,8 @@ export async function buildQuotation(q: QuoteData) {
   const widths = [26, 54, 80, 139, 44, 84, 28, 84];
   const xs = widths.reduce<number[]>((acc, w, i) => [...acc, acc[i] + w], [M]);
   const sizeText = 9.5;
-  const sizeRow = 12;
-  const LH = 13;
+  const sizeRow = 7;
+  const LH = 9;
 
   let page!: PDFPage;
   let y = 0;
@@ -191,12 +191,12 @@ export async function buildQuotation(q: QuoteData) {
     const modelRows = wrap(l.model, font, sizeRow, widths[2] - 8);
     const brandRows = wrap(l.brand, font, sizeRow, widths[1] - 8);
     const rows = Math.max(nameRows.length, modelRows.length, brandRows.length);
-    const rowH = rows * LH + 10;
+    const rowH = rows * LH + 8;
     if (y - rowH < M + 8) {
       closeTable(y);
       newPage(false);
     }
-    const top = y - 13;
+    const top = y - 10;
     centered(String(i + 1), xs[0], widths[0], top, sizeRow);
     brandRows.forEach((r, k) => text(r, xs[1] + 4, top - k * LH, sizeRow));
     modelRows.forEach((r, k) => text(r, xs[2] + 4, top - k * LH, sizeRow));
