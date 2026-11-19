@@ -1,4 +1,9 @@
 import ExcelJS from "exceljs";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { bahtText } from "@/lib/bahttext";
+import { unitLabel } from "@/lib/unit";
+import type { DocCompany } from "@/lib/company";
 import type { QuoteLine } from "@/lib/quotation";
 import type { ReceiptLine } from "@/lib/receipt";
 
@@ -80,37 +85,161 @@ const dateTh = (d: Date | string) => new Date(d).toLocaleDateString("th-TH", { d
 export async function quotationXlsx(q: {
   number: string; date: string; customer: string; attention: string | null; project: string; phone: string | null; email: string | null;
   validDays: number | null; leadDays: number | null; warrantyYears: number | null; paymentTerms: string | null; discountPct: number; vat: boolean;
-  quotedBy: string | null; company: Company; lines: QuoteLine[];
+  quotedBy: string | null; company: DocCompany; lines: QuoteLine[]; signature?: Uint8Array | null;
 }) {
-  const cols = [8, 18, 22, 46, 12, 16, 10, 18];
-  const { wb, ws, line } = sheetWith("Quotation", q.company, cols);
-  line("ใบเสนอราคา / QUOTATION", true, 14);
-  pairs(ws, cols.length, [
-    ["เลขที่ / No.", q.number],
-    ["วันที่ / Date", dateTh(q.date)],
-    ["บริษัท / Company", q.customer],
-    ["เรียน / Attn", q.attention],
-    ["โครงการ / Project", q.project],
-    ["โทรศัพท์ / Tel No", q.phone],
-    ["อีเมล / Email", q.email],
-    ["กำหนดยืนราคา (วัน)", q.validDays],
-    ["ระยะเวลากำหนดส่งสินค้า (วัน)", q.leadDays],
-    ["การรับประกัน (ปี)", q.warrantyYears],
-    ["ผู้เสนอราคา / Quoted by", q.quotedBy],
-  ]);
-  ws.addRow([]);
-  head(ws, ["ลำดับ", "ยี่ห้อ", "รุ่น", "รายละเอียด", "จำนวน", "ราคาต่อหน่วย", "ส่วนลด %", "จำนวนเงิน"]);
-  const first = ws.rowCount + 1;
-  q.lines.forEach((l, i) => {
-    const r = ws.addRow([i + 1, l.brand, l.model, l.name, `${l.qty} ${l.unit}`.trim(), l.price, q.discountPct || 0, null]);
-    r.getCell(8).value = { formula: `${l.qty}*F${r.number}*(1-G${r.number}/100)` };
-    styleRow(r, ["center", "left", "left", "left", "center", "right", "center", "right"], [6, 8]);
+  const co = q.company;
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet("Quotation", {
+    pageSetup: { paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.4, right: 0.4, top: 0.4, bottom: 0.4, header: 0, footer: 0 } },
   });
-  const sub = totalRow(ws, cols.length, "รวมเงิน / Total", `SUM(H${first}:H${ws.rowCount})`);
-  const vat = totalRow(ws, cols.length, q.vat ? "ภาษีมูลค่าเพิ่ม 7% / VAT" : "ภาษีมูลค่าเพิ่ม / VAT (ไม่รวม)", q.vat ? `H${sub}*0.07` : "0");
-  totalRow(ws, cols.length, "จำนวนเงินรวมทั้งสิ้น / Grand total", `H${sub}+H${vat}`, true);
-  ws.addRow([]);
-  pairs(ws, cols.length, [["เงื่อนไขการชำระเงิน / PAYMENT OPTIONS", q.paymentTerms]]);
+  // Column widths mirror the PDF table (30/58/100/156/52/56/32/55 pt).
+  ws.columns = [6, 11, 19, 30, 10, 11, 6, 11].map((width) => ({ width }));
+  const F = (size = 10, bold = false) => ({ name: "Sarabun", size, bold });
+  const BLACK = { argb: "FF000000" };
+  const thinB = { style: "thin" as const, color: BLACK };
+  const frame = { top: thinB, left: thinB, bottom: thinB, right: thinB };
+  const put = (r: number, c1: number, c2: number, value: ExcelJS.CellValue, o: { size?: number; bold?: boolean; h?: "left" | "center" | "right"; v?: "top" | "middle" | "bottom"; border?: boolean } = {}) => {
+    if (c2 > c1) ws.mergeCells(r, c1, r, c2);
+    const c = ws.getCell(r, c1);
+    c.value = value;
+    c.font = F(o.size, o.bold);
+    c.alignment = { horizontal: o.h ?? "left", vertical: o.v ?? "middle", wrapText: false };
+    if (o.border) for (let k = c1; k <= c2; k++) ws.getCell(r, k).border = frame;
+    return c;
+  };
+
+  // Header: logo + company block
+  ws.getRow(1).height = 22;
+  [2, 3, 4].forEach((r) => (ws.getRow(r).height = 15));
+  try {
+    const logo = wb.addImage({ buffer: (await readFile(path.join(process.cwd(), "public", "logo.png"))) as unknown as ExcelJS.Buffer, extension: "png" });
+    ws.addImage(logo, { tl: { col: 0.1, row: 0.1 }, ext: { width: 80, height: 80 } });
+  } catch {}
+  put(1, 3, 8, co.name, { size: 15, bold: true });
+  put(2, 3, 8, co.address, { size: 8.5 });
+  put(3, 3, 8, `${co.tel}    อีเมล: ${co.email}`, { size: 8.5 });
+  put(4, 3, 8, `เลขประจำตัวผู้เสียภาษี: ${co.taxId}`, { size: 8.5 });
+  ws.getRow(5).height = 14;
+
+  put(6, 1, 4, "ใบเสนอราคา / QUOTATION", { size: 14, bold: true });
+  ws.getRow(6).height = 22;
+  const noC = put(6, 5, 8, null, {});
+  noC.value = { richText: [{ text: "เลขที่ / No.: ", font: F(10, true) }, { text: q.number, font: F(10) }] };
+
+  const left = [`บริษัท / Company: ${q.customer}`, `เรียน / Attn: ${q.attention ?? ""}`, `โครงการ / Project: ${q.project}`];
+  const right = [
+    `วันที่ / Date: ${dateTh(q.date)}`,
+    `กำหนดยืนราคา / Validity: ${q.validDays ?? "-"} วัน`,
+    `ระยะเวลากำหนดส่งสินค้า / Lead time: ${q.leadDays ?? "-"} วัน`,
+    `การรับประกัน / Warranty: ${q.warrantyYears ?? "-"} ปี`,
+    `ผู้เสนอราคา / Quoted by: ${q.quotedBy ?? ""}`,
+  ];
+  right.forEach((t, i) => {
+    ws.getRow(7 + i).height = 16;
+    put(7 + i, 5, 8, t);
+    if (left[i]) put(7 + i, 1, 4, left[i]);
+  });
+  put(10, 1, 2, `โทรศัพท์ / Tel No: ${q.phone ?? ""}`);
+  put(10, 3, 4, `อีเมล / Email: ${q.email ?? ""}`);
+  ws.getRow(12).height = 18;
+  put(12, 1, 8, "บริษัทฯยินดีที่จะเสนอราคาสินค้า เพื่อประกอบการพิจารณาดังนี้:", { v: "bottom" });
+
+  // Table header
+  const HR = 13;
+  ws.getRow(HR).height = 30;
+  ["ลำดับที่\nItem", "ยี่ห้อ\nBrand", "รุ่น\nModel", "รายละเอียด\nDescription", "จำนวน\nQuantity", "ราคาต่อหน่วย\nUnit Price", "ส่วนลด\n%", "จำนวนเงิน(บาท)\nAmount"].forEach((t, i) => {
+    const c = ws.getCell(HR, i + 1);
+    c.value = t;
+    c.font = F(8, true);
+    c.border = frame;
+    c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+    c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEDF0FC" } };
+  });
+
+  const factor = 1 - q.discountPct / 100;
+  let gross = 0;
+  const first = HR + 1;
+  q.lines.forEach((l, i) => {
+    const r = first + i;
+    const amount = l.qty * l.price * factor;
+    gross += amount;
+    const cells: [ExcelJS.CellValue, "left" | "center" | "right"][] = [
+      [i + 1, "center"], [l.brand, "left"], [l.model, "left"], [l.name, "left"],
+      [`${l.qty} ${unitLabel(l.unit)}`, "center"], [l.price, "right"],
+      [q.discountPct ? q.discountPct : "-", "center"],
+      [{ formula: `${l.qty}*F${r}*${factor}`, result: amount }, "right"],
+    ];
+    cells.forEach(([v, h], k) => {
+      const c = ws.getCell(r, k + 1);
+      c.value = v;
+      c.font = F(10.5);
+      c.border = frame;
+      c.alignment = { horizontal: h, vertical: "top", wrapText: true };
+      if (k === 5 || k === 7) c.numFmt = MONEY;
+    });
+    // Row height follows the longest wrapped cell (same widths as the PDF wrap).
+    const lines = Math.max(Math.ceil(l.name.length / 30), Math.ceil(l.model.length / 17), Math.ceil(l.brand.length / 9), 1);
+    ws.getRow(r).height = lines * 15 + 4;
+  });
+  const last = first + Math.max(q.lines.length, 1) - 1;
+
+  // Totals
+  const vat = q.vat ? gross * 0.07 : 0;
+  const total = gross + vat;
+  const t1 = last + 2;
+  ws.mergeCells(t1, 1, t1 + 2, 4);
+  const words = ws.getCell(t1, 1);
+  words.value = bahtText(total);
+  words.font = F(12, true);
+  words.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+  for (let r = t1; r <= t1 + 2; r++) for (let k = 1; k <= 4; k++) ws.getCell(r, k).border = frame;
+  const sumRows: [string, ExcelJS.CellValue, boolean][] = [
+    ["ราคาสินค้า", { formula: `SUM(H${first}:H${last})`, result: gross }, false],
+    ["ภาษีมูลค่าเพิ่ม 7%", q.vat ? { formula: `H${t1}*0.07`, result: vat } : "-", false],
+    ["รวมราคาทั้งสิ้น", { formula: `H${t1}+${q.vat ? `H${t1 + 1}` : "0"}`, result: total }, true],
+  ];
+  sumRows.forEach(([label, value, strong], i) => {
+    const r = t1 + i;
+    ws.getRow(r).height = 22;
+    put(r, 5, 7, label, { bold: strong, border: true });
+    const c = put(r, 8, 8, value, { bold: strong, h: "right", border: true });
+    c.numFmt = MONEY;
+  });
+
+  // Payment / confirmation / approval
+  const p1 = t1 + 3;
+  const heights = [20, 22, 26, 20, 16];
+  heights.forEach((h, i) => (ws.getRow(p1 + i).height = h));
+  for (let r = p1; r < p1 + 5; r++) for (let k = 1; k <= 8; k++) ws.getCell(r, k).border = {};
+  const pay = put(p1, 1, 4, null, { h: "left" });
+  pay.value = { richText: [{ text: "เงื่อนไขการชำระเงิน / PAYMENT OPTIONS: ", font: F(10, true) }, { text: q.paymentTerms ?? "", font: F(10) }] };
+  put(p1, 5, 8, "ผู้อนุมัติ / APPROVED BY", { bold: true, h: "center" });
+  put(p1 + 1, 1, 4, "ยืนยันการสั่งซื้อ / ORDER CONFIRMATION", { bold: true, h: "center", border: false });
+  put(p1 + 4, 1, 4, "วันที่ / Date ____ / ________ / ________", { size: 7.5, h: "center" });
+  put(p1 + 3, 1, 4, "ลงชื่อ / Signature", { size: 8, h: "center" });
+  put(p1 + 3, 5, 8, `( ${co.approverTitle} )`, { h: "center" });
+  put(p1 + 2, 5, 8, co.approverName, { h: "center" });
+  // signature line above "ลงชื่อ" for the customer
+  for (let k = 2; k <= 3; k++) ws.getCell(p1 + 2, k).border = { bottom: { style: "thin", color: BLACK } };
+  if (q.signature) {
+    try {
+      const sig = wb.addImage({ buffer: Buffer.from(q.signature) as unknown as ExcelJS.Buffer, extension: "png" });
+      ws.addImage(sig, { tl: { col: 5.2, row: p1 }, ext: { width: 110, height: 40 } });
+    } catch {}
+  }
+  // outer boxes: left (payment+confirm) and right (approval)
+  const outline = (c1: number, c2: number) => {
+    for (let r = p1; r < p1 + 5; r++)
+      for (let k = c1; k <= c2; k++) {
+        const c = ws.getCell(r, k);
+        c.border = { ...c.border, ...(r === p1 ? { top: thinB } : {}), ...(r === p1 + 4 ? { bottom: thinB } : {}), ...(k === c1 ? { left: thinB } : {}), ...(k === c2 ? { right: thinB } : {}) };
+      }
+  };
+  outline(1, 4);
+  outline(5, 8);
+  for (let k = 1; k <= 4; k++) ws.getCell(p1, k).border = { ...ws.getCell(p1, k).border, bottom: thinB };
+
+  ws.pageSetup.printArea = `A1:H${p1 + 4}`;
   return toBuffer(wb);
 }
 

@@ -11,7 +11,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const supabase = await createClient();
   const { data: q } = await supabase.from("quotations").select("*, projects(name)").eq("id", id).maybeSingle();
   if (!q) return new Response("not found", { status: 404 });
+  const { data: sig } = q.signature_id
+    ? await supabase.from("signatures").select("path").eq("id", q.signature_id).maybeSingle()
+    : { data: null };
+  const sigFile = sig?.path ? (await supabase.storage.from("files").download(sig.path)).data : null;
   const buf = await quotationXlsx({
+    signature: sigFile ? new Uint8Array(await sigFile.arrayBuffer()) : null,
     number: q.number ?? "DRAFT",
     date: q.quote_date,
     customer: q.customer,
