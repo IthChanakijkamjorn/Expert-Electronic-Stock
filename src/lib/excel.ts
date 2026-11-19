@@ -181,9 +181,17 @@ export async function quotationXlsx(q: {
     });
     // Row height follows the longest wrapped cell (same widths as the PDF wrap).
     const lines = Math.max(Math.ceil(l.name.length / 45), Math.ceil(l.model.length / 28), Math.ceil(l.brand.length / 15), 1);
-    ws.getRow(r).height = lines * 12 + 8;
+    ws.getRow(r).height = Math.max(18, lines * 12 + 8);
   });
-  const last = first + Math.max(q.lines.length, 1) - 1;
+  // Always print at least 28 product rows (blank rows are numbered nothing) so the sheet fills an A4 page.
+  const MIN_ROWS = 28;
+  for (let i = q.lines.length; i < MIN_ROWS; i++) {
+    const r = first + i;
+    ws.getRow(r).height = 18;
+    for (let k = 1; k <= 8; k++) ws.getCell(r, k).border = frame;
+  }
+  const last = first + Math.max(q.lines.length, MIN_ROWS) - 1;
+  if (q.lines.length <= MIN_ROWS) ws.pageSetup.fitToHeight = 1;
 
   // Totals
   const vat = q.vat ? gross * 0.07 : 0;
