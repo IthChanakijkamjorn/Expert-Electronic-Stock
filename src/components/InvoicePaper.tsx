@@ -184,7 +184,7 @@ export function InvoicePaper({
                     <input type="number" min={1} step={1} className={`${blank} text-center`} value={l.qty} onChange={(e) => h.onLine(l.key, { qty: e.target.value })} />
                   </div>
                 ) : (
-                  `${l.qty} ${unitLabel(l.unit)}`
+                  `${l.qty} ${unitLabel(l.unit, l.qty)}`
                 )}
               </td>
               <td className={`${td} text-right`}>

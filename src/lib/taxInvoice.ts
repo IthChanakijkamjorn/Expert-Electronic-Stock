@@ -160,7 +160,7 @@ export async function buildTaxInvoice(inv: TaxInvoiceData) {
     brandRows.forEach((r, k) => text(r, xs[1] + 4, top - k * 12));
     modelRows.forEach((r, k) => text(r, xs[2] + 4, top - k * 12));
     nameRows.forEach((r, k) => text(r, xs[3] + 4, top - k * 12));
-    centered(`${l.qty} ${unitLabel(l.unit)}`, xs[4], widths[4], top);
+    centered(`${l.qty} ${unitLabel(l.unit, l.qty)}`, xs[4], widths[4], top);
     rightAt(money(l.price), xs[5] + widths[5] - 4, top);
     rightAt(money(l.qty * l.price), xs[7] - 4, top);
     y -= rowH;

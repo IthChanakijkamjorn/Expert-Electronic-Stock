@@ -1,2 +1,3 @@
-// Quantities read "1 pc", "3 pc": the unit is not pluralised.
-export const unitLabel = (u: string) => (u.trim().toLowerCase() === "pcs" ? "pc" : u);
+// "1 pc", "3 pcs": only the pc/pcs unit changes with the quantity.
+export const unitLabel = (u: string, qty: number | string) =>
+  ["pc", "pcs"].includes(u.trim().toLowerCase()) ? (Number(qty) > 1 ? "pcs" : "pc") : u;

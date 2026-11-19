@@ -194,7 +194,7 @@ export async function buildQuotation(q: QuoteData) {
     brandRows.forEach((r, k) => text(r, xs[1] + 4, top - k * 12));
     modelRows.forEach((r, k) => text(r, xs[2] + 4, top - k * 12));
     nameRows.forEach((r, k) => text(r, xs[3] + 4, top - k * 12));
-    centered(`${l.qty} ${unitLabel(l.unit)}`, xs[4], widths[4], top);
+    centered(`${l.qty} ${unitLabel(l.unit, l.qty)}`, xs[4], widths[4], top);
     rightAt(money(l.price), xs[6] - 4, top);
     centered(q.discountPct ? String(q.discountPct) : "-", xs[6], widths[6], top);
     rightAt(money(amount), xs[8] - 4, top);
