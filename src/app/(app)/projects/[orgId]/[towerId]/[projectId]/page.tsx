@@ -11,7 +11,7 @@ import { FileUploader } from "@/components/FileUploader";
 import { DeleteButton } from "@/components/DeleteButton";
 import { RenameForm } from "@/components/RenameForm";
 import { SlotName } from "@/components/SlotName";
-import { addProjectComparisonFile, saveComparisonSlotName, addProjectFile, addProjectPhoto, deleteProject, deleteProjectFile, deleteProjectPhoto, renameProject, setProjectCover } from "../../../actions";
+import { addProjectComparisonFile, saveComparisonSlotName, addProjectTypedFile, addProjectPhoto, deleteProject, deleteProjectFile, deleteProjectPhoto, renameProject, setProjectCover } from "../../../actions";
 
 const formatSize = (n: number | null) =>
   n == null ? "" : n > 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.ceil(n / 1024)} KB`;
@@ -108,9 +108,10 @@ export default async function ProjectPage({
     copied: t.copied,
     failed: t.shareFailed,
   };
-  const files = allFiles?.filter((f) => f.kind !== "comparison");
+  const torFiles = allFiles?.filter((f) => f.kind === "tor") ?? [];
+  const catalogFiles = allFiles?.filter((f) => f.kind === "catalog") ?? [];
+  const files = allFiles?.filter((f) => f.kind === "original") ?? [];
   const comparisons = allFiles?.filter((f) => f.kind === "comparison");
-  const bound = addProjectFile.bind(null, projectId);
   const { data: slotRows } = await supabase.from("project_comparison_slots").select("slot, name").eq("project_id", projectId);
   const slotName = (n: number) => slotRows?.find((r) => r.slot === n)?.name ?? "";
   const fileList = (list: NonNullable<typeof allFiles>) => (
@@ -213,17 +214,30 @@ export default async function ProjectPage({
 
       <div className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold text-navy">{t.files}</h2>
-        <FileUploader
-          prefix={`projects/${projectId}`}
-          record={bound}
-          label={t.uploadFiles}
-          uploadingText={t.uploading}
-          failedText={t.uploadFailed}
-        />
-        {files?.length ? (
-          fileList(files)
-        ) : (
-          <p className="text-muted">{t.noFiles}</p>
+        <div className="grid items-start gap-4 lg:grid-cols-2">
+          {(["tor", "catalog"] as const).map((k) => {
+            const list = k === "tor" ? torFiles : catalogFiles;
+            return (
+              <div key={k} className="flex flex-col gap-3 rounded-2xl border border-[#ece8f2] bg-white/60 p-3">
+                <h3 className="font-semibold text-navy">{k === "tor" ? t.torFiles : t.catalogFiles}</h3>
+                <FileUploader
+                  prefix={`projects/${projectId}`}
+                  record={addProjectTypedFile.bind(null, projectId, k)}
+                  label={t.uploadFiles}
+                  uploadingText={t.uploading}
+                  failedText={t.uploadFailed}
+                  ghost
+                />
+                {list.length ? fileList(list) : <p className="text-sm text-muted">{t.noFiles}</p>}
+              </div>
+            );
+          })}
+        </div>
+        {files.length > 0 && (
+          <div className="flex flex-col gap-3">
+            <h3 className="font-semibold text-navy">{t.otherFiles}</h3>
+            {fileList(files)}
+          </div>
         )}
         <h2 className="mt-4 text-xl font-semibold text-navy">{t.comparisonDocs}</h2>
         <p className="text-sm text-muted">{t.comparisonHelp}</p>

@@ -37,6 +37,7 @@ export default async function ReceiptPage({
           <DocVariantSelect value={variant} label={t.docVariant} />
           <a href={`/receipts/${id}/pdf?doc=${variant}`} target="_blank" className="btn">{t.invOpenPdf}</a>
           <a href={`/receipts/${id}/pdf?doc=${variant}&download=1`} className="btn">⬇ {t.docDownloadPdf}</a>
+          <a href={`/receipts/${id}/xlsx`} className="btn">⬇ Excel</a>
         </div>
         {created && <p className="w-full rounded-lg bg-emerald-50 px-3 py-2 text-emerald-700">{r.status === "draft" ? t.draftSaved : t.docSaved}</p>}
       </div>

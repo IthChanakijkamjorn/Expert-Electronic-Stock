@@ -48,7 +48,7 @@ export async function addProjectFile(
   path: string,
   name: string,
   size: number,
-  kind: "original" | "comparison" = "original",
+  kind: "original" | "comparison" | "tor" | "catalog" = "original",
   slot: number | null = null,
 ) {
   // Only accept objects that live under this project's folder.
@@ -56,8 +56,12 @@ export async function addProjectFile(
   const supabase = await createClient();
   const { error } = await supabase
     .from("project_files")
-    .insert({ project_id: projectId, storage_path: path, file_name: name, size_bytes: size, kind: kind === "comparison" ? "comparison" : "original", slot: kind === "comparison" && slot && slot >= 1 && slot <= 3 ? slot : null });
+    .insert({ project_id: projectId, storage_path: path, file_name: name, size_bytes: size, kind, slot: kind === "comparison" && slot && slot >= 1 && slot <= 3 ? slot : null });
   if (error) throw new Error(error.message);
+}
+
+export async function addProjectTypedFile(projectId: string, kind: "tor" | "catalog", path: string, name: string, size: number) {
+  return addProjectFile(projectId, path, name, size, kind === "tor" ? "tor" : "catalog");
 }
 
 export async function addProjectComparisonFile(projectId: string, slot: number, path: string, name: string, size: number) {
