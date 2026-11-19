@@ -80,6 +80,16 @@ export function QuotationForm({
         ls.map((l) => (l.key === key ? { ...l, ...patch, ...("brand" in patch || "model" in patch || "name" in patch ? { productId: undefined } : {}) } : l)),
       ),
     onRemove: (key) => setLines((ls) => ls.filter((l) => l.key !== key)),
+    onMove: (from, to) =>
+      setLines((ls) => {
+        const a = ls.findIndex((l) => l.key === from);
+        const b = ls.findIndex((l) => l.key === to);
+        if (a < 0 || b < 0) return ls;
+        const next = [...ls];
+        const [m] = next.splice(a, 1);
+        next.splice(b, 0, m);
+        return next;
+      }),
     onPick: (key, p) =>
       setLines((ls) =>
         ls.map((l) =>
