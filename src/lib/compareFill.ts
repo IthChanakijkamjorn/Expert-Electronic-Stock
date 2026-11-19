@@ -6,6 +6,8 @@ const PRICE_RE = /ราคาต่อหน่วย|unit\s*price/i;
 const TOTAL_RE = /จำนวนเงินรวม|ราคารวม|total\s*amount/i;
 const SUMMARY_RE = /^(ราคา)?รวม|^total|^grand|^net\s*total|^vat|^ภาษี/i;
 
+const num = (v: unknown) => Number(String(v ?? "").replace(/,/g, "")) || 0;
+
 export class FillError extends Error {}
 
 const text = (c: ExcelJS.Cell) => {
@@ -75,6 +77,7 @@ export async function fillCompareFile(file: ArrayBuffer, lines: QuoteLine[], min
   }
 
   const items = lines.filter((l) => l.name?.trim() || l.model?.trim());
+  if (!items.some((l) => num(l.price) > 0)) throw new FillError("ใบเสนอราคานี้ไม่มีราคาต่อหน่วย จึงไม่สามารถคำนวณได้");
   if (!rows.length) throw new FillError("ไม่พบแถวรายการที่มีราคาในไฟล์");
   const warning =
     rows.length === items.length
@@ -83,8 +86,8 @@ export async function fillCompareFile(file: ArrayBuffer, lines: QuoteLine[], min
 
   let sum = 0;
   rows.slice(0, items.length).forEach((r, i) => {
-    const qty = Number(items[i].qty) || 0;
-    const price = randomPrice(Number(items[i].price) || 0, minPct, maxPct);
+    const qty = num(items[i].qty);
+    const price = randomPrice(num(items[i].price), minPct, maxPct);
     ws.getCell(r, priceCol).master.value = price;
     const lineTotal = Math.round(price * qty * 100) / 100;
     sum += lineTotal;
