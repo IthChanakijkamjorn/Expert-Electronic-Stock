@@ -1,6 +1,6 @@
 import { unitLabel } from "@/lib/unit";
 import { ThaiDateInput } from "@/components/ThaiDateInput";
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import type { DocCompany } from "@/lib/company";
 import { bahtText } from "@/lib/bahttext";
 import { blank, money, type PaperLine } from "@/components/InvoicePaper";
@@ -57,7 +57,6 @@ export function QuotationPaper({
   editCompany?: boolean;
   pickProducts?: PickerProduct[];
 }) {
-  const [dragKey, setDragKey] = useState<string | null>(null);
   const co = data.company;
   const factor = 1 - (Number(data.discountPct) || 0) / 100;
   const gross = data.lines.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.price) || 0) * factor, 0);
@@ -182,9 +181,8 @@ export function QuotationPaper({
           {data.lines.map((l, i) => (
             <tr
               key={l.key}
-              className={dragKey === l.key ? "opacity-40" : ""}
-              onDragOver={h?.onMove && dragKey ? (e) => e.preventDefault() : undefined}
-              onDrop={h?.onMove ? () => { if (dragKey && dragKey !== l.key) h.onMove?.(dragKey, l.key); setDragKey(null); } : undefined}
+              onDragOver={h?.onMove ? (e) => e.preventDefault() : undefined}
+              onDrop={h?.onMove ? (e) => { const from = e.dataTransfer.getData("text/plain"); if (from && from !== l.key) h.onMove?.(from, l.key); } : undefined}
             >
               <td className={`${td} text-center`}>
                 {i + 1}
@@ -192,8 +190,7 @@ export function QuotationPaper({
                   <span
                     title="Drag to reorder"
                     draggable
-                    onDragStart={() => setDragKey(l.key)}
-                    onDragEnd={() => setDragKey(null)}
+                    onDragStart={(e) => e.dataTransfer.setData("text/plain", l.key)}
                     className="block cursor-grab select-none text-zinc-400 print:hidden"
                   >
                     ⠿
