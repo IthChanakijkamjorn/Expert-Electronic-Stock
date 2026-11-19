@@ -139,8 +139,10 @@ export async function quotationXlsx(q: {
     put(7 + i, 5, 8, t);
     if (left[i]) put(7 + i, 1, 4, left[i]);
   });
-  put(10, 1, 2, `โทรศัพท์ / Tel No: ${q.phone ?? ""}`);
-  put(10, 3, 4, `อีเมล / Email: ${q.email ?? ""}`);
+  ws.getRow(10).height = 16;
+  ws.getRow(11).height = 16;
+  put(10, 1, 4, `โทรศัพท์ / Tel No: ${q.phone ?? ""}`);
+  put(11, 1, 4, `อีเมล / Email: ${q.email ?? ""}`);
   ws.getRow(12).height = 18;
   put(12, 1, 8, "บริษัทฯยินดีที่จะเสนอราคาสินค้า เพื่อประกอบการพิจารณาดังนี้:", { v: "bottom" });
 

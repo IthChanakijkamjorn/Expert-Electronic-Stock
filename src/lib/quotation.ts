@@ -124,7 +124,8 @@ export async function buildQuotation(q: QuoteData) {
         `บริษัท / Company: ${q.customer}`,
         `เรียน / Attn: ${q.attention ?? ""}`,
         `โครงการ / Project: ${q.project}`,
-        "",
+        `โทรศัพท์ / Tel No: ${q.phone ?? ""}`,
+        `อีเมล / Email: ${q.email ?? ""}`,
       ];
       const right = [
         `วันที่ / Date: ${q.date.toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Bangkok" })}`,
@@ -137,11 +138,6 @@ export async function buildQuotation(q: QuoteData) {
         text(fit(l, font, sizeText, rx - M - 8), M, y - i * 14);
         text(fit(right[i], font, sizeText, rw), rx, y - i * 14);
       });
-      // Tel and email keep a fixed gap, even when blank, so they can be written by hand.
-      const telText = `โทรศัพท์ / Tel No: ${q.phone ?? ""}`;
-      const emailX = M + Math.max(font.widthOfTextAtSize(telText, sizeText) + 14, 138);
-      text(telText, M, y - 3 * 14);
-      text(fit(`อีเมล / Email: ${q.email ?? ""}`, font, sizeText, rx - 8 - emailX), emailX, y - 3 * 14);
       y -= 5 * 14 + 4;
       text("บริษัทฯยินดีที่จะเสนอราคาสินค้า เพื่อประกอบการพิจารณาดังนี้:", M, y, sizeText);
       y -= 14;
