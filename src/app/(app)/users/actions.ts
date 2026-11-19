@@ -5,6 +5,7 @@ import { adminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getRole } from "@/lib/role";
 import { logAudit } from "@/lib/audit";
+import { effectivePassword, validPassword } from "@/lib/pin";
 
 const DOMAIN = "expertelectronic.co.th";
 const ROLES = ["admin", "manager", "staff"];
@@ -20,13 +21,13 @@ export async function createUser(_prev: UserState, formData: FormData): Promise<
   const password = String(formData.get("password") ?? "");
   const fullName = String(formData.get("full_name") ?? "").trim() || username;
   const role = String(formData.get("role") ?? "staff");
-  if (!/^[a-z0-9._-]{2,30}$/.test(username) || password.length < 10 || !ROLES.includes(role)) {
+  if (!/^[a-z0-9._-]{2,30}$/.test(username) || !validPassword(password) || !ROLES.includes(role)) {
     return { error: "invalid" };
   }
   const admin = adminClient();
   const { data, error } = await admin.auth.admin.createUser({
     email: `${username}@${DOMAIN}`,
-    password,
+    password: effectivePassword(password),
     email_confirm: true,
     user_metadata: { full_name: fullName },
   });
@@ -52,8 +53,8 @@ export async function setRole(userId: string, role: string) {
 
 export async function resetPassword(userId: string, password: string) {
   await requireAdmin();
-  if (password.length < 10) throw new Error("too short");
-  const { error } = await adminClient().auth.admin.updateUserById(userId, { password });
+  if (!validPassword(password)) throw new Error("too short");
+  const { error } = await adminClient().auth.admin.updateUserById(userId, { password: effectivePassword(password) });
   if (error) throw new Error(error.message);
   await logAudit("reset_password", "user", userId);
 }

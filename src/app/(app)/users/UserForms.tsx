@@ -12,7 +12,7 @@ export function CreateUserForm({ l }: { l: L }) {
       <h2 className="text-lg font-semibold text-navy">{l.addUser}</h2>
       <label>{l.username}<input name="username" required className="input mt-1" autoComplete="off" /></label>
       <label>{l.fullName}<input name="full_name" className="input mt-1" /></label>
-      <label>{l.password}<input name="password" type="password" minLength={10} required className="input mt-1" autoComplete="new-password" /></label>
+      <label>{l.password}<input name="password" type="password" minLength={4} required className="input mt-1" autoComplete="new-password" /></label>
       <label>{l.role}
         <select name="role" defaultValue="staff" className="input mt-1">
           <option value="staff">{l.staff}</option>
@@ -60,7 +60,7 @@ export function UserRow({
       />
       <button
         type="button"
-        disabled={pending || pw.length < 10}
+        disabled={pending || pw.length < 4}
         onClick={() => run(async () => { await resetPassword(id, pw); setPw(""); })}
         className="font-semibold text-navy underline disabled:opacity-40"
       >
