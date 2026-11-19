@@ -7,14 +7,15 @@ export type PickerProduct = { id: string; name: string; model: string | null; br
 
 const cmp = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: "base", numeric: true });
 
-export const isBlankLine = (l: PaperLine) => !l.brand.trim() && !l.model.trim() && !l.name.trim();
+// A row with a quantity or price typed in is never treated as blank, so it is not dropped while editing.
+export const isBlankLine = (l: PaperLine) => !l.brand.trim() && !l.model.trim() && !l.name.trim() && !String(l.qty).trim() && !String(l.price).trim();
 
 export const newBlankLine = (): PaperLine => ({
   key: `n${Math.random().toString(36).slice(2)}`,
   brand: "",
   model: "",
   name: "",
-  unit: "pcs",
+  unit: "pc",
   qty: "",
   price: "",
 });
@@ -103,7 +104,7 @@ export function LineCells({ l, h, products, td }: { l: PaperLine; h: LineHandler
     h.onLine(l.key, { model: v });
     const b = l.brand.trim().toLowerCase();
     const hit = v.trim() && products.find((p) => (p.model ?? "").toLowerCase() === v.trim().toLowerCase() && (!b || (p.brand ?? "").toLowerCase() === b));
-    if (hit) h.onPick?.(l.key, hit);
+    if (hit && !l.name.trim()) h.onPick?.(l.key, hit);
   };
 
   return (

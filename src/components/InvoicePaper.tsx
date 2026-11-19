@@ -1,3 +1,4 @@
+import { unitLabel } from "@/lib/unit";
 import { docHead, type DocVariant } from "@/lib/docType";
 import type { DocCompany } from "@/lib/company";
 import { LineCells, type PickerProduct } from "./LineCells";
@@ -183,7 +184,7 @@ export function InvoicePaper({
                     <input type="number" min={1} step={1} className={`${blank} text-center`} value={l.qty} onChange={(e) => h.onLine(l.key, { qty: e.target.value })} />
                   </div>
                 ) : (
-                  `${l.qty} ${l.unit}`
+                  `${l.qty} ${unitLabel(l.unit)}`
                 )}
               </td>
               <td className={`${td} text-right`}>

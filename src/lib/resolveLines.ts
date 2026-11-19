@@ -3,7 +3,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export type RawLine = { product_id?: string | null; brand?: string; model?: string; name?: string; unit?: string; qty: number; price: number };
 export type ResolvedLine = { product_id: string | null; brand: string; model: string; name: string; unit: string; qty: number; price: number };
 
-// Turns typed lines into product-linked lines. Typed items that are not in the database stay as free-text lines (product_id null); nothing is created.
+// Turns typed lines into product-linked lines. Typed items that are not in the database are saved as new products only when brand, model and description are all filled; otherwise they stay as free-text lines (product_id null).
+const esc = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
+
 export async function resolveLines(
   supabase: SupabaseClient,
   raw: RawLine[],
@@ -21,8 +23,24 @@ export async function resolveLines(
     if (!l.product_id && !name && !model && !brand) continue;
     if (!name || !(qty > 0) || !(price >= 0)) return { error: "invalid" };
 
+    if (!l.product_id && brand && model && name) {
+      const { data: hit } = await supabase.from("products").select("id, name, model, brand, unit").ilike("model", esc(model)).limit(20);
+      let p = hit?.find((x) => (x.brand ?? "").trim().toLowerCase() === brand.toLowerCase()) ?? null;
+      if (!p) {
+        const { data } = await supabase
+          .from("products")
+          .insert({ name, model, brand, unit: (l.unit ?? "").trim() || "pc" })
+          .select("id, name, model, brand, unit")
+          .single();
+        if (!data) return { error: "failed" };
+        p = data;
+      }
+      const cur = out.get(p.id);
+      out.set(p.id, { product_id: p.id, brand: p.brand ?? "", model: p.model ?? "", name: p.name, unit: p.unit, qty: (cur?.qty ?? 0) + qty, price });
+      continue;
+    }
     if (!l.product_id) {
-      out.set(`free${free++}`, { product_id: null, brand, model, name, unit: (l.unit ?? "").trim() || "pcs", qty, price });
+      out.set(`free${free++}`, { product_id: null, brand, model, name, unit: (l.unit ?? "").trim() || "pc", qty, price });
       continue;
     }
     const { data: p } = await supabase.from("products").select("id, name, model, brand, unit").eq("id", l.product_id).maybeSingle();

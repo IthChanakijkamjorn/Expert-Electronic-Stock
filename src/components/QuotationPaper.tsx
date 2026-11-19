@@ -1,3 +1,4 @@
+import { unitLabel } from "@/lib/unit";
 import type { ReactNode } from "react";
 import type { DocCompany } from "@/lib/company";
 import { bahtText } from "@/lib/bahttext";
@@ -117,7 +118,17 @@ export function QuotationPaper({
       <div className="mt-2 grid grid-cols-[1fr_330px] gap-x-4">
         <div className="flex flex-col gap-y-1">
           {row("บริษัท / Company:", h && customerSlot ? customerSlot : field("customer"))}
-          {row("เรียน / Attn:", field("attention"))}
+          {row(
+            "เรียน / Attn:",
+            h ? (
+              <div className="flex items-center gap-1">
+                <div className="min-w-0 flex-1">{field("attention")}</div>
+                <button type="button" title="Copy from Company" className="shrink-0 rounded border border-zinc-300 px-1 text-[11px] print:hidden" onClick={() => h.onField({ attention: data.customer })}>⧉</button>
+              </div>
+            ) : (
+              field("attention")
+            ),
+          )}
           {row("โครงการ / Project:", field("project"))}
           <div className="flex gap-x-2">
             {row("โทรศัพท์ / Tel No:", field("phone"), "w-[44%] flex-none")}
@@ -147,8 +158,8 @@ export function QuotationPaper({
       <table className="mt-1 w-full border-collapse border border-black">
         <colgroup>
           <col style={{ width: 48 }} />
-          <col style={{ width: 70 }} />
-          <col style={{ width: 80 }} />
+          <col style={{ width: 64 }} />
+          <col style={{ width: 120 }} />
           <col />
           <col style={{ width: 62 }} />
           <col style={{ width: 80 }} />
@@ -191,7 +202,7 @@ export function QuotationPaper({
                 {h ? (
                   <input type="number" min={1} step={1} className={`${blank} text-center`} value={l.qty} onChange={(e) => h.onLine(l.key, { qty: e.target.value })} />
                 ) : (
-                  `${l.qty} ${l.unit}`
+                  `${l.qty} ${unitLabel(l.unit)}`
                 )}
               </td>
               <td className={`${td} text-right`}>
