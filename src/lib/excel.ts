@@ -175,7 +175,7 @@ export async function quotationXlsx(q: {
       const c = ws.getCell(r, k + 1);
       c.value = v;
       c.font = F(10);
-      c.border = frame;
+      c.border = { left: thinB, right: thinB };
       c.alignment = { horizontal: h, vertical: "middle", wrapText: true };
       if (k === 5 || k === 7) c.numFmt = MONEY;
     });
@@ -188,7 +188,7 @@ export async function quotationXlsx(q: {
   for (let i = q.lines.length; i < MIN_ROWS; i++) {
     const r = first + i;
     ws.getRow(r).height = 18;
-    for (let k = 1; k <= 8; k++) ws.getCell(r, k).border = frame;
+    for (let k = 1; k <= 8; k++) ws.getCell(r, k).border = { left: thinB, right: thinB };
   }
   const last = first + Math.max(q.lines.length, MIN_ROWS) - 1;
   if (q.lines.length <= MIN_ROWS) ws.pageSetup.fitToHeight = 1;
@@ -222,6 +222,7 @@ export async function quotationXlsx(q: {
   heights.forEach((h, i) => (ws.getRow(p1 + i).height = h));
   for (let r = p1; r < p1 + 5; r++) for (let k = 1; k <= 8; k++) ws.getCell(r, k).border = {};
   const pay = put(p1, 1, 4, null, { h: "left" });
+  pay.alignment = { horizontal: "center", vertical: "middle" };
   pay.value = { richText: [{ text: "เงื่อนไขการชำระเงิน / PAYMENT OPTIONS: ", font: F(10, true) }, { text: q.paymentTerms ?? "", font: F(10) }] };
   put(p1, 5, 8, "ผู้อนุมัติ / APPROVED BY", { bold: true, h: "center" });
   put(p1 + 1, 1, 4, "ยืนยันการสั่งซื้อ / ORDER CONFIRMATION", { bold: true, h: "center", border: false });
@@ -249,6 +250,10 @@ export async function quotationXlsx(q: {
   outline(5, 8);
   for (let k = 1; k <= 4; k++) ws.getCell(p1, k).border = { ...ws.getCell(p1, k).border, bottom: thinB };
 
+  for (let k = 1; k <= 8; k++) {
+    const c = ws.getCell(last, k);
+    c.border = { ...c.border, bottom: thinB };
+  }
   ws.pageSetup.printArea = `A1:H${p1 + 4}`;
   return toBuffer(wb);
 }

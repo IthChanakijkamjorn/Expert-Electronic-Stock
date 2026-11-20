@@ -261,7 +261,7 @@ export function QuotationPaper({
 
       <div className="grid grid-cols-[1fr_1fr] border-x border-b border-black">
         <div className="border-r border-black">
-          <div className="flex items-center gap-2 border-b border-black px-2 py-1">
+          <div className="flex items-center justify-center gap-2 border-b border-black px-2 py-1">
             <b className="whitespace-nowrap">เงื่อนไขการชำระเงิน / PAYMENT OPTIONS:</b>
             {h ? (
               <select className={`${blank} flex-1`} value={data.paymentTerms} onChange={(e) => h.onField({ paymentTerms: e.target.value })}>

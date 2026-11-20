@@ -236,8 +236,14 @@ export async function buildQuotation(q: QuoteData) {
   const split = 300;
   box(M, y2, split - M, row2H);
   box(split, y2, W - M - split, row2H);
-  text("เงื่อนไขการชำระเงิน / PAYMENT OPTIONS:", M + 6, y2 + row2H - 13, sizeText, bold);
-  text(q.paymentTerms ?? "", M + 6 + bold.widthOfTextAtSize("เงื่อนไขการชำระเงิน / PAYMENT OPTIONS:", sizeText) + 6, y2 + row2H - 13);
+  {
+    const label = "เงื่อนไขการชำระเงิน / PAYMENT OPTIONS:";
+    const terms = q.paymentTerms ?? "";
+    const lw = bold.widthOfTextAtSize(label, sizeText);
+    const x0 = M + (split - M - (lw + 6 + font.widthOfTextAtSize(terms, sizeText))) / 2;
+    text(label, x0, y2 + row2H - 13, sizeText, bold);
+    text(terms, x0 + lw + 6, y2 + row2H - 13);
+  }
   hline(y2 + row2H - 18, M, split);
   centered("ยืนยันการสั่งซื้อ / ORDER CONFIRMATION", M, split - M, y2 + row2H - 32, sizeText, bold);
   page.drawLine({ start: { x: M + 60, y: y2 + 26 }, end: { x: split - 60, y: y2 + 26 }, thickness: 0.4, color: BLACK });
