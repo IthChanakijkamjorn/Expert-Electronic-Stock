@@ -15,11 +15,14 @@ Private stock-management app (Next.js + Supabase). Thai by default, English avai
 
 ## Backups
 
-`.github/workflows/backup.yml` runs daily (and on demand from the Actions tab). It dumps the database, downloads the
+`.github/workflows/backup.yml` runs weekly on Saturday 09:00 Thailand time (and on demand from the Actions tab). It dumps the database, downloads the
 `files` bucket, encrypts everything with GPG and uploads it to a private Cloudflare R2 bucket, keeping 30 days.
 
 Repository secrets (Settings → Secrets and variables → Actions): `SUPABASE_DB_URL` (session pooler connection string),
 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `BACKUP_PASSPHRASE`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`,
 `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`. Keep the passphrase somewhere safe: without it a backup cannot be opened.
 
-Restore: `gpg -d backup-YYYY-MM-DD.tar.gpg | tar -x`, then `pg_restore` the `database.dump` into a database.
+Restore into a new Supabase project: download the backup from R2, run `npm ci`, then
+`BACKUP_PASSPHRASE=... TARGET_DB_URL=... SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... scripts/restore.sh backup-YYYY-MM-DD.tar.gpg`
+(`TARGET_DB_URL` is the new project's session pooler string). Then point the site's Supabase env vars at the new project.
+Needs `gpg` and PostgreSQL 17 client tools. Test it on a free scratch project before you need it.
