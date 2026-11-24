@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import readXlsxFile from "read-excel-file/node";
 import { createClient } from "@/lib/supabase/server";
 import { getRole } from "@/lib/role";
-import type { SpecTab } from "@/lib/website";
+import { fileNameOf, type SpecTab } from "@/lib/website";
 
 const REPO = "IthChanakijkamjorn/studio";
 const BRANCH = "main";
@@ -71,11 +71,25 @@ export type SheetResult = { items: ImportItem[]; created: number; updated: numbe
 
 export async function importSheet(path: string): Promise<SheetResult> {
   await guard();
+  const res = await fetch(raw(path), { cache: "no-store" });
+  if (!res.ok) return { items: [], created: 0, updated: 0, warnings: [], error: `download ${res.status}` };
+  return importWorkbook(Buffer.from(await res.arrayBuffer()));
+}
+
+// An .xlsx picked on the Import page (e.g. an edited export). Photos and datasheets named in it
+// are still taken from studio/import; products that already have them keep theirs.
+export async function importUpload(form: FormData): Promise<SheetResult> {
+  await guard();
+  const file = form.get("file");
+  if (!(file instanceof File) || !file.name.toLowerCase().endsWith(".xlsx"))
+    return { items: [], created: 0, updated: 0, warnings: [], error: "not an .xlsx file" };
+  return importWorkbook(Buffer.from(await file.arrayBuffer()));
+}
+
+async function importWorkbook(buf: Buffer): Promise<SheetResult> {
   const out: SheetResult = { items: [], created: 0, updated: 0, warnings: [] };
   try {
-    const res = await fetch(raw(path), { cache: "no-store" });
-    if (!res.ok) throw new Error(`download ${res.status}`);
-    const sheets = await readXlsxFile(Buffer.from(await res.arrayBuffer()));
+    const sheets = await readXlsxFile(buf);
     const byName = (n: string) => sheets.find((s) => key(s.sheet) === key(n))?.data;
     const productData = byName("Products") ?? sheets[0].data;
     const products = table(productData);
@@ -108,14 +122,11 @@ export async function importSheet(path: string): Promise<SheetResult> {
         main: cell(r("maincategory") ?? r("category")),
         sub: cell(r("subcategory")),
         description: cell(r("description")),
-        featured: yesNo(r("featured")),
         image: cell(r("image")),
         datasheet: cell(r("datasheet")),
         website: yesNo(r("website")),
         unit: cell(r("unit")),
-        supplier: cell(r("supplier")),
-        minStock: cell(r("minstock")),
-        openingStock: count(r("openingstock")),
+        quantity: count(r("quantity")),
       }))
       .filter((r) => r.name && r.brand);
 
@@ -136,13 +147,13 @@ export async function importSheet(path: string): Promise<SheetResult> {
         category: w.main || null,
         sub_category: w.sub || null,
         description: w.description || null,
-        ...(hasCol("featured") && { featured: w.featured ?? false }),
-        ...(glance && { at_a_glance: glanceOf(w.name) }),
-        ...(specs && { specifications: specsOf(w.name) }),
         ...(w.unit && { unit: /^pcs?$/i.test(w.unit) ? "ชิ้น" : w.unit }),
-        ...(w.supplier && { supplier: w.supplier }),
-        ...(w.minStock && { min_stock: count(w.minStock) }),
       };
+      // No rows for this product in those sheets means "keep what it has", so a partial file cannot wipe them.
+      const bullets = glance ? glanceOf(w.name) : [];
+      const tabs = specs ? specsOf(w.name) : [];
+      if (bullets.length) fields.at_a_glance = bullets;
+      if (tabs.length) fields.specifications = tabs;
       // An empty Website cell means "show it"; only an explicit no hides it.
       if (hasCol("website") || !hit) fields.on_website = w.website ?? true;
 
@@ -175,12 +186,12 @@ export async function importSheet(path: string): Promise<SheetResult> {
         id = data.id;
         pool.push({ id: data.id, name: w.name, model: model || null, brand: w.brand });
         out.created++;
-        // Opening stock only applies to new products; later changes go through stock movements.
-        if (w.openingStock) {
+        // Quantity only applies to new products; re-imports ignore it, stock changes go through movements.
+        if (w.quantity) {
           const { error: e } = await supabase
             .from("stock_movements")
-            .insert({ product_id: data.id, quantity: w.openingStock, type: "count_correction", comment: "ยอดยกมา (นำเข้าจาก Excel)" });
-          if (e) out.warnings.push(`${w.name}: opening stock ${e.message}`);
+            .insert({ product_id: data.id, quantity: w.quantity, type: "count_correction", comment: "ยอดยกมา (นำเข้าจาก Excel)" });
+          if (e) out.warnings.push(`${w.name}: quantity ${e.message}`);
         }
       }
       out.items.push({ id: id!, brand: w.brand, name: w.name, image: w.image, datasheet: w.datasheet });
@@ -211,7 +222,7 @@ export async function importAssets(item: ImportItem): Promise<{ image: AssetStat
 
   if (item.image) {
     const { data: p } = await supabase.from("products").select("image_path").eq("id", item.id).single();
-    if (p?.image_path?.endsWith(`-${safe(item.image)}`)) out.image = "skipped";
+    if (p?.image_path && fileNameOf(p.image_path) === safe(item.image)) out.image = "skipped";
     else {
       const buf = await download("images", item.brand, item.image);
       if (buf) {
