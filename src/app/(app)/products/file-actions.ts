@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
+import { syncQuietly } from "@/lib/website";
 
 export async function addProductFile(
   productId: string,
@@ -23,12 +24,13 @@ export async function deleteProductFile(fileId: string) {
   const supabase = await createClient();
   const { data } = await supabase
     .from("product_files")
-    .select("storage_path")
+    .select("storage_path, product_id")
     .eq("id", fileId)
     .single();
   if (!data) return;
   await supabase.storage.from("files").remove([data.storage_path]);
   await supabase.from("product_files").delete().eq("id", fileId);
+  await syncQuietly(supabase, data.product_id);
   revalidatePath("/products", "layout");
 }
 
@@ -61,6 +63,7 @@ export async function deleteProduct(productId: string) {
   const { error } = await supabase.from("products").update({ active: false }).eq("id", productId);
   if (error) throw new Error(error.message);
   await logAudit("delete", "product", prod?.name);
+  await syncQuietly(supabase, productId);
   revalidatePath("/products", "layout");
   redirect("/products");
 }
@@ -73,6 +76,7 @@ export async function renameProduct(productId: string, name: string) {
   const { error } = await supabase.from("products").update({ name: clean }).eq("id", productId);
   if (error) throw new Error(error.message);
   await logAudit("rename", "product", `${prod?.name} → ${clean}`);
+  await syncQuietly(supabase, productId);
   revalidatePath("/products", "layout");
   revalidatePath("/movements");
 }
@@ -87,5 +91,6 @@ export async function updateProductDetails(productId: string, formData: FormData
   const supabase = await createClient();
   const { error } = await supabase.from("products").update({ brand, model, name, category, sub_category }).eq("id", productId);
   if (error) throw new Error(error.message);
+  await syncQuietly(supabase, productId);
   revalidatePath("/products", "layout");
 }

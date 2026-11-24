@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { importAssets, importSheet, listSheets, type ImportItem } from "./actions";
+import { publishProduct } from "../website-actions";
 
-type Labels = { start: string; running: string; done: string; failed: string };
+type Labels = { start: string; running: string; done: string; failed: string; website: string };
 
 export function ImportRunner({ labels }: { labels: Labels }) {
   const [busy, setBusy] = useState(false);
@@ -28,6 +29,7 @@ export function ImportRunner({ labels }: { labels: Labels }) {
       let done = 0;
       let images = 0;
       let sheetsAdded = 0;
+      const web = { published: 0, unchanged: 0, removed: 0, skipped: 0 };
       const queue = [...all];
       await Promise.all(
         Array.from({ length: 3 }, async () => {
@@ -37,6 +39,9 @@ export function ImportRunner({ labels }: { labels: Labels }) {
               const r = await importAssets(it);
               if (r.image === "added") images++;
               if (r.datasheet === "added") sheetsAdded++;
+              const w = await publishProduct(it.id);
+              if (w.result) web[w.result]++;
+              else add(`${labels.failed} (${labels.website}): ${it.brand} ${it.name} — ${w.error}`);
             } catch {
               add(`${labels.failed}: ${it.brand} ${it.name}`);
             }
@@ -45,6 +50,7 @@ export function ImportRunner({ labels }: { labels: Labels }) {
         }),
       );
       add(`${labels.done}: ${images} images, ${sheetsAdded} datasheets`);
+      add(`${labels.website}: ${web.published} published, ${web.unchanged} unchanged, ${web.removed} removed`);
     } catch (e) {
       add(`${labels.failed}: ${e instanceof Error ? e.message : ""}`);
     }
