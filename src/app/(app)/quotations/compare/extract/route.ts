@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   if (!(file instanceof File) || !file.size) return new Response("กรุณาเลือกไฟล์", { status: 400 });
   if (file.size > MAX_BYTES) return new Response("ไฟล์ใหญ่เกิน 15MB", { status: 400 });
   try {
-    return Response.json({ lines: await extractLines(await file.arrayBuffer(), file.name) });
+    return Response.json(await extractLines(await file.arrayBuffer(), file.name));
   } catch (e) {
     if (e instanceof ExtractError) return new Response(e.message, { status: 400 });
     console.error("compare extract failed", e);

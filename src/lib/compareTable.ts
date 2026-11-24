@@ -130,3 +130,74 @@ export function readLines(grid: Grid, h: Header): QuoteLine[] {
   }
   return out;
 }
+
+// ---- Document info above the table: date and project name ----
+
+export type CompareMeta = { date: string; project: string }; // date is ISO yyyy-mm-dd or ""
+
+const TH_MONTHS = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+const TH_ABBR = ["มค", "กพ", "มีค", "เมย", "พค", "มิย", "กค", "สค", "กย", "ตค", "พย", "ธค"];
+const EN_MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+export const DATE_LABEL = /^\s*(?:วันที่(?!\s*(?:ส่ง|ครบ|หมด|ยืน|รับ|ชำระ))(?:\s*(?:เสนอราคา|ออกเอกสาร|เอกสาร))?|(?:quotation\s*|quote\s*|issue\s*|doc(?:ument)?\.?\s*)?date)(?:\s*[/|]\s*(?:วันที่|(?:quotation\s*)?date))?\s*[:：.]?\s*/i;
+export const PROJECT_LABEL = /^\s*(?:ชื่อ\s*)?(?:โครงการ|project(?:\s*name)?)(?!\s*(?:manager|engineer|no\b|code))(?:\s*[/|]\s*(?:ชื่อ\s*)?(?:โครงการ|project(?:\s*name)?))?\s*[:：.]?\s*/i;
+/** Blank fill-in placeholders such as "______" or "....". */
+export const isPlaceholder = (s: string) => /^[\s_.\-–—…:/]*$/.test(s);
+
+function monthIndex(word: string): number {
+  const w = norm(word).toLowerCase().replace(/[.\s]/g, "");
+  const th = TH_MONTHS.findIndex((m) => norm(m) === w);
+  if (th >= 0) return th;
+  const ab = TH_ABBR.findIndex((m) => norm(m) === w);
+  if (ab >= 0) return ab;
+  return EN_MONTHS.findIndex((m) => w.startsWith(m));
+}
+
+/** Parses Thai/English dates ("24 พฤศจิกายน 2569", "24 พ.ย. 69", "24/11/2026", "Nov 24, 2026") to ISO. */
+export function parseDate(text: string): string {
+  const t = text.trim();
+  let d = 0, mo = 0, y = 0;
+  let m: RegExpExecArray | null;
+  if ((m = /(\d{4})-(\d{1,2})-(\d{1,2})/.exec(t))) [y, mo, d] = [+m[1], +m[2], +m[3]];
+  else if ((m = /(\d{1,2})\s*[/.\-]\s*(\d{1,2})\s*[/.\-]\s*(\d{2,4})/.exec(t))) [d, mo, y] = [+m[1], +m[2], +m[3]];
+  else if ((m = /(\d{1,2})(?:st|nd|rd|th)?\s*([ก-๙.]+(?:\s*[ก-๙.]+)?|[A-Za-z]+\.?),?\s*(\d{2,4})/.exec(t)) && monthIndex(m[2]) >= 0)
+    [d, mo, y] = [+m[1], monthIndex(m[2]) + 1, +m[3]];
+  else if ((m = /([A-Za-z]+)\.?\s+(\d{1,2}),?\s*(\d{4})/.exec(t)) && monthIndex(m[1]) >= 0) [d, mo, y] = [+m[2], monthIndex(m[1]) + 1, +m[3]];
+  else return "";
+  if (y < 100) y += y >= 40 ? 2500 : 2000;
+  if (y > 2400) y -= 543;
+  const dt = new Date(Date.UTC(y, mo - 1, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return "";
+  return dt.toISOString().slice(0, 10);
+}
+
+/** ISO date → "24 พฤศจิกายน 2569" */
+export const thaiDate = (iso: string) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  return m ? `${Number(m[3])} ${TH_MONTHS[Number(m[2]) - 1]} ${Number(m[1]) + 543}` : "";
+};
+
+/** Reads "label: value" pairs (same cell, or the next cell to the right) from rows of text. */
+export function findMeta(rows: string[][]): CompareMeta {
+  const meta: CompareMeta = { date: "", project: "" };
+  for (const row of rows) {
+    row.forEach((text, i) => {
+      for (const [key, re] of [["date", DATE_LABEL], ["project", PROJECT_LABEL]] as const) {
+        if (meta[key]) continue;
+        const m = re.exec(text);
+        if (!m) continue;
+        let value = text.slice(m[0].length).trim();
+        if (isPlaceholder(value)) {
+          const next = row.slice(i + 1).find((s) => s.trim() && !isPlaceholder(s))?.trim() ?? "";
+          value = /[:：]\s*$/.test(next) || DATE_LABEL.test(next) || PROJECT_LABEL.test(next) ? "" : next;
+        }
+        if (!value || isPlaceholder(value)) continue;
+        if (key === "date") {
+          const iso = parseDate(value);
+          if (iso) meta.date = iso;
+        } else meta.project = value.split("\n")[0].trim();
+      }
+    });
+  }
+  return meta;
+}

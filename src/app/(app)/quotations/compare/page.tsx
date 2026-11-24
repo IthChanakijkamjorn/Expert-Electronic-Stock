@@ -12,12 +12,16 @@ export default async function ComparePage() {
   const { t } = await getDictionary();
   const supabase = await createClient();
   const { data } = await supabase
-    .from("quotations").select("id, number, customer, project_label, lines").eq("status", "final").order("number", { ascending: false }).limit(200);
-  const sources = (data ?? []).map((q) => ({
-    id: q.id as string,
-    label: [q.number, q.customer, q.project_label].filter(Boolean).join(" · "),
-    lines: (q.lines ?? []) as QuoteLine[],
-  }));
+    .from("quotations").select("id, number, customer, project_label, quote_date, lines, projects(name)").eq("status", "final").order("number", { ascending: false }).limit(200);
+  const sources = (data ?? []).map((q) => {
+    const project = q.project_label ?? (q.projects as unknown as { name: string } | null)?.name ?? "";
+    return {
+      id: q.id as string,
+      label: [q.number, q.customer, project].filter(Boolean).join(" · "),
+      lines: (q.lines ?? []) as QuoteLine[],
+      meta: { date: String(q.quote_date ?? "").slice(0, 10), project },
+    };
+  });
   return (
     <section className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">

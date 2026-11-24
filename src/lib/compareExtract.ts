@@ -1,6 +1,8 @@
 import ExcelJS from "exceljs";
 import type { QuoteLine } from "@/lib/quotation";
-import { classify, findHeader, joinText, norm, readLines, SUMMARY_RE, num, type ColKind, type Grid } from "@/lib/compareTable";
+import { classify, findHeader, findMeta, joinText, norm, readLines, SUMMARY_RE, num, type ColKind, type CompareMeta, type Grid } from "@/lib/compareTable";
+
+export type Extracted = { lines: QuoteLine[]; meta: CompareMeta };
 
 export class ExtractError extends Error {}
 
@@ -32,7 +34,23 @@ export function sheetGrid(ws: ExcelJS.Worksheet): Grid {
   return grid;
 }
 
-async function fromXlsx(file: ArrayBuffer): Promise<QuoteLine[]> {
+/** Plain text of the rows above the table; date cells become ISO dates. */
+export function metaRows(ws: ExcelJS.Worksheet, beforeRow: number): string[][] {
+  const rows: string[][] = [];
+  for (let r = 1; r < beforeRow; r++) {
+    const row: string[] = [];
+    for (let c = 1; c <= ws.columnCount; c++) {
+      const x = ws.getCell(r, c);
+      const v = x.isMerged && x.master.address !== x.address ? null : x.value;
+      const d = v instanceof Date ? v : v && typeof v === "object" && "result" in v && v.result instanceof Date ? v.result : null;
+      row.push(d ? d.toISOString().slice(0, 10) : cellText(x));
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+async function fromXlsx(file: ArrayBuffer): Promise<Extracted> {
   const wb = new ExcelJS.Workbook();
   try {
     await wb.xlsx.load(file);
@@ -44,12 +62,12 @@ async function fromXlsx(file: ArrayBuffer): Promise<QuoteLine[]> {
     const h = findHeader(grid);
     if (!h) continue;
     const lines = readLines(grid, h);
-    if (lines.length) return lines;
+    if (lines.length) return { lines, meta: findMeta(metaRows(ws, h.row + 1)) };
   }
   throw new ExtractError("ไม่พบตารางรายการสินค้าในไฟล์ (ต้องมีหัวคอลัมน์ เช่น รายการ / จำนวน / ราคาต่อหน่วย)");
 }
 
-function fromCsv(file: ArrayBuffer): QuoteLine[] {
+function fromCsv(file: ArrayBuffer): Extracted {
   const text = new TextDecoder("utf-8").decode(file).replace(/^\uFEFF/, "");
   const grid: Grid = text.split(/\r?\n/).map((line) => {
     const out: string[] = [];
@@ -76,8 +94,8 @@ function fromCsv(file: ArrayBuffer): QuoteLine[] {
   });
   const h = findHeader(grid);
   const lines = h ? readLines(grid, h) : [];
-  if (!lines.length) throw new ExtractError("ไม่พบตารางรายการสินค้าในไฟล์ CSV");
-  return lines;
+  if (!lines.length || !h) throw new ExtractError("ไม่พบตารางรายการสินค้าในไฟล์ CSV");
+  return { lines, meta: findMeta(grid.slice(0, h.row)) };
 }
 
 // Thai presentation forms (Windows/Mac fonts shift tone marks into the private use area).
@@ -165,7 +183,7 @@ function groupRows(cols: Col[], lines: { y: number; cells: Cell[] }[]): Grid {
   return rows;
 }
 
-async function fromPdf(file: ArrayBuffer): Promise<QuoteLine[]> {
+async function fromPdf(file: ArrayBuffer): Promise<Extracted> {
   const { getDocumentProxy } = await import("unpdf");
   let pdf;
   try {
@@ -176,6 +194,7 @@ async function fromPdf(file: ArrayBuffer): Promise<QuoteLine[]> {
   let cols: Col[] | null = null;
   let anyText = false;
   const grid: Grid = [];
+  const above: string[][] = [];
   for (let p = 1; p <= pdf.numPages; p++) {
     const page = await pdf.getPage(p);
     const content = await page.getTextContent();
@@ -210,11 +229,17 @@ async function fromPdf(file: ArrayBuffer): Promise<QuoteLine[]> {
       if (h) {
         cols = h.cols;
         start = i + h.used;
-        if (!grid.length) grid.push(cols.map((c) => (c.kind ? c.kind : "")));
+        if (!grid.length) {
+          grid.push(cols.map((c) => (c.kind ? c.kind : "")));
+          above.push(...chunked.slice(0, i).map((l) => l.map((c) => c.s)));
+        }
         break;
       }
     }
-    if (!cols) continue;
+    if (!cols) {
+      above.push(...chunked.map((l) => l.map((c) => c.s)));
+      continue;
+    }
     const pageCols = cols;
     const body: { y: number; chunks: Chunk[] }[] = [];
     for (let i = start; i < chunked.length; i++) {
@@ -247,10 +272,10 @@ async function fromPdf(file: ArrayBuffer): Promise<QuoteLine[]> {
   cols.forEach((c, i) => c.kind && !map.has(c.kind) && map.set(c.kind, i));
   const lines = readLines(grid, { row: 0, span: 1, cols: map });
   if (!lines.length) throw new ExtractError("พบหัวตารางใน PDF แต่ไม่พบรายการสินค้า");
-  return lines;
+  return { lines, meta: findMeta(above) };
 }
 
-export async function extractLines(file: ArrayBuffer, name: string): Promise<QuoteLine[]> {
+export async function extractLines(file: ArrayBuffer, name: string): Promise<Extracted> {
   const head = new Uint8Array(file.slice(0, 5));
   const isPdf = String.fromCharCode(...head) === "%PDF-";
   const isZip = head[0] === 0x50 && head[1] === 0x4b;

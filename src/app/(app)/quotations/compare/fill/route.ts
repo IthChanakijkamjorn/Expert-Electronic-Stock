@@ -35,7 +35,12 @@ export async function POST(req: Request) {
   if (!(min >= 0) || !(max >= 0) || max > 50 || min > 50) return new Response("ช่วง % ไม่ถูกต้อง (0–50)", { status: 400 });
   if (min > max) [min, max] = [max, min];
   try {
-    const { buffer } = await fillCompareFile(await file.arrayBuffer(), lines, min, max);
+    const rawDate = String(form.get("date") ?? "");
+    const meta = {
+      date: /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : "",
+      project: String(form.get("project") ?? "").trim().slice(0, 500),
+    };
+    const { buffer } = await fillCompareFile(await file.arrayBuffer(), lines, min, max, meta);
     const name = file.name.replace(/\.xlsx?$/i, "") + "-filled.xlsx";
     return new Response(new Uint8Array(buffer), {
       headers: {

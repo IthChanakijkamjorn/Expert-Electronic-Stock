@@ -2,7 +2,7 @@ import ExcelJS from "exceljs";
 import { bahtText } from "@/lib/bahttext";
 import { unitLabel } from "@/lib/unit";
 import type { QuoteLine } from "@/lib/quotation";
-import { findHeader, norm, SUMMARY_RE, thTest, type ColKind } from "@/lib/compareTable";
+import { DATE_LABEL, findHeader, isPlaceholder, norm, PROJECT_LABEL, SUMMARY_RE, thaiDate, thTest, type ColKind, type CompareMeta } from "@/lib/compareTable";
 import { cellText, sheetGrid } from "@/lib/compareExtract";
 
 export class FillError extends Error {}
@@ -13,16 +13,14 @@ const VAT_RE = /^\s*(vat\b|ภาษี)/i;
 const DISCOUNT_RE = /ส่วนลด|discount/i;
 const MONEY = "#,##0.00";
 
+const LABELISH = /[:：]\s*$|^\s*(เลขที่|no\.|ลูกค้า|customer|company|บริษัท|attn|เรียน|tel|โทร|fax|e-?mail|อีเมล|ที่อยู่|address|เรื่อง|subject|ref|เสนอ|to\b|from\b|quotation|ใบเสนอราคา)/i;
+
+/** Raises each price by a random minPct–maxPct %, then rounds up to the next 100 (next 10 below 100 baht). */
 export function randomPrice(price: number, minPct: number, maxPct: number) {
   if (!(price > 0) || maxPct <= 0) return price;
-  const step = price >= 1000 ? 10 : 1;
-  for (let i = 0; i < 20; i++) {
-    const pct = (minPct + Math.random() * (maxPct - minPct)) / 100;
-    const sign = Math.random() < 0.5 ? -1 : 1;
-    const p = Math.round((price * (1 + sign * pct)) / step) * step;
-    if (p > 0 && p !== price) return p;
-  }
-  return price;
+  const step = price >= 100 ? 100 : 10;
+  const pct = (minPct + Math.random() * (maxPct - minPct)) / 100;
+  return Math.ceil((price * (1 + pct)) / step - 1e-9) * step;
 }
 
 type Merge = { top: number; left: number; bottom: number; right: number };
@@ -79,7 +77,7 @@ function insertRows(ws: ExcelJS.Worksheet, at: number, n: number, src: number) {
 }
 
 /** Writes product lines into another company's quotation form (.xlsx) and recalculates its totals. */
-export async function fillCompareFile(file: ArrayBuffer, lines: QuoteLine[], minPct: number, maxPct: number) {
+export async function fillCompareFile(file: ArrayBuffer, lines: QuoteLine[], minPct: number, maxPct: number, meta?: CompareMeta) {
   const items = lines.filter((l) => l.name?.trim() || l.model?.trim() || l.brand?.trim());
   if (!items.length) throw new FillError("ไม่มีรายการสินค้า");
   const wb = new ExcelJS.Workbook();
@@ -121,8 +119,13 @@ export async function fillCompareFile(file: ArrayBuffer, lines: QuoteLine[], min
   const slotRows = (end: number) => {
     const rows: number[] = [];
     for (let r = start; r < end; r++) if (Number(sheet.getCell(r, keyCol).master.row) === r) rows.push(r);
-    // Drop trailing spacer rows without borders (the gap between the table and the totals).
-    while (rows.length > 1) {
+    // Drop trailing spacer rows without borders (the gap between the table and the totals),
+    // unless the form has no borders at all.
+    const bordered = rows.some((r) => {
+      const b = sheet.getCell(r, keyCol).border;
+      return b?.left || b?.right;
+    });
+    while (bordered && rows.length > 1) {
       const r = rows[rows.length - 1];
       const b = sheet.getCell(r, keyCol).border;
       if (rowTexts(r).length || b?.left || b?.right) break;
@@ -184,15 +187,15 @@ export async function fillCompareFile(file: ArrayBuffer, lines: QuoteLine[], min
     set(r, C.brand, it.brand ?? "");
     set(r, C.model, C.desc ? (it.model ?? "") : [it.model, it.name].filter(Boolean).join(" "));
     if (C.desc) set(r, C.desc, [it.name, extra].filter(Boolean).join(" "));
-    const qtyIsNumber = !!C.unit || !unit;
-    set(r, C.qty, qtyIsNumber ? qty : `${qty} ${unit}`);
+    // Units are only written when the form has its own unit column.
+    set(r, C.qty, qty);
     set(r, C.unit, unit);
     const price = randomPrice(Number(it.price) || 0, minPct, maxPct);
     const lineTotal = Math.round(price * qty * 100) / 100;
     sum += lineTotal;
     if (C.price) set(r, C.price, price, true);
     if (C.amount) {
-      const qRef = C.qty && qtyIsNumber ? cell(r, C.qty).address : String(qty);
+      const qRef = C.qty ? cell(r, C.qty).address : String(qty);
       set(r, C.amount, C.price ? { formula: `${cell(r, C.price).address}*${qRef}`, result: lineTotal } : lineTotal, true);
     }
   });
@@ -234,8 +237,53 @@ export async function fillCompareFile(file: ArrayBuffer, lines: QuoteLine[], min
       if (m && !isFormula(c.value)) c.value = `${m[1]}${bahtText(grand)}${m[3]}`;
     });
   }
+  if (meta) fillMeta(sheet, header.row, meta);
   // Excel recalculates every formula when the file is opened.
   wb.calcProperties.fullCalcOnLoad = true;
 
   return { buffer: Buffer.from(await wb.xlsx.writeBuffer()), filled: items.length };
+}
+
+/** Writes the date and project name next to their labels above the item table. */
+function fillMeta(ws: ExcelJS.Worksheet, beforeRow: number, meta: CompareMeta) {
+  const values = { date: meta.date, project: meta.project.trim() };
+  const done = { date: !values.date, project: !values.project };
+  for (let r = 1; r <= beforeRow; r++) {
+    const cells: ExcelJS.Cell[] = [];
+    for (let c = 1; c <= ws.columnCount; c++) {
+      const x = ws.getCell(r, c);
+      if (x.master.address === x.address) cells.push(x);
+    }
+    cells.forEach((x, i) => {
+      const text = cellText(x);
+      for (const [key, re] of [["date", DATE_LABEL], ["project", PROJECT_LABEL]] as const) {
+        if (done[key]) continue;
+        const m = re.exec(text);
+        if (!m) continue;
+        done[key] = true;
+        const shown = key === "date" ? thaiDate(values.date) : values.project;
+        if (text.slice(m[0].length).trim()) {
+          // "วันที่ ______" or "Date: 01/01/2024" in a single cell
+          x.value = `${m[0].trimEnd()} ${shown}`;
+          return;
+        }
+        const rest = cells.slice(i + 1);
+        const next = rest.find((c) => c.value instanceof Date || cellText(c) !== "");
+        const valueLike = (c: ExcelJS.Cell) => {
+          const t = cellText(c);
+          return c.value instanceof Date || typeof c.value === "number" || isFormula(c.value) || isPlaceholder(t) || !(LABELISH.test(t) || DATE_LABEL.test(t) || PROJECT_LABEL.test(t));
+        };
+        const target = next && valueLike(next) ? next : rest[0] && cellText(rest[0]) === "" ? rest[0] : null;
+        if (!target) {
+          x.value = `${m[0].trimEnd()} ${shown}`;
+          return;
+        }
+        const isDateCell =
+          target.value instanceof Date ||
+          (isFormula(target.value) && target.value.result instanceof Date) ||
+          (/[dmy]{2}/i.test(target.numFmt ?? "") && !/[#0]/.test(target.numFmt ?? ""));
+        target.value = key === "date" && isDateCell ? new Date(`${values.date}T00:00:00Z`) : shown;
+      }
+    });
+  }
 }

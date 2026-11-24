@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import type { QuoteLine } from "@/lib/quotation";
+import type { CompareMeta } from "@/lib/compareTable";
+import { ThaiDateInput } from "@/components/ThaiDateInput";
 
-export type CompareSource = { id: string; label: string; lines: QuoteLine[] };
+export type CompareSource = { id: string; label: string; lines: QuoteLine[]; meta: CompareMeta };
 type Row = { brand: string; model: string; name: string; unit: string; qty: string; price: string };
 
 const toRows = (lines: QuoteLine[]): Row[] =>
@@ -19,8 +21,14 @@ function download(blob: Blob, name: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export default function CompareFill({ initialLines, sources }: { initialLines?: QuoteLine[]; sources?: CompareSource[] }) {
+export default function CompareFill({ initialLines, initialMeta, sources }: { initialLines?: QuoteLine[]; initialMeta?: CompareMeta; sources?: CompareSource[] }) {
   const [rows, setRows] = useState<Row[]>(() => toRows(initialLines ?? []));
+  const [date, setDate] = useState(initialMeta?.date ?? "");
+  const [project, setProject] = useState(initialMeta?.project ?? "");
+  const applyMeta = (m?: CompareMeta) => {
+    setDate(m?.date ?? "");
+    setProject(m?.project ?? "");
+  };
   const [mode, setMode] = useState<"quote" | "file">(initialLines || sources?.length ? "quote" : "file");
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
@@ -40,8 +48,9 @@ export default function CompareFill({ initialLines, sources }: { initialLines?: 
       fd.set("file", file);
       const res = await fetch("/quotations/compare/extract", { method: "POST", body: fd });
       if (!res.ok) return setError(await res.text());
-      const { lines } = (await res.json()) as { lines: QuoteLine[] };
+      const { lines, meta } = (await res.json()) as { lines: QuoteLine[]; meta: CompareMeta };
       setRows(toRows(lines));
+      applyMeta(meta);
     } catch {
       setError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
     } finally {
@@ -66,6 +75,8 @@ export default function CompareFill({ initialLines, sources }: { initialLines?: 
         fd.set("lines", JSON.stringify(lines));
         fd.set("min", min);
         fd.set("max", max);
+        fd.set("date", date);
+        fd.set("project", project);
         const res = await fetch("/quotations/compare/fill", { method: "POST", body: fd });
         if (!res.ok) {
           errors.push(`${f.name}: ${await res.text()}`);
@@ -89,7 +100,7 @@ export default function CompareFill({ initialLines, sources }: { initialLines?: 
       <div>
         <h2 className="font-semibold">คู่เทียบ — คัดลอกรายการสินค้าลงฟอร์ม Excel ของบริษัทอื่น</h2>
         <p className="text-sm text-slate-500">
-          1) เลือกแหล่งรายการสินค้า แล้วตรวจ/แก้ในตาราง 2) อัปโหลดฟอร์ม .xlsx ของแต่ละบริษัท ระบบจะใส่รายการ (เพิ่มแถวให้ถ้าไม่พอ) สุ่มราคาต่อหน่วย ± ตามช่วง % และคำนวณยอดรวม/VAT ให้ กดซ้ำเพื่อสุ่มใหม่
+          1) เลือกแหล่งรายการสินค้า แล้วตรวจ/แก้ในตาราง 2) อัปโหลดฟอร์ม .xlsx ของแต่ละบริษัท ระบบจะใส่รายการ (เพิ่มแถวให้ถ้าไม่พอ) บวกราคาต่อหน่วยของแต่ละรายการแบบสุ่มตามช่วง % แล้วปัดขึ้นเป็นหลักร้อย ใส่วันที่/โครงการ และคำนวณยอดรวม/VAT ให้ กดซ้ำเพื่อสุ่มใหม่
         </p>
       </div>
 
@@ -106,18 +117,36 @@ export default function CompareFill({ initialLines, sources }: { initialLines?: 
           </label>
         </div>
         {mode === "quote" && sources?.length ? (
-          <select className="input" defaultValue="" onChange={(e) => setRows(toRows(sources.find((s) => s.id === e.target.value)?.lines ?? []))}>
+          <select className="input" defaultValue="" onChange={(e) => {
+            const src = sources.find((s) => s.id === e.target.value);
+            setRows(toRows(src?.lines ?? []));
+            applyMeta(src?.meta);
+          }}>
             <option value="" disabled>— เลือกใบเสนอราคา —</option>
             {sources.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
           </select>
         ) : mode === "quote" && initialLines ? (
-          <button type="button" className="btn-ghost text-sm" onClick={() => setRows(toRows(initialLines))}>↺ ใช้รายการจากใบเสนอราคานี้</button>
+          <button type="button" className="btn-ghost text-sm" onClick={() => {
+            setRows(toRows(initialLines));
+            applyMeta(initialMeta);
+          }}>↺ ใช้รายการจากใบเสนอราคานี้</button>
         ) : (
           <div className="space-y-1">
             <input type="file" accept=".xlsx,.pdf,.csv" className="input" disabled={!!busy} onChange={(e) => extract(e.target.files?.[0])} />
             <p className="text-xs text-slate-500">แม่นยำที่สุด: Excel (.xlsx) · PDF ต้องเป็นไฟล์ที่สร้างจากโปรแกรม (ไม่ใช่ภาพสแกน) · ต้องมีหัวตาราง เช่น รายการ / จำนวน / ราคาต่อหน่วย</p>
           </div>
         )}
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-[14rem_1fr]">
+        <label className="text-sm">
+          วันที่
+          <ThaiDateInput value={date} onChange={setDate} className="input" />
+        </label>
+        <label className="text-sm">
+          โครงการ
+          <input className="input" value={project} onChange={(e) => setProject(e.target.value)} placeholder="ชื่อโครงการ" />
+        </label>
       </div>
 
       <div className="overflow-x-auto">
@@ -155,7 +184,7 @@ export default function CompareFill({ initialLines, sources }: { initialLines?: 
         <div className="flex flex-wrap items-end gap-3">
           <input type="file" accept=".xlsx" multiple className="input" onChange={(e) => setForms(Array.from(e.target.files ?? []))} />
           <label className="text-sm">
-            สุ่ม ± ต่ำสุด %
+            บวกเพิ่ม ต่ำสุด %
             <input type="number" step="0.1" min="0" max="50" value={min} onChange={(e) => setMin(e.target.value)} className="input ml-1 w-20" />
           </label>
           <label className="text-sm">

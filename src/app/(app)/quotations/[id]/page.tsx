@@ -67,7 +67,15 @@ export default async function QuotationPage({
           }}
         />
       </div>
-      {q.status !== "draft" && <CompareFill initialLines={q.lines as QuoteLine[]} />}
+      {q.status !== "draft" && (
+        <CompareFill
+          initialLines={q.lines as QuoteLine[]}
+          initialMeta={{
+            date: String(q.quote_date ?? "").slice(0, 10),
+            project: q.project_label ?? (q.projects as unknown as { name: string } | null)?.name ?? "",
+          }}
+        />
+      )}
     </section>
   );
 }

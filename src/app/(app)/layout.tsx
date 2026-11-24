@@ -41,6 +41,7 @@ export default async function AppLayout({
         { href: "/invoices", label: t.taxInvoices },
         { href: "/quotations", label: t.quotation },
         { href: "/receipts", label: t.receipt },
+        ...(manager ? [{ href: "/quotations/compare", label: t.dash.compare }] : []),
       ],
     },
     {
