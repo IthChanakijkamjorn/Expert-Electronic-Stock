@@ -55,7 +55,7 @@ export const fileNameOf = (path: string) => path.split("/").pop()!.replace(/^\d+
 export async function syncProductToWebsite(supabase: Supabase, productId: string): Promise<WebsiteResult> {
   const { data: p, error } = await supabase
     .from("products")
-    .select("id, name:display_name, brand, category, sub_category, description, featured, at_a_glance, specifications, image_path, website_datasheet_id, on_website, active, sanity_id, website_synced")
+    .select("id, name:display_name, brand, model, category, sub_category, description, featured, at_a_glance, specifications, image_path, website_datasheet_id, on_website, active, sanity_id, website_synced")
     .eq("id", productId)
     .single();
   if (error || !p) throw new Error(error?.message ?? "not found");
@@ -67,18 +67,24 @@ export async function syncProductToWebsite(supabase: Supabase, productId: string
     return "removed";
   }
 
-  const sanityId = p.sanity_id ?? `product-${slugify(p.name)}`;
+  let sanityId = p.sanity_id ?? `product-${slugify(p.name)}`;
   if (!p.sanity_id) {
     let { error: e } = await supabase.from("products").update({ sanity_id: sanityId }).eq("id", p.id);
     if (e?.code === "23505") {
       // A removed product (e.g. replaced on import with a new Model) hands its website page over.
-      const { data: holder } = await supabase.from("products").select("id, active").eq("sanity_id", sanityId).maybeSingle();
+      const { data: holder } = await supabase.from("products").select("id, active, display_name").eq("sanity_id", sanityId).maybeSingle();
       if (holder && !holder.active) {
         await supabase.from("products").update({ sanity_id: null, website_synced: null }).eq("id", holder.id);
         ({ error: e } = await supabase.from("products").update({ sanity_id: sanityId }).eq("id", p.id));
+      } else if (holder) {
+        // Two active products with the same name: this one gets its own page named after Brand + Model.
+        sanityId = `product-${slugify(`${p.brand ?? ""} ${p.model ?? p.id}`)}`;
+        ({ error: e } = await supabase.from("products").update({ sanity_id: sanityId }).eq("id", p.id));
+        if (e?.code === "23505") throw new Error(`website id ${sanityId} is already used by another product`);
       }
+      if (e?.code === "23505") throw new Error(`website id ${sanityId} is already used by "${holder?.display_name ?? "another product"}"`);
     }
-    if (e) throw new Error(e.code === "23505" ? `another product already uses website id ${sanityId}` : e.message);
+    if (e) throw new Error(e.message);
   }
 
   const { data: sheet } = p.website_datasheet_id
@@ -116,7 +122,7 @@ export async function syncProductToWebsite(supabase: Supabase, productId: string
   // Only take files off the website that this app put there.
   const unset = [!p.image_path && synced.image && "image", !sheet && synced.datasheet && "datasheet"].filter(Boolean);
   await mutate([
-    { createIfNotExists: { _id: sanityId, _type: "product", name: p.name, slug: { _type: "slug", current: slugify(p.name) } } },
+    { createIfNotExists: { _id: sanityId, _type: "product", name: p.name, slug: { _type: "slug", current: sanityId.replace(/^product-/, "") } } },
     { patch: { id: sanityId, set: fields } },
     ...(unset.length ? [{ patch: { id: sanityId, unset } }] : []),
   ]);
