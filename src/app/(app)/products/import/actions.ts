@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import readXlsxFile from "read-excel-file/node";
 import { createClient } from "@/lib/supabase/server";
 import { getRole } from "@/lib/role";
+import type { SpecTab } from "@/lib/website";
 
 const REPO = "IthChanakijkamjorn/studio";
 const BRANCH = "main";
@@ -19,15 +20,45 @@ async function guard() {
 
 export type ImportItem = { id: string; brand: string; name: string; image: string; datasheet: string };
 
+// Files starting with "_" (e.g. _TEMPLATE_products.xlsx) are not imported.
 export async function listSheets(): Promise<string[]> {
   await guard();
   const res = await fetch(`https://api.github.com/repos/${REPO}/git/trees/${BRANCH}?recursive=1`, { cache: "no-store" });
   if (!res.ok) throw new Error("github");
   const json = (await res.json()) as { tree: { path: string }[] };
-  return json.tree.map((n) => n.path).filter((p) => p.startsWith(`${BASE}/`) && p.endsWith(".xlsx") && !p.slice(BASE.length + 1).includes("/"));
+  return json.tree
+    .map((n) => n.path)
+    .filter((p) => {
+      const file = p.slice(BASE.length + 1);
+      return p.startsWith(`${BASE}/`) && p.endsWith(".xlsx") && !file.includes("/") && !file.startsWith("_");
+    });
 }
 
 const cell = (v: unknown) => (v == null ? "" : String(v).trim());
+const key = (h: unknown) => cell(h).toLowerCase().replace(/[^a-z0-9]/g, "");
+
+// Blank -> undefined, so "not filled in" can be told apart from "no".
+const yesNo = (v: unknown): boolean | undefined => {
+  if (typeof v === "boolean") return v;
+  const s = cell(v).toLowerCase();
+  if (!s) return undefined;
+  return ["true", "yes", "y", "1", "x", "✓"].includes(s);
+};
+
+const count = (v: unknown) => {
+  const n = Math.floor(Number(cell(v)));
+  return Number.isFinite(n) && n > 0 ? n : 0;
+};
+
+// Reads a sheet by its header row; column order and spelling ("Main-Category", "main category") do not matter.
+function table(data: unknown[][] | undefined) {
+  if (!data?.length) return null;
+  const cols = data[0].map(key);
+  return data.slice(1).map((r) => (k: string) => {
+    const i = cols.indexOf(k);
+    return i < 0 ? undefined : r[i];
+  });
+}
 
 // "BOSE AM40.png" -> "AM40"
 const modelFromFile = (file: string, brand: string) => {
@@ -45,37 +76,82 @@ export async function importSheet(path: string): Promise<SheetResult> {
     const res = await fetch(raw(path), { cache: "no-store" });
     if (!res.ok) throw new Error(`download ${res.status}`);
     const sheets = await readXlsxFile(Buffer.from(await res.arrayBuffer()));
-    const rows = sheets[0].data.slice(1);
+    const byName = (n: string) => sheets.find((s) => key(s.sheet) === key(n))?.data;
+    const productData = byName("Products") ?? sheets[0].data;
+    const products = table(productData);
+    if (!products) throw new Error("no Products sheet");
+    const hasCol = (k: string) => productData[0].map(key).includes(k);
+    const glance = table(byName("At-a-glance"));
+    const specs = table(byName("Specifications"));
 
-    const supabase = await createClient();
-    const wanted = rows
+    const forProduct = (name: string) => (row: (k: string) => unknown) => cell(row("productname")).toLowerCase() === name.toLowerCase();
+    const glanceOf = (name: string) => glance!.filter(forProduct(name)).map((r) => cell(r("bullets"))).filter(Boolean);
+    const specsOf = (name: string) => {
+      const tabs: SpecTab[] = [];
+      for (const r of specs!.filter(forProduct(name))) {
+        const label = cell(r("label"));
+        const value = cell(r("value"));
+        if (!label || !value) continue;
+        const tabName = cell(r("tabname"));
+        let tab = tabs.find((t) => t.tabName === tabName);
+        if (!tab) tabs.push((tab = { tabName, rows: [] }));
+        tab.rows.push({ label, value });
+      }
+      return tabs;
+    };
+
+    const wanted = products
       .map((r) => ({
-        name: cell(r[0]),
-        brand: cell(r[1]),
-        main: cell(r[2]),
-        sub: cell(r[3]),
-        description: cell(r[4]),
-        image: cell(r[6]),
-        datasheet: cell(r[7]),
+        name: cell(r("name")),
+        brand: cell(r("brand")),
+        model: cell(r("model")),
+        main: cell(r("maincategory") ?? r("category")),
+        sub: cell(r("subcategory")),
+        description: cell(r("description")),
+        featured: yesNo(r("featured")),
+        image: cell(r("image")),
+        datasheet: cell(r("datasheet")),
+        website: yesNo(r("website")),
+        unit: cell(r("unit")),
+        supplier: cell(r("supplier")),
+        minStock: cell(r("minstock")),
+        openingStock: count(r("openingstock")),
       }))
       .filter((r) => r.name && r.brand);
+
+    const supabase = await createClient();
     const brands = [...new Set(wanted.map((w) => w.brand))];
     const { data: existing } = await supabase.from("products").select("id, name, model, brand").in("brand", brands).limit(5000);
     const pool = [...(existing ?? [])];
 
     for (const w of wanted) {
-      const model = modelFromFile(w.image || w.datasheet, w.brand);
+      const model = w.model || modelFromFile(w.image || w.datasheet, w.brand);
       const hit = pool.find(
         (p) =>
           p.brand?.toLowerCase() === w.brand.toLowerCase() &&
           ((model && (p.model ?? "").toLowerCase() === model.toLowerCase()) || p.name.toLowerCase() === w.name.toLowerCase()),
       );
-      const fields = { category: w.main || null, sub_category: w.sub || null, description: w.description || null };
+      const fields: Record<string, unknown> = {
+        name: w.name,
+        category: w.main || null,
+        sub_category: w.sub || null,
+        description: w.description || null,
+        ...(hasCol("featured") && { featured: w.featured ?? false }),
+        ...(glance && { at_a_glance: glanceOf(w.name) }),
+        ...(specs && { specifications: specsOf(w.name) }),
+        ...(w.unit && { unit: /^pcs?$/i.test(w.unit) ? "ชิ้น" : w.unit }),
+        ...(w.supplier && { supplier: w.supplier }),
+        ...(w.minStock && { min_stock: count(w.minStock) }),
+      };
+      // An empty Website cell means "show it"; only an explicit no hides it.
+      if (hasCol("website") || !hit) fields.on_website = w.website ?? true;
+
       let id = hit?.id;
       if (hit) {
-        const patch = { ...fields, ...(model && !hit.model ? { model } : {}) };
+        const setModel = !!model && (w.model ? hit.model !== model : !hit.model);
+        const patch = { ...fields, ...(setModel ? { model } : {}) };
         let { error } = await supabase.from("products").update(patch).eq("id", hit.id);
-        if (error && "model" in patch) {
+        if (error && setModel) {
           out.warnings.push(`${w.name}: model "${model}" already used`);
           ({ error } = await supabase.from("products").update(fields).eq("id", hit.id));
         }
@@ -83,9 +159,10 @@ export async function importSheet(path: string): Promise<SheetResult> {
           out.warnings.push(`${w.name}: ${error.message}`);
           continue;
         }
+        if (setModel) hit.model = model;
         out.updated++;
       } else {
-        const row = { name: w.name, brand: w.brand, unit: "ชิ้น", ...fields };
+        const row = { brand: w.brand, unit: "ชิ้น", ...fields };
         let { data, error } = await supabase.from("products").insert({ ...row, model: model || null }).select("id").single();
         if (error && model) {
           out.warnings.push(`${w.name}: model "${model}" already used`);
@@ -96,8 +173,15 @@ export async function importSheet(path: string): Promise<SheetResult> {
           continue;
         }
         id = data.id;
-        pool.push({ id, name: w.name, model: model || null, brand: w.brand });
+        pool.push({ id: data.id, name: w.name, model: model || null, brand: w.brand });
         out.created++;
+        // Opening stock only applies to new products; later changes go through stock movements.
+        if (w.openingStock) {
+          const { error: e } = await supabase
+            .from("stock_movements")
+            .insert({ product_id: data.id, quantity: w.openingStock, type: "count_correction", comment: "ยอดยกมา (นำเข้าจาก Excel)" });
+          if (e) out.warnings.push(`${w.name}: opening stock ${e.message}`);
+        }
       }
       out.items.push({ id: id!, brand: w.brand, name: w.name, image: w.image, datasheet: w.datasheet });
     }
@@ -110,22 +194,24 @@ export async function importSheet(path: string): Promise<SheetResult> {
 
 const safe = (s: string) => s.replace(/[^A-Za-z0-9._-]+/g, "_");
 const MIME: Record<string, string> = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", pdf: "application/pdf" };
+type AssetState = "added" | "skipped" | "missing";
 
 async function download(kind: "images" | "datasheets", brand: string, file: string) {
   const res = await fetch(raw(`${BASE}/${kind}/${brand}/${file}`), { cache: "no-store" });
   return res.ok ? Buffer.from(await res.arrayBuffer()) : null;
 }
 
-// Copies one product's image and datasheet from the repo into storage; existing ones are skipped.
-export async function importAssets(item: ImportItem): Promise<{ image: "added" | "skipped" | "missing"; datasheet: "added" | "skipped" | "missing" }> {
+// Copies one product's image and datasheet from the repo into storage. The Excel file wins:
+// a different image file name replaces the photo, and the named datasheet becomes the one shown on the website.
+export async function importAssets(item: ImportItem): Promise<{ image: AssetState; datasheet: AssetState }> {
   await guard();
   const supabase = await createClient();
-  const out = { image: "missing", datasheet: "missing" } as { image: "added" | "skipped" | "missing"; datasheet: "added" | "skipped" | "missing" };
+  const out: { image: AssetState; datasheet: AssetState } = { image: "missing", datasheet: "missing" };
   const ext = (f: string) => f.split(".").pop()?.toLowerCase() ?? "";
 
   if (item.image) {
     const { data: p } = await supabase.from("products").select("image_path").eq("id", item.id).single();
-    if (p?.image_path) out.image = "skipped";
+    if (p?.image_path?.endsWith(`-${safe(item.image)}`)) out.image = "skipped";
     else {
       const buf = await download("images", item.brand, item.image);
       if (buf) {
@@ -133,6 +219,7 @@ export async function importAssets(item: ImportItem): Promise<{ image: "added" |
         const up = await supabase.storage.from("files").upload(path, buf, { contentType: MIME[ext(item.image)] ?? "application/octet-stream" });
         if (!up.error) {
           await supabase.from("products").update({ image_path: path }).eq("id", item.id);
+          if (p?.image_path) await supabase.storage.from("files").remove([p.image_path]);
           out.image = "added";
         }
       }
@@ -140,18 +227,25 @@ export async function importAssets(item: ImportItem): Promise<{ image: "added" |
   }
   if (item.datasheet) {
     const { data: f } = await supabase.from("product_files").select("id").eq("product_id", item.id).eq("file_name", item.datasheet).limit(1);
-    if (f?.length) out.datasheet = "skipped";
+    let fileId: string | undefined = f?.[0]?.id;
+    if (fileId) out.datasheet = "skipped";
     else {
       const buf = await download("datasheets", item.brand, item.datasheet);
       if (buf) {
         const path = `products/${item.id}/${Date.now()}-${safe(item.datasheet)}`;
         const up = await supabase.storage.from("files").upload(path, buf, { contentType: MIME[ext(item.datasheet)] ?? "application/octet-stream" });
         if (!up.error) {
-          await supabase.from("product_files").insert({ product_id: item.id, storage_path: path, file_name: item.datasheet, size_bytes: buf.length });
+          const { data: row } = await supabase
+            .from("product_files")
+            .insert({ product_id: item.id, storage_path: path, file_name: item.datasheet, size_bytes: buf.length })
+            .select("id")
+            .single();
+          fileId = row?.id;
           out.datasheet = "added";
         }
       }
     }
+    if (fileId) await supabase.from("products").update({ website_datasheet_id: fileId }).eq("id", item.id);
   }
   return out;
 }

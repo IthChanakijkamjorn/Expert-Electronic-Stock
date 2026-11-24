@@ -12,6 +12,7 @@ import { ImageUploader } from "@/components/ImageUploader";
 import { BrandLogo } from "@/components/BrandLogo";
 import { setProductImage } from "../image-actions";
 import { setPrices } from "../price-actions";
+import { saveWebsiteSettings } from "../website-actions";
 import { addProductFile, deleteProduct, deleteProductFile, updateProductDetails } from "../file-actions";
 
 const formatSize = (n: number | null) =>
@@ -51,6 +52,9 @@ export default async function ProductFilesPage({
     : { data: [] };
   const { data: price } = canManage
     ? await supabase.from("product_prices").select("cost, sell_price").eq("product_id", productId).maybeSingle()
+    : { data: null };
+  const { data: web } = canManage
+    ? await supabase.from("products").select("on_website, featured, website_datasheet_id, website_synced").eq("id", productId).single()
     : { data: null };
   const { data: brandRow } = product.brand
     ? await supabase.from("brands").select("logo_path").eq("name", product.brand).maybeSingle()
@@ -149,6 +153,37 @@ export default async function ProductFilesPage({
             </label>
             <button className="btn">{t.save}</button>
           </form>
+          {web && (
+            <>
+              <h2 className="text-xl font-semibold text-navy">
+                {t.website}
+                {web.on_website && web.website_synced && <span className="pill ml-2 bg-emerald-100 align-middle text-emerald-700">✓</span>}
+              </h2>
+              <form action={saveWebsiteSettings.bind(null, productId)} className="card flex flex-col gap-3 p-4">
+                <p className="text-sm text-muted">{t.websiteHelp}</p>
+                <div className="flex flex-wrap items-end gap-5">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" name="on_website" defaultChecked={web.on_website} />
+                    {t.showOnWebsite}
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" name="featured" defaultChecked={!!web.featured} />
+                    {t.featuredOnWebsite}
+                  </label>
+                  <label className="text-sm">
+                    {t.websiteDatasheet}
+                    <select name="datasheet" defaultValue={web.website_datasheet_id ?? ""} className="input mt-1">
+                      <option value="">{t.noDatasheet}</option>
+                      {(files ?? []).map((f) => (
+                        <option key={f.id} value={f.id}>{f.file_name}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <button className="btn">{t.saveAndPublish}</button>
+                </div>
+              </form>
+            </>
+          )}
         </>
       )}
       <h2 className="text-xl font-semibold text-navy">{t.files}</h2>

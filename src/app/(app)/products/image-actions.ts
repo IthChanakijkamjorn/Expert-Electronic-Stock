@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { syncQuietly } from "@/lib/website";
 
 export async function setProductImage(productId: string, path: string) {
   if (!path.startsWith(`images/products/${productId}/`)) throw new Error("bad path");
@@ -10,6 +11,7 @@ export async function setProductImage(productId: string, path: string) {
   const { error } = await supabase.from("products").update({ image_path: path }).eq("id", productId);
   if (error) throw new Error(error.message);
   if (old?.image_path) await supabase.storage.from("files").remove([old.image_path]);
+  await syncQuietly(supabase, productId);
   revalidatePath("/products", "layout");
 }
 

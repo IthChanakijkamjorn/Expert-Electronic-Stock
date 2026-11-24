@@ -13,6 +13,20 @@ Private stock-management app (Next.js + Supabase). Thai by default, English avai
 ## Import existing products (one-off)
 `node scripts/import-sanity-products.mjs > import-products.sql`, then paste the file into the Supabase SQL editor. Safe to re-run.
 
+## Products and the website
+The back office is the only place products are managed; the website (Sanity) gets a copy.
+
+1. Fill in `<BRAND>_products.xlsx` in the `studio` repo's `import/` folder (copy `import/_TEMPLATE_products.xlsx`; its
+   "How to use" sheet explains every column), and put photos/PDFs in `import/images/<Brand>/` and `import/datasheets/<Brand>/`.
+2. Push, then Products → Import → Start import. Products, photos and datasheets are added or updated, and every product
+   with Website = TRUE (or empty) is pushed to the website; Website = FALSE removes it from the website.
+
+Re-importing is safe: products match on Brand + Model (or Name), and unchanged products are not re-sent, so the website
+is only redeployed for real changes. Editing a product, its photo or its files in the back office also updates the website;
+the product page has a Website box for show/hide, featured and which datasheet is public.
+Needs `SANITY_WRITE_TOKEN` (Editor token) and migration `0046_website_sync.sql`. Do not edit products in Sanity Studio:
+the next import overwrites those changes.
+
 ## Backups
 
 `.github/workflows/backup.yml` runs weekly on Saturday 09:00 Thailand time (and on demand from the Actions tab). It dumps the database, downloads the
