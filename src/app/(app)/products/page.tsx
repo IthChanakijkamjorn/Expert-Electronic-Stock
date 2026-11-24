@@ -51,7 +51,7 @@ export default async function ProductsPage({
   return (
     <section className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-semibold">{t.products}</h1>
+        <h1 className="page-title">{t.products}</h1>
         {(role === "admin" || role === "manager") && (
           <span className="flex gap-2">
             <a href="/export/products" className="btn-ghost">⬇ {t.exportCsv}</a>

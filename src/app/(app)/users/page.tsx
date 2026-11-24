@@ -22,7 +22,7 @@ export default async function UsersPage() {
   };
   return (
     <section className="flex flex-col gap-6">
-      <h1 className="text-3xl font-semibold">{t.users}</h1>
+      <h1 className="page-title">{t.users}</h1>
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">
         <div className="card p-4">
           <ul className="divide-y divide-[#ece8f2] text-sm">

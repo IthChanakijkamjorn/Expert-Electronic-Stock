@@ -13,14 +13,20 @@ export function ProductPicker({
   placeholder,
   emptyText,
   newText,
+  onSelect,
 }: {
   products: Item[];
   placeholder: string;
   emptyText: string;
   newText?: string;
+  onSelect?: (p: Item | null) => void;
 }) {
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<Item | null>(null);
+  const [selected, setSelectedState] = useState<Item | null>(null);
+  const setSelected = (p: Item | null) => {
+    setSelectedState(p);
+    onSelect?.(p);
+  };
   const [open, setOpen] = useState(false);
   const [extra, setExtra] = useState<Item[]>([]);
   const [busy, setBusy] = useState(false);
@@ -69,7 +75,7 @@ export function ProductPicker({
         autoComplete="off"
       />
       {open && (
-        <ul className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-zinc-300 bg-white shadow-lg">
+        <ul className="pop-in absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-xl border border-[#dcd8e6] bg-white py-1 shadow-[0_18px_40px_rgba(0,0,77,0.14)]">
           {matches.length === 0 && <li className="px-3 py-2 text-muted">{emptyText}</li>}
           {canCreate && (
             <li>
@@ -89,7 +95,7 @@ export function ProductPicker({
             <li key={p.id}>
               <button
                 type="button"
-                className="w-full px-3 py-2 text-left hover:bg-zinc-100"
+                className="w-full px-3 py-2 text-left transition-colors hover:bg-[#f3f2fb]"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   setSelected(p);

@@ -43,7 +43,7 @@ export default async function TowerPage({
       <div>
         <Link href={`/projects/${orgId}`} className="text-sm text-muted hover:underline">{t.back}</Link>
         <p className="eyebrow mt-3">{orgName}</p>
-        <h1 className="text-3xl font-semibold">{tower.name}</h1>
+        <h1 className="page-title">{tower.name}</h1>
       </div>
       {byYear.size ? (
         [...byYear].map(([year, list]) => (

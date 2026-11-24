@@ -15,7 +15,7 @@ export default async function AuditPage() {
   const names = new Map((people ?? []).map((p) => [p.id, p.full_name]));
   return (
     <section className="flex flex-col gap-6">
-      <h1 className="text-3xl font-semibold">{t.auditLog}</h1>
+      <h1 className="page-title">{t.auditLog}</h1>
       <div className="card overflow-x-auto p-4">
         <table className="data-table w-full text-left text-sm">
           <thead className="border-b border-zinc-300">

@@ -12,7 +12,7 @@ export default async function PlansPage() {
   return (
     <section className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-semibold">{t.floorPlans}</h1>
+        <h1 className="page-title">{t.floorPlans}</h1>
         {(role === "admin" || role === "manager") && <Link href="/floorplans/new" className="btn">{t.fpNew}</Link>}
       </div>
       <div className="card overflow-x-auto p-4">

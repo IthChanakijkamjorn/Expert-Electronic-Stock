@@ -24,7 +24,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   return (
     <section className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-semibold">{t.taxInvoices}</h1>
+        <h1 className="page-title">{t.taxInvoices}</h1>
         <Link href="/invoices/new" className="btn">{t.newTaxInvoice}</Link>
       </div>
       <DraftList rows={drafts} base="/invoices" kind="invoices" t={t} lang={lang} />

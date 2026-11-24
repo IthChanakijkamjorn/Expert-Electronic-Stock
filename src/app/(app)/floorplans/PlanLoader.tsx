@@ -33,7 +33,7 @@ export async function PlanLoader({
 
   return (
     <section className="flex flex-col gap-6">
-      <h1 className="text-3xl font-semibold">{plan ? plan.name : t.fpNew}</h1>
+      <h1 className="page-title">{plan ? plan.name : t.fpNew}</h1>
       <PlanEditor
         t={t}
         id={plan?.id ?? null}

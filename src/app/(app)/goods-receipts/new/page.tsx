@@ -14,7 +14,7 @@ export default async function NewGoodsReceiptPage() {
   ]);
   return (
     <section className="flex flex-col gap-6">
-      <h1 className="text-3xl font-semibold">{t.newGoodsReceipt}</h1>
+      <h1 className="page-title">{t.newGoodsReceipt}</h1>
       <GoodsReceiptForm t={t} products={products ?? []} />
     </section>
   );

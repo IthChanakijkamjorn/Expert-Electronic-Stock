@@ -18,7 +18,7 @@ export default async function StockListPage({ searchParams }: { searchParams: Pr
   return (
     <section className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-semibold">{onlyLow ? t.lowStockTitle : t.stockList}</h1>
+        <h1 className="page-title">{onlyLow ? t.lowStockTitle : t.stockList}</h1>
         <div className="flex flex-wrap gap-2">
           <Link href={onlyLow ? "/stock-list" : "/stock-list?low=1"} className="btn-ghost">{onlyLow ? t.showAllProducts : t.showLowOnly}</Link>
           <a href={onlyLow ? "/export/products?low=1" : "/export/products"} className="btn-ghost">⬇ {t.exportCsv}</a>

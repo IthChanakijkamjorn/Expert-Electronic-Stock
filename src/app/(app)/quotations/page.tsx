@@ -21,7 +21,7 @@ export default async function QuotationsPage({ searchParams }: { searchParams: P
   return (
     <section className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-semibold">{t.quotation}</h1>
+        <h1 className="page-title">{t.quotation}</h1>
         <div className="flex flex-wrap gap-2">
           <Link href="/quotations/compare" className="btn-ghost">คู่เทียบ</Link>
           <Link href="/quotations/new" className="btn">{t.newQuotation}</Link>

@@ -69,7 +69,7 @@ export default async function BrandPage({
           <BrandLogo name={title ?? t.noBrand} url={logoUrl} size={64} />
           <div>
             <p className="eyebrow">{t.brand}</p>
-            <h1 className="text-3xl font-semibold">{title ?? t.noBrand}</h1>
+            <h1 className="page-title">{title ?? t.noBrand}</h1>
           </div>
           {canManage && title && (
             <ImageUploader

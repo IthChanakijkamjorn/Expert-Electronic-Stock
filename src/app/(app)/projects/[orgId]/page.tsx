@@ -41,7 +41,7 @@ export default async function OrganizationPage({
     <>
       <Link href="/projects" className="text-sm text-muted hover:underline">{t.back}</Link>
       <p className="eyebrow mt-3">{t.organization}</p>
-      <h1 className="text-3xl font-semibold">{org.name}</h1>
+      <h1 className="page-title">{org.name}</h1>
     </>
   );
 

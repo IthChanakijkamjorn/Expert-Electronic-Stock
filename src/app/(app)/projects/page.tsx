@@ -27,7 +27,7 @@ export default async function ProjectsPage() {
   return (
     <section className={canManage ? "grid gap-8 lg:grid-cols-[65fr_35fr]" : ""}>
       <EditableGrid
-        heading={<h1 className="text-3xl font-semibold">{t.organizations}</h1>}
+        heading={<h1 className="page-title">{t.organizations}</h1>}
         items={(orgs ?? []).map((o) => ({
           id: o.id,
           href: `/projects/${o.id}`,

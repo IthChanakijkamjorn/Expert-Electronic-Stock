@@ -49,7 +49,7 @@ export async function ReceiptEditor({ id }: { id?: string }) {
   }
   return (
     <section className="flex flex-col gap-6">
-      <h1 className="text-3xl font-semibold print:hidden">{id ? t.docEdit : t.newReceipt}</h1>
+      <h1 className="page-title print:hidden">{id ? t.docEdit : t.newReceipt}</h1>
       <ReceiptForm
         t={t}
         defaultCompany={await loadCompanyDefault("receipt")}

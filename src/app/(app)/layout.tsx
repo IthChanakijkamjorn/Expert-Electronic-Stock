@@ -69,18 +69,18 @@ export default async function AppLayout({
             </span>
           </Link>
           <div className="contents lg:flex lg:items-center lg:gap-6">
-          <nav className="order-last flex w-full flex-wrap gap-x-6 gap-y-1 text-[11px] font-semibold uppercase tracking-[0.12em] lg:order-none lg:w-auto lg:flex-nowrap lg:whitespace-nowrap lg:gap-x-6">
+          <nav className="order-last flex w-full flex-wrap gap-x-6 gap-y-1 text-[13px] font-semibold tracking-[0.03em] lg:order-none lg:w-auto lg:flex-nowrap lg:whitespace-nowrap lg:gap-x-6">
             {nav.map((n) => (
               <div key={n.label} className="group relative">
-                <Link href={n.href} className="block py-1 text-white/80 hover:text-white">
+                <Link href={n.href} className="nav-link">
                   {n.label}
                   {n.children && " ▾"}
                 </Link>
                 {n.children && (
-                  <div className="absolute left-0 top-full z-50 hidden min-w-44 pt-1 group-hover:block">
+                  <div className="nav-menu">
                     <div className="flex flex-col rounded-lg bg-navy py-1 shadow-xl ring-1 ring-white/15">
                       {n.children.map((c) => (
-                        <Link key={c.href} href={c.href} className="whitespace-nowrap px-4 py-2 text-white/80 hover:bg-white/10 hover:text-white">
+                        <Link key={c.href} href={c.href} className="whitespace-nowrap px-4 py-2 text-white/80 transition-colors hover:bg-white/10 hover:pl-5 hover:text-white">
                           {c.label}
                         </Link>
                       ))}
@@ -91,10 +91,10 @@ export default async function AppLayout({
             ))}
           </nav>
           <div className="flex shrink-0 items-center gap-3 whitespace-nowrap">
-            <Link href="/account" className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/80 hover:text-white">{t.account}</Link>
+            <Link href="/account" className="text-[13px] font-semibold tracking-[0.03em] text-white/80 transition-colors hover:text-white">{t.account}</Link>
             <LangSwitch current={lang} />
             <form action={signOut}>
-              <button className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/80 hover:text-white">
+              <button className="text-[13px] font-semibold tracking-[0.03em] text-white/80 transition-colors hover:text-white">
                 {t.logout}
               </button>
             </form>

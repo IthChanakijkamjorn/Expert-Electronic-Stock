@@ -6,7 +6,7 @@ export default async function CadPage() {
   const th = lang === "th";
   return (
     <section className="flex flex-col gap-6">
-      <h1 className="text-3xl font-semibold">{th ? "แปลงรูปสินค้าเป็น CAD (DXF)" : "Product photo to CAD (DXF)"}</h1>
+      <h1 className="page-title">{th ? "แปลงรูปสินค้าเป็น CAD (DXF)" : "Product photo to CAD (DXF)"}</h1>
       <CadTracer th={th} />
     </section>
   );

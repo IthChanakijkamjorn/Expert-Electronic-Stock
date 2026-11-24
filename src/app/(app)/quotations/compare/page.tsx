@@ -25,7 +25,7 @@ export default async function ComparePage() {
   return (
     <section className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-semibold">คู่เทียบ</h1>
+        <h1 className="page-title">คู่เทียบ</h1>
         <Link href="/quotations" className="btn-ghost">← {t.quotation}</Link>
       </div>
       <CompareFill sources={sources} />

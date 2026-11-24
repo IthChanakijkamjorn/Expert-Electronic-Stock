@@ -20,7 +20,7 @@ export default async function GoodsReceiptsPage() {
   return (
     <section className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-semibold">{t.goodsReceived}</h1>
+        <h1 className="page-title">{t.goodsReceived}</h1>
         <Link href="/goods-receipts/new" className="btn">{t.newGoodsReceipt}</Link>
       </div>
       <div className="card overflow-x-auto p-4">

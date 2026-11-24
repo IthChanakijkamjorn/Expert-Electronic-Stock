@@ -75,7 +75,7 @@ export default async function DocumentsPage() {
   return (
     <section className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-semibold">{t.documents}</h1>
+        <h1 className="page-title">{t.documents}</h1>
         <p className="mt-1 text-muted">{t.documentsHelp}</p>
       </div>
       <div className="grid items-start gap-6 lg:grid-cols-3">

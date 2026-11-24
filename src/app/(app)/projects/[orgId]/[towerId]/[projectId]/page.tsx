@@ -151,7 +151,7 @@ export default async function ProjectPage({
         <p className="eyebrow mt-3">
           {tower.organizations.name} · {tower.name} · {project.year}
         </p>
-        <h1 className="text-3xl font-semibold">{project.name}</h1>
+        <h1 className="page-title">{project.name}</h1>
         {canManage && (
           <div className="mt-3 flex flex-wrap items-center gap-4">
             <RenameForm initial={project.name} action={renameProject.bind(null, projectId)} labels={renameLabels} />

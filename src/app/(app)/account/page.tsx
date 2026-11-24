@@ -18,7 +18,7 @@ export default async function AccountPage() {
   }
   return (
     <section className="flex max-w-xl flex-col gap-4">
-      <h1 className="text-3xl font-semibold">{t.account}</h1>
+      <h1 className="page-title">{t.account}</h1>
       <div className="card flex flex-col gap-3 p-6">
         <h2 className="text-xl font-semibold text-navy">{t.twoFactor}</h2>
         <p className="text-muted">{t.twoFactorHelp}</p>
