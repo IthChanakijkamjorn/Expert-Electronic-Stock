@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import readXlsxFile from "read-excel-file/node";
 import { createClient } from "@/lib/supabase/server";
 import { getRole } from "@/lib/role";
-import { fileNameOf, type SpecTab } from "@/lib/website";
+import { fileNameOf, syncQuietly, type SpecTab } from "@/lib/website";
+import { logAudit } from "@/lib/audit";
 
 const REPO = "IthChanakijkamjorn/studio";
 const BRANCH = "main";
@@ -151,7 +152,9 @@ async function importWorkbook(buf: Buffer): Promise<SheetResult> {
       const hit =
         sameBrand.find((p) => lc(p.model) === lc(model)) ??
         (w.name ? sameBrand.find((p) => (legacy || !p.model) && lc(p.name) === lc(w.name)) : undefined);
+      // Being in the file brings back a product that was removed earlier.
       const fields: Record<string, unknown> = {
+        active: true,
         name: w.name || null,
         category: w.main || null,
         sub_category: w.sub || null,
@@ -268,4 +271,30 @@ export async function importAssets(item: ImportItem): Promise<{ image: AssetStat
     if (fileId) await supabase.from("products").update({ website_datasheet_id: fileId }).eq("id", item.id);
   }
   return out;
+}
+
+// "Remove products not in this file": active products whose id is not in keep. Admin only, like deleting one product.
+export async function listMissing(keep: string[]): Promise<{ id: string; name: string; stock: number }[]> {
+  if ((await getRole()) !== "admin") throw new Error("forbidden");
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("product_stock").select("id, name:display_name, stock").eq("active", true).limit(10000);
+  if (error) throw new Error(error.message);
+  const k = new Set(keep);
+  return (data ?? []).filter((p) => !k.has(p.id));
+}
+
+// Same as the product page's delete: hidden from the back office and the website, history (stock, projects, quotes) kept.
+export async function removeProducts(ids: string[]): Promise<number> {
+  if ((await getRole()) !== "admin") throw new Error("forbidden");
+  const supabase = await createClient();
+  let done = 0;
+  for (const id of ids) {
+    const { data } = await supabase.from("products").update({ active: false }).eq("id", id).select("display_name").maybeSingle();
+    if (!data) continue;
+    await logAudit("delete", "product", `${data.display_name} (Excel import)`);
+    await syncQuietly(supabase, id);
+    done++;
+  }
+  revalidatePath("/products", "layout");
+  return done;
 }
