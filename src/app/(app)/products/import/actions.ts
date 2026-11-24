@@ -144,6 +144,8 @@ async function importWorkbook(buf: Buffer): Promise<SheetResult> {
     const { data: existing } = await supabase.from("products").select("id, name, model, brand").in("brand", brands).limit(5000);
     const pool = [...(existing ?? [])];
     const lc = (v: string | null | undefined) => (v ?? "").trim().toLowerCase();
+    // Names match ignoring punctuation and spacing, so fixing "Flood Light/" to "Flood Light" still finds the product.
+    const nameKey = (v: string | null | undefined) => lc(v).replace(/[^\p{L}\p{M}\p{N}]+/gu, "");
 
     for (const w of wanted) {
       const { model } = w;
@@ -151,7 +153,7 @@ async function importWorkbook(buf: Buffer): Promise<SheetResult> {
       const sameBrand = pool.filter((p) => lc(p.brand) === lc(w.brand));
       const hit =
         sameBrand.find((p) => lc(p.model) === lc(model)) ??
-        (w.name ? sameBrand.find((p) => (legacy || !p.model) && lc(p.name) === lc(w.name)) : undefined);
+        (w.name ? sameBrand.find((p) => (legacy || !p.model) && nameKey(p.name) === nameKey(w.name)) : undefined);
       // Being in the file brings back a product that was removed earlier.
       const fields: Record<string, unknown> = {
         active: true,
