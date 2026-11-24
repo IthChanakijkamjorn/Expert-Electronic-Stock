@@ -21,7 +21,7 @@ export default async function StockListPage({ searchParams }: { searchParams: Pr
         <h1 className="page-title">{onlyLow ? t.lowStockTitle : t.stockList}</h1>
         <div className="flex flex-wrap gap-2">
           <Link href={onlyLow ? "/stock-list" : "/stock-list?low=1"} className="btn-ghost">{onlyLow ? t.showAllProducts : t.showLowOnly}</Link>
-          <a href={onlyLow ? "/export/products?low=1" : "/export/products"} className="btn-ghost">⬇ {t.exportCsv}</a>
+          <a href={onlyLow ? "/export/products?low=1" : "/export/products"} className="btn-ghost">⬇ {t.exportExcel}</a>
         </div>
       </div>
       {low.length === 0 && <p className="text-muted">{onlyLow ? t.noLowStock : t.noItems}</p>}

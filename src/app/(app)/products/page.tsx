@@ -54,7 +54,7 @@ export default async function ProductsPage({
         <h1 className="page-title">{t.products}</h1>
         {(role === "admin" || role === "manager") && (
           <span className="flex gap-2">
-            <a href="/export/products" className="btn-ghost">⬇ {t.exportCsv}</a>
+            <a href="/export/products" className="btn-ghost">⬇ {t.exportExcel}</a>
             <Link href="/products/import" className="btn-ghost">⬆ {t.importProducts}</Link>
             <Link href="/products/new" className="btn">{t.addProduct}</Link>
           </span>
