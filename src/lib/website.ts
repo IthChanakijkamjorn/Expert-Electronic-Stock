@@ -45,7 +45,8 @@ async function uploadAsset(supabase: Supabase, kind: "images" | "files", path: s
   return { _type: kind === "images" ? "image" : "file", asset: { _type: "reference", _ref: document._id } };
 }
 
-const fileNameOf = (path: string) => path.split("/").pop()!.replace(/^\d+-/, "");
+// Storage keys are "<timestamp>-<name>" (import) or "<uuid>.<ext>" (upload); this gives the name part.
+export const fileNameOf = (path: string) => path.split("/").pop()!.replace(/^\d+-/, "");
 
 /**
  * Pushes one product to the website, or removes it when it is not listed (or deactivated).
