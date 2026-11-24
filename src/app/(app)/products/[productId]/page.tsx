@@ -31,7 +31,7 @@ export default async function ProductFilesPage({
 
   const { data: product } = await supabase
     .from("product_stock")
-    .select("id, name, model, brand, unit, stock, image_path, category, sub_category, description")
+    .select("id, name:display_name, raw_name:name, model, brand, unit, stock, image_path, category, sub_category, description")
     .eq("id", productId)
     .maybeSingle();
   if (!product) notFound();
@@ -125,11 +125,13 @@ export default async function ProductFilesPage({
             <details className="w-full">
               <summary className="btn-ghost inline-block cursor-pointer">✎ {t.editDetails}</summary>
               <form action={updateProductDetails.bind(null, productId)} className="mt-3 grid gap-3 sm:grid-cols-3">
-                <label className="text-sm">{t.brand}<input name="brand" defaultValue={product.brand ?? ""} className="input mt-1" /></label>
-                <label className="text-sm">{t.modelLabel}<input name="model" defaultValue={product.model ?? ""} className="input mt-1" /></label>
+                <label className="text-sm">{t.brand} *<input name="brand" required defaultValue={product.brand ?? ""} className="input mt-1" /></label>
+                <label className="text-sm">{t.modelLabel} *<input name="model" required defaultValue={product.model ?? ""} className="input mt-1" /></label>
+                <label className="text-sm">{t.name}<input name="name" defaultValue={product.raw_name ?? ""} placeholder={[product.brand, product.model].filter(Boolean).join(" ")} className="input mt-1" /></label>
                 <label className="text-sm">{t.category}<input name="category" defaultValue={product.category ?? ""} className="input mt-1" /></label>
                 <label className="text-sm">{t.subCategory}<input name="sub_category" defaultValue={product.sub_category ?? ""} className="input mt-1" /></label>
-                <label className="text-sm">{t.descriptionLabel}<input name="name" required defaultValue={product.name} className="input mt-1" /></label>
+                <label className="text-sm sm:col-span-3">{t.descriptionLabel}<textarea name="description" rows={5} defaultValue={product.description ?? ""} className="input mt-1" /></label>
+                <p className="text-xs text-muted sm:col-span-3">{t.nameHint}</p>
                 <button className="btn sm:col-span-3 sm:w-fit">{t.save}</button>
               </form>
             </details>

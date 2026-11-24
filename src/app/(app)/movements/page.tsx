@@ -20,7 +20,7 @@ export default async function MovementsPage({
   let filter: string | null = null;
   if (q) {
     const [{ data: ps }, { data: us }] = await Promise.all([
-      supabase.from("products").select("id").or(`name.ilike.%${q}%,model.ilike.%${q}%,brand.ilike.%${q}%`).limit(500),
+      supabase.from("products").select("id").or(`display_name.ilike.%${q}%,model.ilike.%${q}%,brand.ilike.%${q}%`).limit(500),
       supabase.from("profiles").select("id").ilike("full_name", `%${q}%`).limit(100),
     ]);
     const parts = [`comment.ilike.%${q}%`];
@@ -30,7 +30,7 @@ export default async function MovementsPage({
   }
   let movementsQuery = supabase
     .from("stock_movements")
-    .select("id, quantity, type, comment, created_at, created_by, products(name)", { count: "exact" })
+    .select("id, quantity, type, comment, created_at, created_by, products(name:display_name)", { count: "exact" })
     .order("created_at", { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
   if (filter) movementsQuery = movementsQuery.or(filter);
@@ -40,9 +40,9 @@ export default async function MovementsPage({
   const [{ data: products }, { data: movements, count }, { data: projects }, { data: receipts }] = await Promise.all([
     supabase
       .from("product_stock")
-      .select("id, name, model, brand, stock, unit")
+      .select("id, name:display_name, model, brand, stock, unit")
       .eq("active", true)
-      .order("name")
+      .order("display_name")
       .limit(1000),
     movementsQuery,
     supabase

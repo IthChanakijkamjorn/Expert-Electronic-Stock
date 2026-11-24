@@ -55,7 +55,7 @@ export const fileNameOf = (path: string) => path.split("/").pop()!.replace(/^\d+
 export async function syncProductToWebsite(supabase: Supabase, productId: string): Promise<WebsiteResult> {
   const { data: p, error } = await supabase
     .from("products")
-    .select("id, name, brand, category, sub_category, description, featured, at_a_glance, specifications, image_path, website_datasheet_id, on_website, active, sanity_id, website_synced")
+    .select("id, name:display_name, brand, category, sub_category, description, featured, at_a_glance, specifications, image_path, website_datasheet_id, on_website, active, sanity_id, website_synced")
     .eq("id", productId)
     .single();
   if (error || !p) throw new Error(error?.message ?? "not found");

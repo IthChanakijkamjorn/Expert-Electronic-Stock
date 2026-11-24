@@ -4,8 +4,8 @@ import ExcelJS from "exceljs";
 // and studio/import/_TEMPLATE_products.xlsx is generated from it. Keep all three in step.
 export const PRODUCT_COLUMNS = [
   ["Brand", 12, "Required. Same spelling every time (e.g. BOSE). Image/datasheet files go in images/<Brand>/ and datasheets/<Brand>/."],
-  ["Model", 16, "Recommended. Unique model code (e.g. AM40). Used to match the product on re-import, so do not change it later. If empty it is guessed from the image file name."],
-  ["Name", 40, "Required. Product name shown on the website. Also the key for the At-a-glance and Specifications sheets."],
+  ["Model", 16, "Required. Unique model code (e.g. AM40). Used to match the product on re-import, so do not change it later."],
+  ["Name", 40, "Optional. Product name shown on both websites. If empty, Brand + Model is shown (e.g. BOSE AM40)."],
   ["Main-Category", 22, "Website menu, lowercase-with-dashes (e.g. pa-speaker)."],
   ["Sub-Category", 22, "Website sub-menu, lowercase-with-dashes (e.g. ceiling-speaker)."],
   ["Description", 50, "Shown on the website and in the back office."],
@@ -19,7 +19,7 @@ export const PRODUCT_COLUMNS = [
 export type ProductSheetRow = {
   brand: string | null;
   model: string | null;
-  name: string;
+  name: string | null;
   category: string | null;
   subCategory: string | null;
   description: string | null;
@@ -51,20 +51,21 @@ export async function productsXlsx(rows: ProductSheetRow[]) {
 
   const g = wb.addWorksheet("At-a-glance");
   g.columns = [{ header: "ProductName", width: 40 }, { header: "Bullets", width: 80 }];
-  for (const p of rows) for (const b of p.atAGlance ?? []) g.addRow([p.name, b]);
+  for (const p of rows) for (const b of p.atAGlance ?? []) g.addRow([p.name || p.model, b]);
   header(g);
 
   const s = wb.addWorksheet("Specifications");
   s.columns = [{ header: "ProductName", width: 40 }, { header: "tabName", width: 20 }, { header: "Label", width: 30 }, { header: "Value", width: 40 }];
-  for (const p of rows) for (const tab of p.specifications ?? []) for (const r of tab.rows) s.addRow([p.name, tab.tabName, r.label, r.value]);
+  for (const p of rows) for (const tab of p.specifications ?? []) for (const r of tab.rows) s.addRow([p.name || p.model, tab.tabName, r.label, r.value]);
   header(s);
 
   const h = wb.addWorksheet("How to use");
   h.columns = [{ header: "Column (Products sheet)", width: 18 }, { header: "What to put", width: 120 }];
   PRODUCT_COLUMNS.forEach(([n, , d]) => h.addRow([n, d]));
   h.addRow([]);
-  h.addRow(["Steps", "1) Save as <BRAND>_products.xlsx in studio/import/ (names starting with _ are skipped). 2) Put photos in import/images/<Brand>/ and PDFs in import/datasheets/<Brand>/. 3) Push to GitHub. 4) Back office → Products → Import → Start import. Stock app and website are both updated."]);
-  h.addRow(["Re-import", "Safe to run again any time. Products are matched by Brand + Model (or Name), never duplicated. Unchanged products are not re-sent to the website. A product with no rows in At-a-glance / Specifications keeps its current ones."]);
+  h.addRow(["Steps", "1) Save as <BRAND>_products.xlsx in studio/import/ (names starting with _ are skipped). 2) Put photos in import/images/<Brand>/ and PDFs in import/datasheets/<Brand>/. 3) Push to GitHub. 4) Back office → Products → Import → นำเข้าจาก GitHub (or skip 3 and use อัปโหลดไฟล์ Excel). Stock app and website are both updated."]);
+  h.addRow(["Re-import", "Safe to run again any time. Products are matched by Brand + Model, never duplicated. Unchanged products are not re-sent to the website. A product with no rows in At-a-glance / Specifications keeps its current ones."]);
+  h.addRow(["ProductName", "In At-a-glance / Specifications: the product's Name, or its Model when Name is empty."]);
   h.addRow(["Export", "Products → ดาวน์โหลด Excel gives this same layout with every product, so you can edit it and import it back."]);
   header(h);
 

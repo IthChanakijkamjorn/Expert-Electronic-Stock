@@ -13,7 +13,7 @@ export default async function GoodsReceiptPage({ params }: { params: Promise<{ i
   const supabase = await createClient();
   const { data: r } = await supabase
     .from("goods_receipts")
-    .select("id, supplier, reference, note, received_date, file_path, file_name, goods_receipt_lines(id, qty, unit_cost, products(name, model, unit))")
+    .select("id, supplier, reference, note, received_date, file_path, file_name, goods_receipt_lines(id, qty, unit_cost, products(name:display_name, model, unit))")
     .eq("id", id)
     .maybeSingle();
   if (!r) notFound();

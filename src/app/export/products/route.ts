@@ -15,7 +15,7 @@ export async function GET(req: Request) {
     supabase
       .from("products")
       .select("id, brand, model, name, category, sub_category, description, image_path, website_datasheet_id, unit, on_website, at_a_glance, specifications")
-      .eq("active", true).order("brand").order("name").range(from, to),
+      .eq("active", true).order("brand").order("model").range(from, to),
   );
   const stock = await fetchAll((from, to) => supabase.from("product_stock").select("id, stock").eq("active", true).order("id").range(from, to));
   const qty = new Map(stock.map((s) => [s.id, s.stock as number]));

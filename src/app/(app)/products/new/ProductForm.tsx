@@ -9,10 +9,12 @@ export function ProductForm({ t }: { t: Dictionary }) {
   const field = "input mt-1";
   return (
     <form action={action} className="card flex max-w-md flex-col gap-3">
-      <label>{t.name}<input name="name" required className={field} /></label>
-      <label>{t.modelLabel}<input name="model" className={field} /></label>
-      <label>{t.brand}<input name="brand" className={field} /></label>
+      <label>{t.brand} *<input name="brand" required className={field} /></label>
+      <label>{t.modelLabel} *<input name="model" required className={field} /></label>
+      <label>{t.name}<input name="name" className={field} /></label>
+      <p className="-mt-2 text-xs text-muted">{t.nameHint}</p>
       <label>{t.category}<input name="category" className={field} /></label>
+      <label>{t.descriptionLabel}<textarea name="description" rows={4} className={field} /></label>
       <label>{t.unit}<input name="unit" defaultValue="ชิ้น" className={field} /></label>
       <label>{t.supplier}<input name="supplier" className={field} /></label>
       {state?.error && <p className="text-red-600">{t.saveFailed}</p>}

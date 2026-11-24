@@ -98,11 +98,12 @@ async function importWorkbook(buf: Buffer): Promise<SheetResult> {
     const glance = table(byName("At-a-glance"));
     const specs = table(byName("Specifications"));
 
-    const forProduct = (name: string) => (row: (k: string) => unknown) => cell(row("productname")).toLowerCase() === name.toLowerCase();
-    const glanceOf = (name: string) => glance!.filter(forProduct(name)).map((r) => cell(r("bullets"))).filter(Boolean);
-    const specsOf = (name: string) => {
+    // ProductName in these sheets is the product's Name, or its Model when Name is empty.
+    const forProduct = (keys: string[]) => (row: (k: string) => unknown) => keys.includes(cell(row("productname")).toLowerCase());
+    const glanceOf = (keys: string[]) => glance!.filter(forProduct(keys)).map((r) => cell(r("bullets"))).filter(Boolean);
+    const specsOf = (keys: string[]) => {
       const tabs: SpecTab[] = [];
-      for (const r of specs!.filter(forProduct(name))) {
+      for (const r of specs!.filter(forProduct(keys))) {
         const label = cell(r("label"));
         const value = cell(r("value"));
         if (!label || !value) continue;
@@ -114,8 +115,11 @@ async function importWorkbook(buf: Buffer): Promise<SheetResult> {
       return tabs;
     };
 
-    const wanted = products
-      .map((r) => ({
+    // Brand and Model are required. Old brand files have no Model column, so there the model is taken from the image file name.
+    const legacy = !hasCol("model");
+    const wanted = [];
+    for (const [i, r] of products.entries()) {
+      const row = {
         name: cell(r("name")),
         brand: cell(r("brand")),
         model: cell(r("model")),
@@ -127,31 +131,37 @@ async function importWorkbook(buf: Buffer): Promise<SheetResult> {
         website: yesNo(r("website")),
         unit: cell(r("unit")),
         quantity: count(r("quantity")),
-      }))
-      .filter((r) => r.name && r.brand);
+      };
+      if (!row.brand && !row.model && !row.name) continue;
+      if (legacy && row.brand) row.model = modelFromFile(row.image || row.datasheet, row.brand);
+      if (!row.brand || !row.model) out.warnings.push(`row ${i + 2}: Brand and Model are required`);
+      else wanted.push(row);
+    }
 
     const supabase = await createClient();
     const brands = [...new Set(wanted.map((w) => w.brand))];
     const { data: existing } = await supabase.from("products").select("id, name, model, brand").in("brand", brands).limit(5000);
     const pool = [...(existing ?? [])];
+    const lc = (v: string | null | undefined) => (v ?? "").trim().toLowerCase();
 
     for (const w of wanted) {
-      const model = w.model || modelFromFile(w.image || w.datasheet, w.brand);
-      const hit = pool.find(
-        (p) =>
-          p.brand?.toLowerCase() === w.brand.toLowerCase() &&
-          ((model && (p.model ?? "").toLowerCase() === model.toLowerCase()) || p.name.toLowerCase() === w.name.toLowerCase()),
-      );
+      const { model } = w;
+      const label = w.name || `${w.brand} ${model}`;
+      const sameBrand = pool.filter((p) => lc(p.brand) === lc(w.brand));
+      const hit =
+        sameBrand.find((p) => lc(p.model) === lc(model)) ??
+        (w.name ? sameBrand.find((p) => (legacy || !p.model) && lc(p.name) === lc(w.name)) : undefined);
       const fields: Record<string, unknown> = {
-        name: w.name,
+        name: w.name || null,
         category: w.main || null,
         sub_category: w.sub || null,
         description: w.description || null,
         ...(w.unit && { unit: /^pcs?$/i.test(w.unit) ? "ชิ้น" : w.unit }),
       };
       // No rows for this product in those sheets means "keep what it has", so a partial file cannot wipe them.
-      const bullets = glance ? glanceOf(w.name) : [];
-      const tabs = specs ? specsOf(w.name) : [];
+      const keys = [w.name, model].filter(Boolean).map(lc);
+      const bullets = glance ? glanceOf(keys) : [];
+      const tabs = specs ? specsOf(keys) : [];
       if (bullets.length) fields.at_a_glance = bullets;
       if (tabs.length) fields.specifications = tabs;
       // An empty Website cell means "show it"; only an explicit no hides it.
@@ -159,42 +169,41 @@ async function importWorkbook(buf: Buffer): Promise<SheetResult> {
 
       let id = hit?.id;
       if (hit) {
-        const setModel = !!model && (w.model ? hit.model !== model : !hit.model);
-        const patch = { ...fields, ...(setModel ? { model } : {}) };
-        let { error } = await supabase.from("products").update(patch).eq("id", hit.id);
+        // A guessed model never overwrites one that is already set.
+        const setModel = legacy ? !hit.model : hit.model !== model;
+        let { error } = await supabase.from("products").update({ ...fields, ...(setModel ? { model } : {}) }).eq("id", hit.id);
         if (error && setModel) {
-          out.warnings.push(`${w.name}: model "${model}" already used`);
+          out.warnings.push(`${label}: model "${model}" already used`);
           ({ error } = await supabase.from("products").update(fields).eq("id", hit.id));
         }
         if (error) {
-          out.warnings.push(`${w.name}: ${error.message}`);
+          out.warnings.push(`${label}: ${error.message}`);
           continue;
         }
         if (setModel) hit.model = model;
         out.updated++;
       } else {
-        const row = { brand: w.brand, unit: "ชิ้น", ...fields };
-        let { data, error } = await supabase.from("products").insert({ ...row, model: model || null }).select("id").single();
-        if (error && model) {
-          out.warnings.push(`${w.name}: model "${model}" already used`);
-          ({ data, error } = await supabase.from("products").insert(row).select("id").single());
-        }
+        const { data, error } = await supabase
+          .from("products")
+          .insert({ brand: w.brand, model, unit: "ชิ้น", ...fields })
+          .select("id")
+          .single();
         if (error || !data) {
-          out.warnings.push(`${w.name}: ${error?.message ?? "insert failed"}`);
+          out.warnings.push(`${label}: ${error?.code === "23505" ? `model "${model}" already used` : error?.message ?? "insert failed"}`);
           continue;
         }
         id = data.id;
-        pool.push({ id: data.id, name: w.name, model: model || null, brand: w.brand });
+        pool.push({ id: data.id, name: w.name || null, model, brand: w.brand });
         out.created++;
         // Quantity only applies to new products; re-imports ignore it, stock changes go through movements.
         if (w.quantity) {
           const { error: e } = await supabase
             .from("stock_movements")
             .insert({ product_id: data.id, quantity: w.quantity, type: "count_correction", comment: "ยอดยกมา (นำเข้าจาก Excel)" });
-          if (e) out.warnings.push(`${w.name}: quantity ${e.message}`);
+          if (e) out.warnings.push(`${label}: quantity ${e.message}`);
         }
       }
-      out.items.push({ id: id!, brand: w.brand, name: w.name, image: w.image, datasheet: w.datasheet });
+      out.items.push({ id: id!, brand: w.brand, name: label, image: w.image, datasheet: w.datasheet });
     }
     revalidatePath("/products", "layout");
   } catch (e) {

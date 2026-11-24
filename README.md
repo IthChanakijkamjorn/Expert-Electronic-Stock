@@ -21,7 +21,9 @@ The back office is the only place products are managed; the website (Sanity) get
 2. Push, then Products → Import → Start import. Products, photos and datasheets are added or updated, and every product
    with Website = TRUE (or empty) is pushed to the website; Website = FALSE removes it from the website.
 
-Re-importing is safe: products match on Brand + Model (or Name), and unchanged products are not re-sent, so the website
+Brand and Model are required; every other field is optional. Screens and the website show the Name, or "Brand Model"
+(e.g. BOSE AM40) when Name is empty — the database keeps that in `products.display_name` (migration 0047), so read
+`name:display_name` when showing a product. Re-importing is safe: products match on Brand + Model, and unchanged products are not re-sent, so the website
 is only redeployed for real changes. Quantity only sets the opening stock of new products; re-imports ignore it.
 The ดาวน์โหลด Excel button (Products and Product list pages, `/export/products`) downloads the same layout
 (`src/lib/productSheet.ts`), so an export can be edited and imported back: on Products → Import, use

@@ -54,11 +54,11 @@ export default async function ProjectPage({
       .order("created_at", { ascending: false }),
     supabase
       .from("stock_movements")
-      .select("quantity, product_id, products(name, unit)")
+      .select("quantity, product_id, products(name:display_name, unit)")
       .eq("project_id", projectId),
     supabase
       .from("project_items")
-      .select("id, product_id, planned_qty, products(name, unit)")
+      .select("id, product_id, planned_qty, products(name:display_name, unit)")
       .eq("project_id", projectId),
     canManage
       ? supabase.from("product_prices").select("product_id, cost")

@@ -13,7 +13,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   if (!plan) return new Response("not found", { status: 404 });
   const data = plan.data as PlanData;
   const { data: products } = data.used.length
-    ? await supabase.from("products").select("id, name, model, brand, image_path").in("id", data.used)
+    ? await supabase.from("products").select("id, name:display_name, model, brand, image_path").in("id", data.used)
     : { data: [] };
 
   const [regularBytes, boldBytes] = await Promise.all([

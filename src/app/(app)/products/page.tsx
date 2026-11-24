@@ -19,10 +19,10 @@ export default async function ProductsPage({
   const role = await getRole();
   const term = q.replace(/[%,()*\\]/g, " ").trim();
 
-  const columns = "id, model, name, brand, unit, stock";
-  let query = supabase.from("product_stock").select(columns).eq("active", true).order("name").limit(1000);
+  const columns = "id, model, name:display_name, brand, unit, stock";
+  let query = supabase.from("product_stock").select(columns).eq("active", true).order("display_name").limit(1000);
   if (term) {
-    query = query.or(`name.ilike.%${term}%,model.ilike.%${term}%,brand.ilike.%${term}%`);
+    query = query.or(`display_name.ilike.%${term}%,model.ilike.%${term}%,brand.ilike.%${term}%`);
   }
   const [{ data: products }, { data: shares }] = await Promise.all([
     query,
