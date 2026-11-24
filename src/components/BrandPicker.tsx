@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { nameBeyond, splitBrandModel } from "@/lib/brandModel";
 import { quickCreateProduct } from "@/app/(app)/products/new/quick";
 
 export type PickerProduct = { id: string; name: string; model: string | null; brand: string | null; unit: string };
@@ -16,6 +17,7 @@ export function BrandPicker({
   available,
   allowOver = false,
   newText,
+  newHint,
   onPick,
 }: {
   products: PickerProduct[];
@@ -25,6 +27,7 @@ export function BrandPicker({
   available?: (id: string) => number;
   allowOver?: boolean;
   newText?: string;
+  newHint?: string;
   onPick: (p: PickerProduct) => void;
 }) {
   const [query, setQuery] = useState("");
@@ -32,7 +35,9 @@ export function BrandPicker({
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const typed = query.trim();
-  const canCreate = !!newText && !!typed && !products.some((p) => p.name.trim().toLowerCase() === typed.toLowerCase());
+  const newBm = newText ? splitBrandModel(typed) : null;
+  const exists = (p: PickerProduct) => `${p.brand ?? ""} ${p.model ?? ""}`.trim().toLowerCase() === typed.toLowerCase() || p.name.trim().toLowerCase() === typed.toLowerCase();
+  const canCreate = !!newText && !!typed && !products.some(exists);
 
   async function create() {
     setBusy(true);
@@ -80,12 +85,12 @@ export function BrandPicker({
           {canCreate && (
             <button
               type="button"
-              disabled={busy}
+              disabled={busy || !newBm}
               className="w-full border-b border-zinc-200 px-3 py-2 text-left font-semibold text-navy hover:bg-zinc-100"
               onMouseDown={(e) => e.preventDefault()}
               onClick={create}
             >
-              + {newText} “{typed}”
+              + {newText} {newBm ? `“${newBm.brand} · ${newBm.model}”` : `— ${newHint ?? ""}`}
             </button>
           )}
           {failed && <p className="px-3 py-2 text-red-600">!</p>}
@@ -109,7 +114,7 @@ export function BrandPicker({
                       setOpen(false);
                     }}
                   >
-                    <span>{p.model ? `${p.model} · ` : ""}{p.name}</span>
+                    <span>{[p.model, nameBeyond(p)].filter(Boolean).join(" · ")}</span>
                     {left !== undefined && <span className={`shrink-0 ${left <= 0 ? "text-red-600" : "text-muted"}`}>{left} {p.unit}</span>}
                   </button>
                 );

@@ -59,7 +59,7 @@ export async function revokeShare(shareId: string) {
 
 export async function deleteProduct(productId: string) {
   const supabase = await createClient();
-  const { data: prod } = await supabase.from("products").select("name").eq("id", productId).maybeSingle();
+  const { data: prod } = await supabase.from("products").select("name:display_name").eq("id", productId).maybeSingle();
   const { error } = await supabase.from("products").update({ active: false }).eq("id", productId);
   if (error) throw new Error(error.message);
   await logAudit("delete", "product", prod?.name);
@@ -72,7 +72,7 @@ export async function renameProduct(productId: string, name: string) {
   const clean = name.trim();
   if (!clean) throw new Error("empty name");
   const supabase = await createClient();
-  const { data: prod } = await supabase.from("products").select("name").eq("id", productId).maybeSingle();
+  const { data: prod } = await supabase.from("products").select("name:display_name").eq("id", productId).maybeSingle();
   const { error } = await supabase.from("products").update({ name: clean }).eq("id", productId);
   if (error) throw new Error(error.message);
   await logAudit("rename", "product", `${prod?.name} → ${clean}`);
@@ -81,15 +81,17 @@ export async function renameProduct(productId: string, name: string) {
   revalidatePath("/movements");
 }
 
+// Brand and Model are required; an empty Name shows as "Brand Model".
 export async function updateProductDetails(productId: string, formData: FormData) {
-  const brand = String(formData.get("brand") ?? "").trim() || null;
-  const model = String(formData.get("model") ?? "").trim() || null;
-  const name = String(formData.get("name") ?? "").trim();
-  if (!name) return;
-  const category = String(formData.get("category") ?? "").trim() || null;
-  const sub_category = String(formData.get("sub_category") ?? "").trim() || null;
+  const val = (k: string) => String(formData.get(k) ?? "").trim() || null;
+  const brand = val("brand");
+  const model = val("model");
+  if (!brand || !model) return;
   const supabase = await createClient();
-  const { error } = await supabase.from("products").update({ brand, model, name, category, sub_category }).eq("id", productId);
+  const { error } = await supabase
+    .from("products")
+    .update({ brand, model, name: val("name"), category: val("category"), sub_category: val("sub_category"), description: val("description") })
+    .eq("id", productId);
   if (error) throw new Error(error.message);
   await syncQuietly(supabase, productId);
   revalidatePath("/products", "layout");

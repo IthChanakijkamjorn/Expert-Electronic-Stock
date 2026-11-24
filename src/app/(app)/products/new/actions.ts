@@ -12,13 +12,15 @@ export async function createProduct(
   _prev: { error: boolean } | null,
   formData: FormData,
 ) {
-  const name = text(formData, "name");
-  if (!name) return { error: true };
+  const brand = text(formData, "brand");
+  const model = text(formData, "model");
+  if (!brand || !model) return { error: true };
   const supabase = await createClient();
   const { error } = await supabase.from("products").insert({
-    name,
-    model: text(formData, "model"),
-    brand: text(formData, "brand"),
+    name: text(formData, "name"),
+    model,
+    brand,
+    description: text(formData, "description"),
     category: text(formData, "category"),
     unit: text(formData, "unit") ?? "ชิ้น",
     supplier: text(formData, "supplier"),

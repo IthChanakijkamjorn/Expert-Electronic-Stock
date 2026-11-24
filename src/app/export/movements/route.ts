@@ -4,7 +4,7 @@ import { csvResponse, toCsv } from "@/lib/csv";
 export async function GET() {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("stock_movements").select("created_at, quantity, type, comment, created_by, products(name, model, brand)")
+    .from("stock_movements").select("created_at, quantity, type, comment, created_by, products(name:display_name, model, brand)")
     .order("created_at", { ascending: false }).limit(50000);
   if (error) return new Response("forbidden", { status: 403 });
   const ids = [...new Set((data ?? []).map((m) => m.created_by))];

@@ -24,13 +24,13 @@ export async function resolveLines(
     if (!name || !(qty > 0) || !(price >= 0)) return { error: "invalid" };
 
     if (!l.product_id && brand && model && name) {
-      const { data: hit } = await supabase.from("products").select("id, name, model, brand, unit").ilike("model", esc(model)).limit(20);
+      const { data: hit } = await supabase.from("products").select("id, name:display_name, model, brand, unit").ilike("model", esc(model)).limit(20);
       let p = hit?.find((x) => (x.brand ?? "").trim().toLowerCase() === brand.toLowerCase()) ?? null;
       if (!p) {
         const { data } = await supabase
           .from("products")
           .insert({ name, model, brand, unit: (l.unit ?? "").trim() || "ชิ้น" })
-          .select("id, name, model, brand, unit")
+          .select("id, name:display_name, model, brand, unit")
           .single();
         if (!data) return { error: "failed" };
         p = data;
@@ -44,7 +44,7 @@ export async function resolveLines(
       out.set(`free${free++}`, { product_id: null, brand, model, name, unit: (l.unit ?? "").trim() || "ชิ้น", qty, price });
       continue;
     }
-    const { data: p } = await supabase.from("products").select("id, name, model, brand, unit").eq("id", l.product_id).maybeSingle();
+    const { data: p } = await supabase.from("products").select("id, name:display_name, model, brand, unit").eq("id", l.product_id).maybeSingle();
     if (!p) return { error: "invalid" };
     // The typed description wins and replaces the saved one.
     if (p.name !== name) await supabase.from("products").update({ name }).eq("id", p.id);

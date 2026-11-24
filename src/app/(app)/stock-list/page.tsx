@@ -7,8 +7,8 @@ export default async function StockListPage({ searchParams }: { searchParams: Pr
   const { t } = await getDictionary();
   const supabase = await createClient();
   const { data } = await supabase
-    .from("product_stock").select("id, name, model, brand, unit, stock")
-    .eq("active", true).order("name").limit(5000);
+    .from("product_stock").select("id, name:display_name, model, brand, unit, stock")
+    .eq("active", true).order("display_name").limit(5000);
   const low = (data ?? []).filter((p) => !onlyLow || p.stock < 5);
   const groups = new Map<string, typeof low>();
   low.forEach((p) => {

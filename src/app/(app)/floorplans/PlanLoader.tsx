@@ -16,7 +16,7 @@ export async function PlanLoader({
   const supabase = await createClient();
   const [products, { data: projects }] = await Promise.all([
     fetchAll((a, b) =>
-      supabase.from("products").select("id, name, model, brand, unit, image_path").eq("active", true).order("id").range(a, b),
+      supabase.from("products").select("id, name:display_name, model, brand, unit, image_path").eq("active", true).order("id").range(a, b),
     ),
     supabase.from("projects").select("id, name, year, towers(name, organizations(name))").order("year", { ascending: false }).limit(500),
   ]);

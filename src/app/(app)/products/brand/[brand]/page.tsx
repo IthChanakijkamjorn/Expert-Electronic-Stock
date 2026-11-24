@@ -34,11 +34,11 @@ export default async function BrandPage({
 
   let query = supabase
     .from("product_stock")
-    .select("id, model, name, unit, stock, image_path, category, sub_category")
+    .select("id, model, name:display_name, unit, stock, image_path, category, sub_category")
     .eq("active", true)
     .order("category", { nullsFirst: false })
     .order("sub_category", { nullsFirst: false })
-    .order("name")
+    .order("display_name")
     .limit(1000);
   query = brand === "_" ? query.is("brand", null) : query.eq("brand", brand);
   const term = q.replace(/[%,()*\\]/g, " ").trim();

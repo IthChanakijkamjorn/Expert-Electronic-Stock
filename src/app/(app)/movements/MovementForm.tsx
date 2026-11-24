@@ -109,6 +109,7 @@ function Body({
           placeholder={t.searchProducts}
           emptyText={t.noMatches}
           newText={isIn ? t.addNewProduct : undefined}
+          newHint={t.quickNewHint}
           onSelect={setProduct}
         />
         {product && (

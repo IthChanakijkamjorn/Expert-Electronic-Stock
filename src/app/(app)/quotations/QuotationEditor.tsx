@@ -16,7 +16,7 @@ export async function QuotationEditor({ id, project }: { id?: string; project?: 
   const supabase = await createClient();
 
   const [products, prices, { data: projects }, { data: sigs }, { data: salespeople }, { data: customers }, { data: units }, { data: requesters }] = await Promise.all([
-    fetchAll((a, b) => supabase.from("products").select("id, name, model, brand, unit").eq("active", true).order("id").range(a, b)),
+    fetchAll((a, b) => supabase.from("products").select("id, name:display_name, model, brand, unit").eq("active", true).order("id").range(a, b)),
     fetchAll((a, b) => supabase.from("product_prices").select("product_id, sell_price").order("product_id").range(a, b)),
     supabase.from("projects").select("id, name, year, towers(name, organizations(name))").order("year", { ascending: false }).limit(500),
     supabase.from("signatures").select("id, name, path, is_default").order("created_at"),

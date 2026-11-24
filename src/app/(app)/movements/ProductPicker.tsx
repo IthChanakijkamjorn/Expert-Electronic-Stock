@@ -1,24 +1,27 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { nameBeyond, splitBrandModel } from "@/lib/brandModel";
 import { quickCreateProduct } from "../products/new/quick";
 
 type Item = { id: string; name: string; model: string | null; brand?: string | null; stock: number; unit: string };
 
 const label = (p: Item) =>
-  `${p.brand ? `${p.brand} · ` : ""}${p.model ? `${p.model} · ` : ""}${p.name} (${p.stock} ${p.unit})`;
+  `${[p.brand, p.model, nameBeyond(p)].filter(Boolean).join(" · ")} (${p.stock} ${p.unit})`;
 
 export function ProductPicker({
   products,
   placeholder,
   emptyText,
   newText,
+  newHint,
   onSelect,
 }: {
   products: Item[];
   placeholder: string;
   emptyText: string;
   newText?: string;
+  newHint?: string;
   onSelect?: (p: Item | null) => void;
 }) {
   const [query, setQuery] = useState("");
@@ -33,7 +36,9 @@ export function ProductPicker({
   const [failed, setFailed] = useState(false);
   const all = useMemo(() => [...extra, ...products], [extra, products]);
   const typed = query.trim();
-  const canCreate = !!newText && !!typed && !all.some((p) => p.name.trim().toLowerCase() === typed.toLowerCase());
+  const newBm = newText ? splitBrandModel(typed) : null;
+  const exists = (p: Item) => `${p.brand ?? ""} ${p.model ?? ""}`.trim().toLowerCase() === typed.toLowerCase() || p.name.trim().toLowerCase() === typed.toLowerCase();
+  const canCreate = !!newText && !!typed && !all.some(exists);
 
   async function create() {
     setBusy(true);
@@ -81,12 +86,12 @@ export function ProductPicker({
             <li>
               <button
                 type="button"
-                disabled={busy}
+                disabled={busy || !newBm}
                 className="w-full border-b border-zinc-200 px-3 py-2 text-left font-semibold text-navy hover:bg-zinc-100"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={create}
               >
-                + {newText} “{typed}”
+                + {newText} {newBm ? `“${newBm.brand} · ${newBm.model}”` : `— ${newHint ?? ""}`}
               </button>
             </li>
           )}
