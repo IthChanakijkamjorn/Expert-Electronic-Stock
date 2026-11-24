@@ -67,7 +67,7 @@ export default async function QuotationPage({
           }}
         />
       </div>
-      {q.status !== "draft" && <CompareFill id={id} />}
+      {q.status !== "draft" && <CompareFill initialLines={q.lines as QuoteLine[]} />}
     </section>
   );
 }

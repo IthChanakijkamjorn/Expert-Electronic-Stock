@@ -22,7 +22,10 @@ export default async function QuotationsPage({ searchParams }: { searchParams: P
     <section className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-semibold">{t.quotation}</h1>
-        <Link href="/quotations/new" className="btn">{t.newQuotation}</Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/quotations/compare" className="btn-ghost">คู่เทียบ</Link>
+          <Link href="/quotations/new" className="btn">{t.newQuotation}</Link>
+        </div>
       </div>
       <DraftList rows={drafts} base="/quotations" kind="quotations" t={t} lang={lang} />
       <RequesterFilter rows={finals} selected={sel} base="/quotations" t={t} />
