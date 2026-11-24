@@ -69,7 +69,15 @@ export async function syncProductToWebsite(supabase: Supabase, productId: string
 
   const sanityId = p.sanity_id ?? `product-${slugify(p.name)}`;
   if (!p.sanity_id) {
-    const { error: e } = await supabase.from("products").update({ sanity_id: sanityId }).eq("id", p.id);
+    let { error: e } = await supabase.from("products").update({ sanity_id: sanityId }).eq("id", p.id);
+    if (e?.code === "23505") {
+      // A removed product (e.g. replaced on import with a new Model) hands its website page over.
+      const { data: holder } = await supabase.from("products").select("id, active").eq("sanity_id", sanityId).maybeSingle();
+      if (holder && !holder.active) {
+        await supabase.from("products").update({ sanity_id: null, website_synced: null }).eq("id", holder.id);
+        ({ error: e } = await supabase.from("products").update({ sanity_id: sanityId }).eq("id", p.id));
+      }
+    }
     if (e) throw new Error(e.code === "23505" ? `another product already uses website id ${sanityId}` : e.message);
   }
 
