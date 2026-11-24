@@ -72,7 +72,7 @@ export async function syncProductToWebsite(supabase: Supabase, productId: string
     let { error: e } = await supabase.from("products").update({ sanity_id: sanityId }).eq("id", p.id);
     if (e?.code === "23505") {
       // A removed product (e.g. replaced on import with a new Model) hands its website page over.
-      const { data: holder } = await supabase.from("products").select("id, active").eq("sanity_id", sanityId).maybeSingle();
+      const { data: holder } = await supabase.from("products").select("id, active, display_name").eq("sanity_id", sanityId).maybeSingle();
       if (holder && !holder.active) {
         await supabase.from("products").update({ sanity_id: null, website_synced: null }).eq("id", holder.id);
         ({ error: e } = await supabase.from("products").update({ sanity_id: sanityId }).eq("id", p.id));
@@ -80,9 +80,11 @@ export async function syncProductToWebsite(supabase: Supabase, productId: string
         // Two active products with the same name: this one gets its own page named after Brand + Model.
         sanityId = `product-${slugify(`${p.brand ?? ""} ${p.model ?? p.id}`)}`;
         ({ error: e } = await supabase.from("products").update({ sanity_id: sanityId }).eq("id", p.id));
+        if (e?.code === "23505") throw new Error(`website id ${sanityId} is already used by another product`);
       }
+      if (e?.code === "23505") throw new Error(`website id ${sanityId} is already used by "${holder?.display_name ?? "another product"}"`);
     }
-    if (e) throw new Error(e.code === "23505" ? `another product already uses website id ${sanityId}` : e.message);
+    if (e) throw new Error(e.message);
   }
 
   const { data: sheet } = p.website_datasheet_id
