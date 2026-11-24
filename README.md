@@ -24,7 +24,9 @@ The back office is the only place products are managed; the website (Sanity) get
 Re-importing is safe: products match on Brand + Model (or Name), and unchanged products are not re-sent, so the website
 is only redeployed for real changes. Quantity only sets the opening stock of new products; re-imports ignore it.
 The ดาวน์โหลด Excel button (Products and Product list pages, `/export/products`) downloads the same layout
-(`src/lib/productSheet.ts`), so an export can be edited and imported back. Editing a product, its photo or its files in the back office also updates the website;
+(`src/lib/productSheet.ts`), so an export can be edited and imported back: on Products → Import, use
+**อัปโหลดไฟล์ Excel** to pick the edited file directly (no GitHub push). Photos and datasheets named in it are still
+taken from `studio/import/`, or can be added on the product page. Editing a product, its photo or its files in the back office also updates the website;
 the product page has a Website box for show/hide, featured and which datasheet is public.
 Needs `SANITY_WRITE_TOKEN` (Editor token) and migration `0046_website_sync.sql`. Do not edit products in Sanity Studio:
 the next import overwrites those changes.

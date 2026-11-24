@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/projects/**": ["./fonts/**", "./public/logo.png"],
   },
+  // Excel uploads on Products → Import go through a server action (default limit 1 MB).
+  experimental: { serverActions: { bodySizeLimit: "4mb" } },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

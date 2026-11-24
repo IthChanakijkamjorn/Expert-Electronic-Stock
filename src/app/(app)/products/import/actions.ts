@@ -71,11 +71,25 @@ export type SheetResult = { items: ImportItem[]; created: number; updated: numbe
 
 export async function importSheet(path: string): Promise<SheetResult> {
   await guard();
+  const res = await fetch(raw(path), { cache: "no-store" });
+  if (!res.ok) return { items: [], created: 0, updated: 0, warnings: [], error: `download ${res.status}` };
+  return importWorkbook(Buffer.from(await res.arrayBuffer()));
+}
+
+// An .xlsx picked on the Import page (e.g. an edited export). Photos and datasheets named in it
+// are still taken from studio/import; products that already have them keep theirs.
+export async function importUpload(form: FormData): Promise<SheetResult> {
+  await guard();
+  const file = form.get("file");
+  if (!(file instanceof File) || !file.name.toLowerCase().endsWith(".xlsx"))
+    return { items: [], created: 0, updated: 0, warnings: [], error: "not an .xlsx file" };
+  return importWorkbook(Buffer.from(await file.arrayBuffer()));
+}
+
+async function importWorkbook(buf: Buffer): Promise<SheetResult> {
   const out: SheetResult = { items: [], created: 0, updated: 0, warnings: [] };
   try {
-    const res = await fetch(raw(path), { cache: "no-store" });
-    if (!res.ok) throw new Error(`download ${res.status}`);
-    const sheets = await readXlsxFile(Buffer.from(await res.arrayBuffer()));
+    const sheets = await readXlsxFile(buf);
     const byName = (n: string) => sheets.find((s) => key(s.sheet) === key(n))?.data;
     const productData = byName("Products") ?? sheets[0].data;
     const products = table(productData);
