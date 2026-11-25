@@ -214,12 +214,12 @@ export default async function ProjectPage({
 
       <div className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold text-navy">{t.files}</h2>
-        <div className="grid items-start gap-4 lg:grid-cols-2">
-          {(["tor", "catalog"] as const).map((k) => {
-            const list = k === "tor" ? torFiles : catalogFiles;
+        <div className="grid items-start gap-4 lg:grid-cols-3">
+          {(["tor", "catalog", "original"] as const).map((k) => {
+            const list = k === "tor" ? torFiles : k === "catalog" ? catalogFiles : files;
             return (
               <div key={k} className="flex flex-col gap-3 rounded-2xl border border-[#ece8f2] bg-white/60 p-3">
-                <h3 className="font-semibold text-navy">{k === "tor" ? t.torFiles : t.catalogFiles}</h3>
+                <h3 className="font-semibold text-navy">{k === "tor" ? t.torFiles : k === "catalog" ? t.catalogFiles : t.otherFiles}</h3>
                 <FileUploader
                   prefix={`projects/${projectId}`}
                   record={addProjectTypedFile.bind(null, projectId, k)}
@@ -233,12 +233,6 @@ export default async function ProjectPage({
             );
           })}
         </div>
-        {files.length > 0 && (
-          <div className="flex flex-col gap-3">
-            <h3 className="font-semibold text-navy">{t.otherFiles}</h3>
-            {fileList(files)}
-          </div>
-        )}
         <h2 className="mt-4 text-xl font-semibold text-navy">{t.comparisonDocs}</h2>
         <p className="text-sm text-muted">{t.comparisonHelp}</p>
         <div className="grid items-start gap-4 lg:grid-cols-3">
