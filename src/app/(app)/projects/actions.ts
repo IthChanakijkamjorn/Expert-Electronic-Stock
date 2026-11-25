@@ -60,8 +60,8 @@ export async function addProjectFile(
   if (error) throw new Error(error.message);
 }
 
-export async function addProjectTypedFile(projectId: string, kind: "tor" | "catalog", path: string, name: string, size: number) {
-  return addProjectFile(projectId, path, name, size, kind === "tor" ? "tor" : "catalog");
+export async function addProjectTypedFile(projectId: string, kind: "tor" | "catalog" | "original", path: string, name: string, size: number) {
+  return addProjectFile(projectId, path, name, size, kind);
 }
 
 export async function addProjectComparisonFile(projectId: string, slot: number, path: string, name: string, size: number) {
