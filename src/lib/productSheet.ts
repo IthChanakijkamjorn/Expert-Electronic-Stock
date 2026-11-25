@@ -5,12 +5,12 @@ import ExcelJS from "exceljs";
 export const PRODUCT_COLUMNS = [
   ["Brand", 12, "Required. Same spelling every time (e.g. BOSE). Image/datasheet files go in images/<Brand>/ and datasheets/<Brand>/."],
   ["Model", 16, "Required. Unique model code (e.g. AM40). Used to match the product on re-import, so do not change it later."],
-  ["Name", 40, "Optional. Product name shown on both websites. If empty, Brand + Model is shown (e.g. BOSE AM40)."],
+  ["Name", 40, "Optional. Product name shown on both websites. If empty, Brand + Model is shown (e.g. BOSE AM40); the export fills it in."],
   ["Main-Category", 22, "Website menu, lowercase-with-dashes (e.g. pa-speaker)."],
   ["Sub-Category", 22, "Website sub-menu, lowercase-with-dashes (e.g. ceiling-speaker)."],
   ["Description", 50, "Shown on the website and in the back office."],
-  ["Image", 22, "File name inside images/<Brand>/ (e.g. BOSE AM40.png). Use a new file name to replace the photo."],
-  ["Datasheet", 22, "File name inside datasheets/<Brand>/ (e.g. BOSE AM40.pdf)."],
+  ["Image", 22, "File name inside images/<Brand>/. The export fills in BRAND_Model (spaces → -), e.g. BOSE_AM40.png. Use a new file name to replace the photo."],
+  ["Datasheet", 22, "File name inside datasheets/<Brand>/. The export fills in BRAND_Model.pdf, e.g. BOSE_AM40.pdf."],
   ["Quantity", 10, "Stock on hand. Only used when the product is created the first time; after that change stock in รับ/จ่ายสินค้า (re-import ignores it)."],
   ["Unit", 8, "Default ชิ้น."],
   ["Website", 10, "TRUE or empty = show on website. FALSE = back office only (removes it from the website)."],
@@ -31,6 +31,10 @@ export type ProductSheetRow = {
   atAGlance: string[] | null;
   specifications: { tabName: string; rows: { label: string; value: string }[] }[] | null;
 };
+
+// File name base for a product's photo and datasheet: BRAND_Model, e.g. WISI_LX-32-L-xxxx.
+export const fileBase = (brand: string, model: string) =>
+  `${brand.trim().toUpperCase()}_${model.trim().replace(/[\s/\\]+/g, "-")}`;
 
 function header(ws: ExcelJS.Worksheet) {
   ws.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };

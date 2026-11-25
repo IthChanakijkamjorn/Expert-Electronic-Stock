@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { fetchAll } from "@/lib/fetchAll";
 import { xlsxResponse } from "@/lib/excel";
-import { productsXlsx } from "@/lib/productSheet";
+import { fileBase, productsXlsx } from "@/lib/productSheet";
 import { unitLabel } from "@/lib/unit";
 import { fileNameOf, type SpecTab } from "@/lib/website";
 
@@ -28,20 +28,26 @@ export async function GET(req: Request) {
 
   const rows = products
     .filter((p) => !low || (qty.get(p.id) ?? 0) < 5)
-    .map((p) => ({
-      brand: p.brand,
-      model: p.model,
-      name: p.name,
-      category: p.category,
-      subCategory: p.sub_category,
-      description: p.description,
-      image: p.image_path ? fileNameOf(p.image_path) : null,
-      datasheet: p.website_datasheet_id ? sheets.get(p.website_datasheet_id) ?? null : null,
-      quantity: qty.get(p.id) ?? 0,
-      unit: unitLabel(p.unit),
-      website: p.on_website,
-      atAGlance: p.at_a_glance,
-      specifications: p.specifications as SpecTab[] | null,
-    }));
+    .map((p) => {
+      // Filled in from Brand + Model so the file is complete and photos/datasheets follow one naming rule.
+      const base = p.brand && p.model ? fileBase(p.brand, p.model) : null;
+      const current = p.image_path ? fileNameOf(p.image_path) : null;
+      const ext = current?.match(/\.(png|jpe?g|webp)$/i)?.[1].toLowerCase() ?? "png";
+      return {
+        brand: p.brand,
+        model: p.model,
+        name: p.name || [p.brand, p.model].filter(Boolean).join(" ") || null,
+        category: p.category,
+        subCategory: p.sub_category,
+        description: p.description,
+        image: base ? `${base}.${ext}` : current,
+        datasheet: base ? `${base}.pdf` : p.website_datasheet_id ? sheets.get(p.website_datasheet_id) ?? null : null,
+        quantity: qty.get(p.id) ?? 0,
+        unit: unitLabel(p.unit),
+        website: p.on_website,
+        atAGlance: p.at_a_glance,
+        specifications: p.specifications as SpecTab[] | null,
+      };
+    });
   return xlsxResponse(await productsXlsx(rows), low ? "low-stock" : "products");
 }
