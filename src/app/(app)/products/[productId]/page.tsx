@@ -31,7 +31,7 @@ export default async function ProductFilesPage({
 
   const { data: product } = await supabase
     .from("product_stock")
-    .select("id, name:display_name, raw_name:name, model, brand, unit, stock, image_path, category, sub_category, description")
+    .select("id, name:display_name, raw_name:name, model, brand, unit, stock, image_path, category, sub_category, description, short_description")
     .eq("id", productId)
     .maybeSingle();
   if (!product) notFound();
@@ -131,6 +131,7 @@ export default async function ProductFilesPage({
                 <label className="text-sm">{t.category}<input name="category" defaultValue={product.category ?? ""} className="input mt-1" /></label>
                 <label className="text-sm">{t.subCategory}<input name="sub_category" defaultValue={product.sub_category ?? ""} className="input mt-1" /></label>
                 <label className="text-sm sm:col-span-3">{t.descriptionLabel}<textarea name="description" rows={5} defaultValue={product.description ?? ""} className="input mt-1" /></label>
+                <label className="text-sm sm:col-span-3">{t.shortDescriptionLabel}<textarea name="short_description" rows={2} defaultValue={product.short_description ?? ""} placeholder={t.shortDescriptionHint} className="input mt-1" /></label>
                 <p className="text-xs text-muted sm:col-span-3">{t.nameHint}</p>
                 <button className="btn sm:col-span-3 sm:w-fit">{t.save}</button>
               </form>

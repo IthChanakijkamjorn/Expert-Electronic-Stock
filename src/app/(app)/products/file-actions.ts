@@ -90,7 +90,7 @@ export async function updateProductDetails(productId: string, formData: FormData
   const supabase = await createClient();
   const { error } = await supabase
     .from("products")
-    .update({ brand, model, name: val("name"), category: val("category"), sub_category: val("sub_category"), description: val("description") })
+    .update({ brand, model, name: val("name"), category: val("category"), sub_category: val("sub_category"), description: val("description"), short_description: val("short_description") })
     .eq("id", productId);
   if (error) throw new Error(error.message);
   await syncQuietly(supabase, productId);

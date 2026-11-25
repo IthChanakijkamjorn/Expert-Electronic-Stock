@@ -127,6 +127,7 @@ async function importWorkbook(buf: Buffer): Promise<SheetResult> {
         main: cell(r("maincategory") ?? r("category")),
         sub: cell(r("subcategory")),
         description: cell(r("description")),
+        shortDescription: cell(r("shortdescription")),
         image: cell(r("image")),
         datasheet: cell(r("datasheet")),
         website: yesNo(r("website")),
@@ -161,6 +162,8 @@ async function importWorkbook(buf: Buffer): Promise<SheetResult> {
         category: w.main || null,
         sub_category: w.sub || null,
         description: w.description || null,
+        // Older files without the column keep what staff saved from forms.
+        ...(hasCol("shortdescription") && { short_description: w.shortDescription || null }),
         ...(w.unit && { unit: /^pcs?$/i.test(w.unit) ? "ชิ้น" : w.unit }),
       };
       // No rows for this product in those sheets means "keep what it has", so a partial file cannot wipe them.

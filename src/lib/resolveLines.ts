@@ -3,7 +3,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export type RawLine = { product_id?: string | null; brand?: string; model?: string; name?: string; unit?: string; qty: number; price: number };
 export type ResolvedLine = { product_id: string | null; brand: string; model: string; name: string; unit: string; qty: number; price: number };
 
-// Turns typed lines into product-linked lines. A typed description that differs from a matched product replaces the saved one. Typed items that are not in the database are saved as new products only when brand, model and description are all filled; otherwise they stay as free-text lines (product_id null).
+// Turns typed lines into product-linked lines. A typed description that differs from what the form fills in for a matched product
+// (form_text: short description, else full description, else name) is saved as that product's short description. Typed items that are not in the database are saved as new products only when brand, model and description are all filled; otherwise they stay as free-text lines (product_id null).
 const esc = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
 
 export async function resolveLines(
@@ -24,18 +25,18 @@ export async function resolveLines(
     if (!name || !(qty > 0) || !(price >= 0)) return { error: "invalid" };
 
     if (!l.product_id && brand && model && name) {
-      const { data: hit } = await supabase.from("products").select("id, name:display_name, model, brand, unit").ilike("model", esc(model)).limit(20);
+      const { data: hit } = await supabase.from("products").select("id, text:form_text, model, brand, unit").ilike("model", esc(model)).limit(20);
       let p = hit?.find((x) => (x.brand ?? "").trim().toLowerCase() === brand.toLowerCase()) ?? null;
       if (!p) {
         const { data } = await supabase
           .from("products")
-          .insert({ name, model, brand, unit: (l.unit ?? "").trim() || "ชิ้น" })
-          .select("id, name:display_name, model, brand, unit")
+          .insert({ short_description: name, model, brand, unit: (l.unit ?? "").trim() || "ชิ้น" })
+          .select("id, text:form_text, model, brand, unit")
           .single();
         if (!data) return { error: "failed" };
         p = data;
       }
-      if (p.name !== name) await supabase.from("products").update({ name }).eq("id", p.id);
+      if (p.text !== name) await supabase.from("products").update({ short_description: name }).eq("id", p.id);
       const cur = out.get(p.id);
       out.set(p.id, { product_id: p.id, brand: p.brand ?? "", model: p.model ?? "", name, unit: (l.unit ?? "").trim() || p.unit, qty: (cur?.qty ?? 0) + qty, price });
       continue;
@@ -44,10 +45,10 @@ export async function resolveLines(
       out.set(`free${free++}`, { product_id: null, brand, model, name, unit: (l.unit ?? "").trim() || "ชิ้น", qty, price });
       continue;
     }
-    const { data: p } = await supabase.from("products").select("id, name:display_name, model, brand, unit").eq("id", l.product_id).maybeSingle();
+    const { data: p } = await supabase.from("products").select("id, text:form_text, model, brand, unit").eq("id", l.product_id).maybeSingle();
     if (!p) return { error: "invalid" };
-    // The typed description wins and replaces the saved one.
-    if (p.name !== name) await supabase.from("products").update({ name }).eq("id", p.id);
+    // The typed description wins and becomes the product's short description.
+    if (p.text !== name) await supabase.from("products").update({ short_description: name }).eq("id", p.id);
     const cur = out.get(p.id);
     out.set(p.id, {
       product_id: p.id,

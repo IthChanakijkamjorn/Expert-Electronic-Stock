@@ -14,7 +14,7 @@ export async function GET(req: Request) {
   const products = await fetchAll((from, to) =>
     supabase
       .from("products")
-      .select("id, brand, model, name, category, sub_category, description, image_path, website_datasheet_id, unit, on_website, at_a_glance, specifications")
+      .select("id, brand, model, name, category, sub_category, description, short_description, image_path, website_datasheet_id, unit, on_website, at_a_glance, specifications")
       .eq("active", true).order("brand").order("model").range(from, to),
   );
   const stock = await fetchAll((from, to) => supabase.from("product_stock").select("id, stock").eq("active", true).order("id").range(from, to));
@@ -40,6 +40,7 @@ export async function GET(req: Request) {
         category: p.category,
         subCategory: p.sub_category,
         description: p.description,
+        shortDescription: p.short_description,
         image: base ? `${base}.${ext}` : current,
         datasheet: base ? `${base}.pdf` : p.website_datasheet_id ? sheets.get(p.website_datasheet_id) ?? null : null,
         quantity: qty.get(p.id) ?? 0,

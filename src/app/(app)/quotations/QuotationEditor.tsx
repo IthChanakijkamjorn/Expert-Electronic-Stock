@@ -16,7 +16,7 @@ export async function QuotationEditor({ id, project }: { id?: string; project?: 
   const supabase = await createClient();
 
   const [products, prices, { data: projects }, { data: sigs }, { data: salespeople }, { data: customers }, { data: units }, { data: requesters }] = await Promise.all([
-    fetchAll((a, b) => supabase.from("products").select("id, name:display_name, model, brand, unit").eq("active", true).order("id").range(a, b)),
+    fetchAll((a, b) => supabase.from("products").select("id, name:display_name, text:form_text, model, brand, unit").eq("active", true).order("id").range(a, b)),
     fetchAll((a, b) => supabase.from("product_prices").select("product_id, sell_price").order("product_id").range(a, b)),
     supabase.from("projects").select("id, name, year, towers(name, organizations(name))").order("year", { ascending: false }).limit(500),
     supabase.from("signatures").select("id, name, path, is_default").order("created_at"),
@@ -59,8 +59,8 @@ export async function QuotationEditor({ id, project }: { id?: string; project?: 
       // Older quotations did not store the product id, so match by model + name, then by name.
       const p =
         products.find((x) => x.id === l.product_id) ??
-        products.find((x) => (x.model ?? "") === l.model && x.name === l.name) ??
-        products.find((x) => x.name === l.name);
+        products.find((x) => (x.model ?? "") === l.model && (x.name === l.name || x.text === l.name)) ??
+        products.find((x) => x.name === l.name || x.text === l.name);
       if (!p) {
         lines.push({ key: `free${lines.length}`, brand: l.brand, model: l.model, name: l.name, unit: l.unit, qty: String(l.qty), price: String(l.price) });
         continue;

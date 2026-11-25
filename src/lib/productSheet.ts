@@ -8,7 +8,8 @@ export const PRODUCT_COLUMNS = [
   ["Name", 40, "Optional. Product name shown on both websites. If empty, Brand + Model is shown (e.g. BOSE AM40); the export fills it in."],
   ["Main-Category", 22, "Website menu, lowercase-with-dashes (e.g. pa-speaker)."],
   ["Sub-Category", 22, "Website sub-menu, lowercase-with-dashes (e.g. ceiling-speaker)."],
-  ["Description", 50, "Shown on the website and in the back office."],
+  ["Description", 50, "Full description. Shown on the website and on the back office product page."],
+  ["Short Description", 40, "Optional. Text filled in on quotations/invoices. If empty, forms use Description. Editing the text on a form saves it here."],
   ["Image", 22, "File name inside images/<Brand>/. The export fills in BRAND_Model (spaces → -), e.g. BOSE_AM40.png. Use a new file name to replace the photo."],
   ["Datasheet", 22, "File name inside datasheets/<Brand>/. The export fills in BRAND_Model.pdf, e.g. BOSE_AM40.pdf."],
   ["Quantity", 10, "Stock on hand. Only used when the product is created the first time; after that change stock in รับ/จ่ายสินค้า (re-import ignores it)."],
@@ -23,6 +24,7 @@ export type ProductSheetRow = {
   category: string | null;
   subCategory: string | null;
   description: string | null;
+  shortDescription: string | null;
   image: string | null;
   datasheet: string | null;
   quantity: number | null;
@@ -47,7 +49,7 @@ export async function productsXlsx(rows: ProductSheetRow[]) {
   const ws = wb.addWorksheet("Products");
   ws.columns = PRODUCT_COLUMNS.map(([h, width]) => ({ header: h, width }));
   for (const p of rows)
-    ws.addRow([p.brand, p.model, p.name, p.category, p.subCategory, p.description, p.image, p.datasheet, p.quantity, p.unit, p.website ? "TRUE" : "FALSE"]);
+    ws.addRow([p.brand, p.model, p.name, p.category, p.subCategory, p.description, p.shortDescription, p.image, p.datasheet, p.quantity, p.unit, p.website ? "TRUE" : "FALSE"]);
   header(ws);
   const websiteCol = PRODUCT_COLUMNS.length;
   for (let r = 2; r <= rows.length + 500; r++)

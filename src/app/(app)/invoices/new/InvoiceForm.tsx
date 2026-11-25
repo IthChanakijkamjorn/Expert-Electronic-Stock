@@ -78,7 +78,7 @@ export function InvoiceForm({
       setLines((ls) =>
         ls.map((l) =>
           l.key === key
-            ? { ...l, productId: p.id, brand: p.brand ?? "", model: p.model ?? "", name: p.name, unit: p.unit, qty: l.qty || "1", price: priceOf(p.id) }
+            ? { ...l, productId: p.id, brand: p.brand ?? "", model: p.model ?? "", name: p.text ?? p.name, unit: p.unit, qty: l.qty || "1", price: priceOf(p.id) }
             : l,
         ),
       ),

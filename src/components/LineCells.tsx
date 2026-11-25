@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { blank, type PaperLine } from "./InvoicePaper";
 
-export type PickerProduct = { id: string; name: string; model: string | null; brand: string | null; unit: string };
+// text: what a form line fills in (short description, else full description, else name).
+export type PickerProduct = { id: string; name: string; text?: string; model: string | null; brand: string | null; unit: string };
 
 const cmp = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: "base", numeric: true });
 
