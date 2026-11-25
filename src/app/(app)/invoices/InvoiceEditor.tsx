@@ -13,7 +13,7 @@ export async function InvoiceEditor({ id }: { id?: string }) {
 
   const [products, stockRows, prices, { data: projects }, { data: salespeople }, { data: requesters }] = await Promise.all([
     fetchAll((a, b) =>
-      supabase.from("product_stock").select("id, name:display_name, model, brand, unit").eq("active", true).order("id").range(a, b),
+      supabase.from("product_stock").select("id, name:display_name, text:form_text, model, brand, unit").eq("active", true).order("id").range(a, b),
     ),
     fetchAll((a, b) =>
       supabase.from("product_stock").select("id, stock").eq("active", true).order("id").range(a, b),

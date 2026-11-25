@@ -21,6 +21,7 @@ export async function createProduct(
     model,
     brand,
     description: text(formData, "description"),
+    short_description: text(formData, "short_description"),
     category: text(formData, "category"),
     unit: text(formData, "unit") ?? "ชิ้น",
     supplier: text(formData, "supplier"),

@@ -15,6 +15,7 @@ export function ProductForm({ t }: { t: Dictionary }) {
       <p className="-mt-2 text-xs text-muted">{t.nameHint}</p>
       <label>{t.category}<input name="category" className={field} /></label>
       <label>{t.descriptionLabel}<textarea name="description" rows={4} className={field} /></label>
+      <label>{t.shortDescriptionLabel}<textarea name="short_description" rows={2} placeholder={t.shortDescriptionHint} className={field} /></label>
       <label>{t.unit}<input name="unit" defaultValue="ชิ้น" className={field} /></label>
       <label>{t.supplier}<input name="supplier" className={field} /></label>
       {state?.error && <p className="text-red-600">{t.saveFailed}</p>}

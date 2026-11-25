@@ -12,7 +12,7 @@ import { SalesPicker } from "@/components/SalesPicker";
 import type { PaperLine } from "@/components/InvoicePaper";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
-type Product = { id: string; name: string; model: string | null; brand: string | null; unit: string };
+type Product = { id: string; name: string; text?: string; model: string | null; brand: string | null; unit: string };
 
 export function QuotationForm({
   t,
@@ -50,7 +50,7 @@ export function QuotationForm({
   const [state, action, pending] = useActionState(saveQuotation.bind(null, existing?.id ?? null), null);
   const byId = new Map(products.map((p) => [p.id, p]));
   const toLine = (p: Product, qty: number): PaperLine => ({
-    key: p.id, productId: p.id, brand: p.brand ?? "", model: p.model ?? "", name: p.name, unit: p.unit, qty: String(qty), price: String(sellPrice[p.id] ?? 0),
+    key: p.id, productId: p.id, brand: p.brand ?? "", model: p.model ?? "", name: p.text ?? p.name, unit: p.unit, qty: String(qty), price: String(sellPrice[p.id] ?? 0),
   });
   const [sigId, setSigId] = useState(existing?.sigId ?? signatures.find((s) => s.is_default)?.id ?? "");
   const [projectId, setProjectId] = useState(existing?.projectId ?? initialProject);
@@ -102,7 +102,7 @@ export function QuotationForm({
       setLines((ls) =>
         ls.map((l) =>
           l.key === key
-            ? { ...l, productId: p.id, brand: p.brand ?? "", model: p.model ?? "", name: p.name, unit: /^pcs?$/i.test(p.unit) ? "ชิ้น" : p.unit, qty: l.qty || "1", price: String(sellPrice[p.id] ?? 0) }
+            ? { ...l, productId: p.id, brand: p.brand ?? "", model: p.model ?? "", name: p.text ?? p.name, unit: /^pcs?$/i.test(p.unit) ? "ชิ้น" : p.unit, qty: l.qty || "1", price: String(sellPrice[p.id] ?? 0) }
             : l,
         ),
       ),

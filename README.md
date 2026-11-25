@@ -23,7 +23,9 @@ The back office is the only place products are managed; the website (Sanity) get
 
 Brand and Model are required; every other field is optional. Screens and the website show the Name, or "Brand Model"
 (e.g. BOSE AM40) when Name is empty — the database keeps that in `products.display_name` (migration 0047), so read
-`name:display_name` when showing a product. Re-importing is safe: products match on Brand + Model, and unchanged products are not re-sent, so the website
+`name:display_name` when showing a product. Description (full) is shown on the website and product page; Short Description is what
+quotations and invoices fill in (`products.form_text`, migration 0048: short, else full, else display name). Editing the
+text on a form line saves it as that product's Short Description. Re-importing is safe: products match on Brand + Model, and unchanged products are not re-sent, so the website
 is only redeployed for real changes. Quantity only sets the opening stock of new products; re-imports ignore it.
 The ดาวน์โหลด Excel button (Products and Product list pages, `/export/products`) downloads the same layout
 (`src/lib/productSheet.ts`), so an export can be edited and imported back: on Products → Import, use
