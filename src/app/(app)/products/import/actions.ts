@@ -118,7 +118,8 @@ async function importWorkbook(buf: Buffer): Promise<SheetResult> {
 
     // Brand and Model are required. Old brand files have no Model column, so there the model is taken from the image file name.
     const legacy = !hasCol("model");
-    const wanted = [];
+    type Wanted = { name: string; brand: string; model: string; main: string; sub: string; description: string; shortDescription: string; image: string; datasheet: string; website: boolean | undefined; unit: string; quantity: ReturnType<typeof count> };
+    const wanted: Wanted[] = [];
     for (const [i, r] of products.entries()) {
       const row = {
         name: cell(r("name")),
@@ -148,7 +149,8 @@ async function importWorkbook(buf: Buffer): Promise<SheetResult> {
     // Names match ignoring punctuation and spacing, so fixing "Flood Light/" to "Flood Light" still finds the product.
     const nameKey = (v: string | null | undefined) => lc(v).replace(/[^\p{L}\p{M}\p{N}]+/gu, "");
 
-    for (const w of wanted) {
+    // Rows are saved a few at a time; one by one, a large sheet outruns the function time limit.
+    const saveRow = async (w: Wanted) => {
       const { model } = w;
       const label = w.name || `${w.brand} ${model}`;
       const sameBrand = pool.filter((p) => lc(p.brand) === lc(w.brand));
@@ -186,7 +188,7 @@ async function importWorkbook(buf: Buffer): Promise<SheetResult> {
         }
         if (error) {
           out.warnings.push(`${label}: ${error.message}`);
-          continue;
+          return;
         }
         if (setModel) hit.model = model;
         out.updated++;
@@ -198,7 +200,7 @@ async function importWorkbook(buf: Buffer): Promise<SheetResult> {
           .single();
         if (error || !data) {
           out.warnings.push(`${label}: ${error?.code === "23505" ? `model "${model}" already used` : error?.message ?? "insert failed"}`);
-          continue;
+          return;
         }
         id = data.id;
         pool.push({ id: data.id, name: w.name || null, model, brand: w.brand });
@@ -212,7 +214,8 @@ async function importWorkbook(buf: Buffer): Promise<SheetResult> {
         }
       }
       out.items.push({ id: id!, brand: w.brand, name: label, image: w.image, datasheet: w.datasheet });
-    }
+    };
+    for (let i = 0; i < wanted.length; i += 10) await Promise.all(wanted.slice(i, i + 10).map(saveRow));
     revalidatePath("/products", "layout");
   } catch (e) {
     out.error = e instanceof Error ? e.message : "error";
