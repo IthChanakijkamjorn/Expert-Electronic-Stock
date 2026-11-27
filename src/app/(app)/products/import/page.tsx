@@ -4,7 +4,7 @@ import { getDictionary } from "@/lib/i18n";
 import { getRole } from "@/lib/role";
 import { ImportRunner } from "./ImportRunner";
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export default async function ImportPage() {
   const { t } = await getDictionary();
