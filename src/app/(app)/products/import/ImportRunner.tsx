@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { importAssets, importSheet, importUpload, listMissing, listSheets, removeProducts, type ImportItem, type SheetResult } from "./actions";
-import { publishProduct } from "../website-actions";
+import { publishProduct, triggerWebsiteDeploy } from "../website-actions";
 
 type Labels = { start: string; upload: string; uploadHelp: string; running: string; done: string; failed: string; website: string; removeMissing: string; removeConfirm: string; removeBlocked: string; removed: string };
 
@@ -53,6 +53,10 @@ export function ImportRunner({ labels, isAdmin }: { labels: Labels; isAdmin: boo
       );
       add(`${labels.done}: ${images} images, ${sheetsAdded} datasheets`);
       add(`${labels.website}: ${web.published} published, ${web.unchanged} unchanged, ${web.removed} removed`);
+      if (web.published + web.removed > 0) {
+        const d = await triggerWebsiteDeploy();
+        add(d.ok ? `${labels.website}: deploy started` : `${labels.failed} (${labels.website}): ${d.error}`);
+      }
     } catch (e) {
       add(`${labels.failed}: ${e instanceof Error ? e.message : ""}`);
     }
